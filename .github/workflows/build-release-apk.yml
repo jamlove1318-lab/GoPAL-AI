@@ -65,10 +65,10 @@ jobs:
       - name: Install Android SDK platform
         run: sdkmanager "platform-tools" "platforms;android-34" "platforms;android-35" "platforms;android-36"
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
 
       - name: Install dependencies
@@ -81,7 +81,9 @@ jobs:
           # module to the installed Expo SDK (SDK 57) compatible versions.
           # (Must list react/react-native explicitly — `expo install --fix`
           # alone does not add missing core packages.)
-          npx expo install \
+          # Use --npm: yarn enforces engines strictly and fails on
+          # @supabase/supabase-js (needs Node >=22); npm only warns.
+          npx expo install --npm \
             react react-native \
             react-native-reanimated \
             react-native-safe-area-context \
