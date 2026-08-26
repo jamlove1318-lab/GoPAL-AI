@@ -1,5 +1,7 @@
 import { LocalStore, ReviewStory } from '../../lib/localStore';
+import { WaveStore, DecisionEcho } from '../../lib/waveStore';
 import type { Mood } from '../../lib/types';
+import type { ExperienceIntent } from '../director/experienceDirector';
 
 export interface DialogueEvaluation {
   isCorrect: boolean;
@@ -267,6 +269,66 @@ export class TutorEngine {
     }
 
     return '“I love how curious you are. Every word you practice makes our living world grow richer!”';
+  }
+
+  /* ------------------------------------------------------------
+   * Wave 5R: THINK TOGETHER CHALLENGES
+   * Cassidy is a collaborative thinking partner with explicit hint levels,
+   * not an answer generator. Assistance level is recorded separately from
+   * mastery evidence (protects Facts vs Interpretations).
+   * ------------------------------------------------------------ */
+  static HINT_LEVELS = ['observation', 'hint', 'strong_hint', 'explanation', 'full_solution'] as const;
+
+  static hintForLevel(step: ScenarioStep, level: (typeof TutorEngine.HINT_LEVELS)[number]): string {
+    switch (level) {
+      case 'observation':
+        return `Notice the situation: ${step.npcPrompt}`;
+      case 'hint':
+        return step.hint;
+      case 'strong_hint':
+        return `Build on the hint — try “${step.sampleResponses[0].text}” as a model.`;
+      case 'explanation':
+        return `Why this works: ${step.npcTranslation} is answered politely using “... o kudasai”.`;
+      case 'full_solution':
+        return `One natural answer: ${step.sampleResponses[0].text} (${step.sampleResponses[0].translation})`;
+    }
+  }
+
+  /* ------------------------------------------------------------
+   * Wave 5Q: DECISION ECHOES
+   * A meaningful choice is acknowledged later by future content.
+   * ------------------------------------------------------------ */
+  async recordDecision(decision: string): Promise<DecisionEcho[]> {
+    return WaveStore.recordDecision(decision);
+  }
+
+  async getDecisions(): Promise<DecisionEcho[]> {
+    return WaveStore.getDecisions();
+  }
+
+  async acknowledgeDecision(id: string, reference: string): Promise<DecisionEcho[]> {
+    return WaveStore.acknowledgeDecision(id, reference);
+  }
+
+  /* ------------------------------------------------------------
+   * Wave 3R: ADAPTIVE SESSION COACH
+   * Suggest (never trap) based on observable signals.
+   * ------------------------------------------------------------ */
+  static coachSuggestion(opts: {
+    recentAccuracy: number;
+    unfinishedCount: number;
+    availableMinutes?: number;
+  }): { suggestion: string; recommendedIntent: ExperienceIntent } {
+    if (opts.recentAccuracy < 60) {
+      return { suggestion: 'Let’s slow down with a calm review before trying again.', recommendedIntent: 'relax' };
+    }
+    if (opts.unfinishedCount > 0) {
+      return { suggestion: 'You have an unfinished thread — want to pick it up?', recommendedIntent: 'conversation' };
+    }
+    if ((opts.availableMinutes ?? 5) <= 5) {
+      return { suggestion: 'A five-minute flash is perfect right now.', recommendedIntent: 'focus' };
+    }
+    return { suggestion: 'You’re in a good rhythm — try a small adventure.', recommendedIntent: 'adventure' };
   }
 }
 

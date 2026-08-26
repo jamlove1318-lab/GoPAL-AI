@@ -1,0 +1,173 @@
+name: Build Release APK
+
+# Builds the root "GoPAL AI" Expo app into a signed, UPGRADABLE release APK.
+# Mirrors the Pulse project's GitHub Action build pipeline.
+#
+# ── Required GitHub repo secrets ──────────────────────────────────────────────
+# EXPO_PUBLIC_SUPABASE_URL        injected at bundle time (Expo public env)
+# EXPO_PUBLIC_SUPABASE_ANON_KEY   injected at bundle time
+# ANDROID_KEYSTORE_BASE64         base64 of your PERSISTENT release keystore
+# KEYSTORE_PASSWORD               keystore password
+# KEY_ALIAS                       key alias (e.g. release)
+# KEY_PASSWORD                    key password
+#
+# ── Create the persistent keystore ONCE, locally ──────────────────────────────
+#   keytool -genkeypair -v \
+#     -keystore release.keystore -alias release \
+#     -keyalg RSA -keysize 2048 -validity 10000 \
+#     -storepass "CHOOSE_A_STRONG_PASS" -keypass "CHOOSE_A_STRONG_PASS" \
+#     -dname "CN=GoPAL, OU=GoPAL, O=GoPAL, C=US"
+#   base64 -w0 release.keystore > release.keystore.b64
+# Paste release.keystore.b64 into ANDROID_KEYSTORE_BASE64, and set the three
+# password/alias secrets to match. KEEP release.keystore SAFE — losing it makes
+# future APKs un-upgradable over existing installs.
+# If ANDROID_KEYSTORE_BASE64 is empty, the workflow falls back to an ephemeral
+# keystore (builds succeed, but the APK is NOT upgradable — testing only).
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - ".github/workflows/build-release-apk.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      CI: "1"
+      EXPO_NO_TELEMETRY: "1"
+      EXPO_TELEMETRY_DISABLED: "1"
+      # Prevent "command node finished with non-zero exit value 1" (OOM) during
+      # the JS bundle step.
+      NODE_OPTIONS: "--max-old-space-size=4096"
+      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          accept-android-sdk-licenses: true
+          ndk: "27.1.12297006"
+          build-tools: "36.0.0"
+
+      - name: Install Android SDK platform
+        run: sdkmanager "platform-tools" "platforms;android-34" "platforms;android-35" "platforms;android-36"
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Install Expo CLI + align native deps to SDK
+        run: |
+          npm install --save-dev expo
+          # Install react/react-native and align EVERY Expo-managed native
+          # module to the installed Expo SDK (SDK 57) compatible versions.
+          # (Must list react/react-native explicitly — `expo install --fix`
+          # alone does not add missing core packages.)
+          npx expo install \
+            react react-native \
+            react-native-reanimated \
+            react-native-safe-area-context \
+            react-native-svg \
+            react-native-worklets \
+            @react-native-async-storage/async-storage \
+            expo-status-bar \
+            expo-updates
+          npm install --legacy-peer-deps
+
+      # Clean JS export/bundle first so bundle errors surface early and the
+      # Gradle node subprocess inherits the raised heap size above.
+      - name: Clean JS export (pre-bundle)
+        run: npx expo export -p android --output-dir dist-export --non-interactive
+
+      - name: Expo prebuild (Android)
+        run: npx expo prebuild -p android --clean --no-install
+
+      # prebuild rewrites package.json; install the resulting native deps
+      # ourselves (non-interactively) instead of letting it prompt.
+      - name: Install native dependencies (post-prebuild)
+        run: npm install --legacy-peer-deps
+
+      - name: Set up Gradle signing (persistent keystore)
+        run: |
+          KEYSTORE_BASE64="${{ secrets.ANDROID_KEYSTORE_BASE64 }}"
+          # Length is non-sensitive (the value itself stays redacted in logs).
+          echo "ANDROID_KEYSTORE_BASE64 length: ${#KEYSTORE_BASE64}"
+          # Normalize: drop all whitespace and accept URL-safe base64 (-/_ -> +/).
+          KEYSTORE_B64=$(echo "$KEYSTORE_BASE64" | tr -d '[:space:]' | tr -- '-_' '+/')
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::warning::ANDROID_KEYSTORE_BASE64 is EMPTY — generating ephemeral keystore (APK will NOT be upgradable). Set it to the base64 of your release.keystore."
+          elif [ "$KEYSTORE_BASE64" = "***" ]; then
+            echo "::warning::ANDROID_KEYSTORE_BASE64 is the placeholder '***' — generating ephemeral keystore. Paste the REAL base64 of your keystore (see header comment for the keytool command)."
+          elif echo "$KEYSTORE_B64" | base64 -d > /tmp/release.keystore 2>/dev/null \
+                && [ -s /tmp/release.keystore ]; then
+            mv /tmp/release.keystore android/app/release.keystore
+            STORE_PASS="${{ secrets.KEYSTORE_PASSWORD }}"
+            KEY_ALIAS="${{ secrets.KEY_ALIAS }}"
+            KEY_PASS="${{ secrets.KEY_PASSWORD }}"
+            echo "Using persistent keystore from ANDROID_KEYSTORE_BASE64."
+          else
+            echo "::warning::ANDROID_KEYSTORE_BASE64 is set but NOT valid base64 (decode failed) — generating ephemeral keystore. Re-upload a valid base64 keystore."
+            STORE_PASS=$(openssl rand -hex 16)
+            KEY_ALIAS=release
+            KEY_PASS="$STORE_PASS"
+            keytool -genkeypair -v \
+              -keystore android/app/release.keystore \
+              -alias release -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass "$STORE_PASS" -keypass "$STORE_PASS" \
+              -dname "CN=GoPAL, OU=GoPAL, O=GoPAL, C=US"
+          fi
+
+          # Avoid duplicate org.gradle.jvmargs if prebuild already wrote one.
+          sed -i '/^org.gradle.jvmargs=/d' android/gradle.properties
+          # Expo prebuild writes `expo.inlineModules.watchedDirectories=[]` WITHOUT a
+          # trailing newline, and the autolinking Gradle plugin reads that property and
+          # passes it verbatim to `JSON.parse`. If we `>>` the signing vars directly
+          # after it, the lines glue into `[]MYAPP_UPLOAD_STORE_FILE=...`, which makes
+          # JSON.parse() throw and the whole build fail. So: drop any stale copy, force
+          # a trailing newline, and re-emit a clean, newline-separated property block.
+          sed -i '/^expo.inlineModules.watchedDirectories=/d' android/gradle.properties
+          printf '\n' >> android/gradle.properties
+          {
+            echo "MYAPP_UPLOAD_STORE_FILE=release.keystore"
+            echo "MYAPP_UPLOAD_KEY_ALIAS=$KEY_ALIAS"
+            echo "MYAPP_UPLOAD_STORE_PASSWORD=$STORE_PASS"
+            echo "MYAPP_UPLOAD_KEY_PASSWORD=$KEY_PASS"
+            echo "expo.inlineModules.watchedDirectories=[]"
+            echo "org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m"
+          } >> android/gradle.properties
+
+      - name: Build signed release APK
+        run: |
+          chmod +x android/gradlew
+          cd android && ./gradlew assembleRelease --no-daemon --stacktrace --info
+
+      - name: Verify APK
+        run: |
+          APK=$(ls android/app/build/outputs/apk/release/*.apk | head -n1)
+          test -f "$APK"
+          echo "Release APK: $(ls -lh "$APK")"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gopal-ai-release-apk
+          path: android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error

@@ -3,6 +3,7 @@ import { View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useWorldState } from '../../../hooks/useWorldState';
 import { LocalStore, CulturalArtifact, RevisitRecord } from '../../../lib/localStore';
+import { KnowledgeEngine } from '../../../engines/knowledge/knowledgeEngine';
 import { WonderPromptModal } from '../../learning/components/WonderPromptModal';
 import { WorldThresholdModal } from '../components/WorldThresholdModal';
 import { EmaRitualModal } from '../components/EmaRitualModal';
@@ -80,6 +81,8 @@ export function WorldMapScreen({ onStartScenario }: WorldMapScreenProps) {
   const [locations, setLocations] = useState<LocationDetail[]>([]);
   const [artifacts, setArtifacts] = useState<CulturalArtifact[]>([]);
   const [revisitStats, setRevisitStats] = useState<Record<string, RevisitRecord>>({});
+  const [revisitNotes, setRevisitNotes] = useState<Record<string, string | null>>({});
+  const [gatedByLoc, setGatedByLoc] = useState<Record<string, number>>({});
 
   // Modals
   const [selectedArtifact, setSelectedArtifact] = useState<CulturalArtifact | null>(null);
@@ -94,6 +97,23 @@ export function WorldMapScreen({ onStartScenario }: WorldMapScreenProps) {
 
     setArtifacts(arts);
     setRevisitStats(stats);
+
+    // Wave 5Y: Revisit Difference — subtle, deterministic changes per location.
+    const notes: Record<string, string | null> = {};
+    for (const loc of rawLocations) {
+      const diff = await worldEngine.getRevisitDifference(loc.key);
+      notes[loc.key] = diff.note;
+    }
+    setRevisitNotes(notes);
+
+    // Wave 5E/5Y: Knowledge-Gated Progressive Revelation — concepts below the
+    // mastery gate remain "unreadable" in the world until verified learning reveals them.
+    const nodes = await LocalStore.getKnowledgeNodes();
+    const gated: Record<string, number> = {};
+    for (const n of nodes) {
+      if (n.masteryLevel < 40) gated[n.locationKey] = (gated[n.locationKey] || 0) + 1;
+    }
+    setGatedByLoc(gated);
 
     const merged: LocationDetail[] = rawLocations.map((loc) => {
       const meta = LOCATION_METADATA[loc.key] || {
@@ -257,6 +277,23 @@ export function WorldMapScreen({ onStartScenario }: WorldMapScreenProps) {
                 <Text className="mt-3 text-xs leading-relaxed text-slate-300">
                   {loc.description}
                 </Text>
+
+                {/* Wave 5Y: Revisit Difference — the place stays recognizable but changes subtly. */}
+                {revisitNotes[loc.key] && (
+                  <View className="mt-2 rounded-xl bg-indigo-950/30 border border-indigo-500/20 p-2.5">
+                    <Text className="text-[11px] italic text-indigo-200">“{revisitNotes[loc.key]}”</Text>
+                  </View>
+                )}
+
+                {/* Wave 5E/5Y: Knowledge-Gated Progressive Revelation */}
+                {gatedByLoc[loc.key] > 0 && (
+                  <View className="mt-2 flex-row items-center gap-1.5 rounded-xl bg-slate-800/60 border border-slate-700 p-2.5">
+                    <Eye size={12} color="#94a3b8" />
+                    <Text className="text-[10px] text-slate-400">
+                      A sign here is still unreadable — keep learning to reveal {gatedByLoc[loc.key]} hidden {gatedByLoc[loc.key] === 1 ? 'concept' : 'concepts'}.
+                    </Text>
+                  </View>
+                )}
 
                 {/* Cultural Artifacts & Wonder Prompts */}
                 {locArtifacts.length > 0 && (

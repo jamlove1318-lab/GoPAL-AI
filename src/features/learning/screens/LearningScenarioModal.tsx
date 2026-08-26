@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, Modal } from 'react-native';
 import { useLearningSession } from '../../../hooks/useLearningSession';
+import { KnowledgeEngine } from '../../../engines/knowledge/knowledgeEngine';
+import { JourneyEngine } from '../../../engines/journey/journeyEngine';
+import { ExperienceDirector } from '../../../engines/director/experienceDirector';
+import { TutorEngine } from '../../../engines/tutor/tutorEngine';
+import { LocalStore } from '../../../lib/localStore';
+import { WaveStore } from '../../../lib/waveStore';
 import {
   X,
   Sparkles,
@@ -40,6 +46,9 @@ export function LearningScenarioModal({
   const [inputVal, setInputVal] = useState('');
   const [showHint, setShowHint] = useState(false);
   const [showTranslation, setShowTranslation] = useState(true);
+  const [thinkTogetherLevel, setThinkTogetherLevel] = React.useState<(typeof TutorEngine.HINT_LEVELS)[number] | null>(null);
+  const [thinkTogetherText, setThinkTogetherText] = React.useState('');
+  const recordedRef = React.useRef(false);
 
   // Initialize scenario when opening
   React.useEffect(() => {
@@ -47,8 +56,39 @@ export function LearningScenarioModal({
       startScenario(scenarioKey);
       setInputVal('');
       setShowHint(false);
+      setThinkTogetherLevel(null);
+      setThinkTogetherText('');
+      recordedRef.current = false;
     }
   }, [visible, scenarioKey, startScenario]);
+
+  // Wave 4W Learning Echoes + Wave 5X Souvenir: on completion, concepts quietly
+  // reappear later; a meaningful artifact is preserved. Bounded, not spammy.
+  React.useEffect(() => {
+    if (sessionCompleted && activeScenario && !recordedRef.current) {
+      recordedRef.current = true;
+      (async () => {
+        const nodes = await LocalStore.getKnowledgeNodes();
+        const context = `scenario:${activeScenario.id}`;
+        for (const step of activeScenario.steps) {
+          for (const c of step.expectedConcepts) {
+            const node = nodes.find((n) => n.key === c);
+            const label = node ? `${node.term} (${node.reading})` : c;
+            await KnowledgeEngine.recordLearningEcho(c, label, context);
+          }
+        }
+        await new JourneyEngine().earnSouvenir(
+          `Conversation: ${activeScenario.title}`,
+          'memory',
+          `Held a full dialogue with ${activeScenario.characterName} at ${activeScenario.locationName}.`
+        );
+        // Wave 5Q: Decision Echoes — a meaningful choice the learner followed through on.
+        await WaveStore.recordDecision(`Completed "${activeScenario.title}" and chose to follow it through.`);
+        // Wave 3: Living Object Contract — the study companion grows with each session.
+        await WaveStore.tickLivingObject('living-bonsai', `Grew after "${activeScenario.title}".`);
+      })();
+    }
+  }, [sessionCompleted, activeScenario]);
 
   const handleClose = () => {
     endSession();
@@ -237,28 +277,58 @@ export function LearningScenarioModal({
                 </View>
               </View>
 
-              {/* Custom Typed Response */}
-              <View className="mt-4">
-                <Text className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  Or type your own response
-                </Text>
-                <View className="mt-2 flex-row items-center gap-2">
-                  <TextInput
-                    value={inputVal}
-                    onChangeText={setInputVal}
-                    placeholder="Type in Japanese or English..."
-                    placeholderTextColor="#64748b"
-                    className="flex-1 rounded-xl bg-slate-900 px-4 py-3 text-xs text-white border border-slate-800"
-                    onSubmitEditing={() => handleSend()}
-                  />
-                  <Pressable
-                    onPress={() => handleSend()}
-                    className="rounded-xl bg-indigo-600 p-3 active:bg-indigo-500"
-                  >
-                    <Send size={16} color="#ffffff" />
-                  </Pressable>
+                {/* Custom Typed Response */}
+                <View className="mt-4">
+                  <Text className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    Or type your own response
+                  </Text>
+                  <View className="mt-2 flex-row items-center gap-2">
+                    <TextInput
+                      value={inputVal}
+                      onChangeText={setInputVal}
+                      placeholder="Type in Japanese or English..."
+                      placeholderTextColor="#64748b"
+                      className="flex-1 rounded-xl bg-slate-900 px-4 py-3 text-xs text-white border border-slate-800"
+                      onSubmitEditing={() => handleSend()}
+                    />
+                    <Pressable
+                      onPress={() => handleSend()}
+                      className="rounded-xl bg-indigo-600 p-3 active:bg-indigo-500"
+                    >
+                      <Send size={16} color="#ffffff" />
+                    </Pressable>
+                  </View>
                 </View>
-              </View>
+
+                {/* Wave 5R: Think Together — Cassidy as collaborative partner with explicit hint levels. */}
+                <View className="mt-4 rounded-2xl border border-violet-500/30 bg-violet-950/20 p-3">
+                  <Text className="text-[11px] font-bold uppercase tracking-wider text-violet-300">
+                    Think Together (Cassidy, not an answer machine)
+                  </Text>
+                  <View className="mt-2 flex-row flex-wrap gap-1.5">
+                    {TutorEngine.HINT_LEVELS.map((lvl) => (
+                      <Pressable
+                        key={lvl}
+                        onPress={() => {
+                          setThinkTogetherLevel(lvl);
+                          setThinkTogetherText(TutorEngine.hintForLevel(currentStep, lvl));
+                        }}
+                        className={`rounded-full px-2.5 py-1 ${
+                          thinkTogetherLevel === lvl ? 'bg-violet-600' : 'bg-slate-800'
+                        }`}
+                      >
+                        <Text className="text-[10px] text-white capitalize">{lvl.replace('_', ' ')}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                  {thinkTogetherText ? (
+                    <Text className="mt-2 text-xs text-slate-300 italic">{thinkTogetherText}</Text>
+                  ) : (
+                    <Text className="mt-1.5 text-[10px] text-slate-500">
+                      Choose a level — assistance is recorded separately from your mastery.
+                    </Text>
+                  )}
+                </View>
             </View>
           ) : (
             /* Celebration Screen on Completion */
@@ -285,6 +355,25 @@ export function LearningScenarioModal({
                   A new postcard and memory exhibit have been preserved in your Memory Museum!
                 </Text>
               </View>
+
+              {/* Wave 5J: Session Landing — a satisfying, skippable end-of-session summary. */}
+              {activeScenario && (() => {
+                const landing = ExperienceDirector.sessionLanding(
+                  { steps: activeScenario.steps } as any,
+                  totalSteps
+                );
+                return (
+                  <View className="mt-4 w-full rounded-2xl border border-emerald-500/30 bg-emerald-950/15 p-4">
+                    <Text className="text-xs font-bold text-emerald-300">{landing.headline}</Text>
+                    {landing.bullets.map((b, i) => (
+                      <Text key={i} className="mt-1 text-[11px] text-slate-300">
+                        {'• '}
+                        {b}
+                      </Text>
+                    ))}
+                  </View>
+                );
+              })()}
 
               <Pressable
                 onPress={handleClose}

@@ -1,4 +1,5 @@
 import { LocalStore, KnowledgeNode, CulturalArtifact, PostcardItem, CustomCreation } from '../../lib/localStore';
+import { WaveStore, LearningEcho, WorldEcho } from '../../lib/waveStore';
 
 export interface SearchResultCategory {
   title: string;
@@ -144,5 +145,49 @@ export class KnowledgeEngine {
   static async recordKnowledgeRecall(key: string, success: boolean): Promise<KnowledgeNode[]> {
     const delta = success ? 5 : -2;
     return LocalStore.updateKnowledgeMastery(key, delta);
+  }
+
+  /**
+   * Learning Echoes (Wave 4W): schedule a quiet contextual reappearance of a concept.
+   * The engine records the echo; the UI may later surface it in a different context.
+   */
+  static async recordLearningEcho(conceptKey: string, conceptLabel: string, context: string): Promise<LearningEcho[]> {
+    return WaveStore.recordLearningEcho(conceptKey, conceptLabel, context);
+  }
+
+  static async getLearningEchoes(): Promise<LearningEcho[]> {
+    return WaveStore.getLearningEchoes();
+  }
+
+  /**
+   * World Echoes (Wave 4X): a world event unlocks future learning context.
+   */
+  static async recordWorldEcho(worldEvent: string, conceptKey: string, conceptLabel: string): Promise<WorldEcho[]> {
+    return WaveStore.recordWorldEcho(worldEvent, conceptKey, conceptLabel);
+  }
+
+  static async getWorldEchoes(): Promise<WorldEcho[]> {
+    return WaveStore.getWorldEchoes();
+  }
+
+  static async revealWorldEcho(id: string): Promise<WorldEcho[]> {
+    return WaveStore.revealWorldEcho(id);
+  }
+
+  /**
+   * Knowledge-Gated Progressive Revelation (Wave 5E/5Y): a concept becomes
+   * readable/visible only once verified mastery crosses a gate. This is the
+   * engine-owned rule; "learning literally reveals more of the world."
+   */
+  static async isConceptRevealed(conceptKey: string, gate = 40): Promise<boolean> {
+    const nodes = await LocalStore.getKnowledgeNodes();
+    const node = nodes.find((n) => n.key === conceptKey);
+    if (!node) return false;
+    return node.masteryLevel >= gate;
+  }
+
+  static async getRevealableConcepts(gate = 40): Promise<KnowledgeNode[]> {
+    const nodes = await LocalStore.getKnowledgeNodes();
+    return nodes.filter((n) => n.masteryLevel >= gate);
   }
 }

@@ -1,4 +1,5 @@
 import { LocalStore, SessionBookmark } from '../../lib/localStore';
+import { WaveStore, ExperiencePlaylist, ReturnSignature, EditorialMoment } from '../../lib/waveStore';
 import { SCENARIOS } from '../tutor/tutorEngine';
 
 export type ExperienceIntent =
@@ -219,5 +220,122 @@ export class ExperienceDirector {
    */
   static async getContinuityCard(): Promise<SessionBookmark | null> {
     return LocalStore.getSessionBookmark();
+  }
+
+  /* ------------------------------------------------------------
+   * Wave 4G: EXPERIENCE PLAYLISTS
+   * Experiences can be composed, not only selected one by one.
+   * ------------------------------------------------------------ */
+  static async getPlaylists(): Promise<ExperiencePlaylist[]> {
+    return WaveStore.getPlaylists();
+  }
+
+  static async createPlaylist(title: string, steps: ExperiencePlaylist['steps']): Promise<ExperiencePlaylist[]> {
+    return WaveStore.addPlaylist({ title, userCreated: true, steps });
+  }
+
+  /* ------------------------------------------------------------
+   * Wave 4V: RETURN SIGNATURE
+   * Adaptive arrival based on explicit preferences + interaction history.
+   * ------------------------------------------------------------ */
+  static async getReturnSignature(): Promise<ReturnSignature> {
+    return WaveStore.getReturnSignature();
+  }
+
+  static async recordReturn(mode: ReturnSignature['lastMode']): Promise<ReturnSignature> {
+    return WaveStore.recordReturn(mode);
+  }
+
+  /**
+   * Decides the arrival emphasis from the Return Signature without making
+   * hidden psychological claims. Bounded, explainable, reversible.
+   */
+  static async resolveArrivalMode(): Promise<'resume' | 'explore' | 'calm' | 'study'> {
+    const sig = await this.getReturnSignature();
+    if (sig.samples === 0) return 'study';
+    if (sig.prefersResumeFirst) return 'resume';
+    if (sig.prefersExploreFirst) return 'explore';
+    if (sig.prefersCalmReturn) return 'calm';
+    return sig.lastMode;
+  }
+
+  /* ------------------------------------------------------------
+   * Wave 4H: WORLD EDITORIAL MOMENTS
+   * Curated collections assembled from verified content (not an algo feed).
+   * ------------------------------------------------------------ */
+  static async getEditorialMoments(): Promise<EditorialMoment[]> {
+    return WaveStore.getEditorialMoments();
+  }
+
+  // Wave 3: Recursive Self-Model — GoPAL reflects on its own behavior toward the learner.
+  static async selfModelReflection(): Promise<string> {
+    const sig = await WaveStore.getReturnSignature();
+    const decisions = await WaveStore.getDecisions();
+    const threads = await WaveStore.getThreads();
+    const echoes = await WaveStore.getLearningEchoes();
+    const bits: string[] = [];
+    if (sig.samples > 0) bits.push(`You've returned ${sig.samples} time(s) and lately lean toward "${sig.lastMode}".`);
+    if (decisions.length) bits.push(`I've watched ${decisions.length} of your decisions echo back.`);
+    if (threads.length) bits.push(`I've tied your moments into ${threads.length} memory thread(s).`);
+    if (echoes.length) bits.push(`I quietly re-show ${echoes.length} concept(s) you've learned.`);
+    return bits.length
+      ? "How I've been helping: " + bits.join(' ')
+      : "I'm still learning how best to help you.";
+  }
+
+  /* ------------------------------------------------------------
+   * Wave 5L: WORLD CONCIERGE BEHAVIOR
+   * Cassidy offers choices; never commands. Learner retains agency.
+   * ------------------------------------------------------------ */
+  static conciergePrompt(): { question: string; options: string[] } {
+    return {
+      question: 'Want something familiar, or something new?',
+      options: [
+        'Something familiar',
+        'Surprise me with something new',
+        'I have 5 minutes',
+        'I have more time today',
+      ],
+    };
+  }
+
+  /* ------------------------------------------------------------
+   * Wave 5U: EXPERIENCE RHYTHM CONTRACT
+   * Longer experiences model rhythm: orient -> explore -> focus ->
+   * challenge -> release -> reflect. Composed by the Experience Layer.
+   * ------------------------------------------------------------ */
+  static readonly RHYTHM_PHASES = [
+    'orient',
+    'explore',
+    'focus',
+    'challenge',
+    'release',
+    'reflect',
+  ] as const;
+
+  static rhythmSequence(intent: ExperienceIntent): string[] {
+    if (intent === 'relax') return ['orient', 'explore', 'release', 'reflect'];
+    if (intent === 'creative') return ['orient', 'focus', 'release', 'reflect'];
+    if (intent === 'surprise_me') return ['orient', 'explore', 'challenge', 'reflect'];
+    return ['orient', 'explore', 'focus', 'challenge', 'release', 'reflect'];
+  }
+
+  /* ------------------------------------------------------------
+   * Wave 5J: SESSION LANDINGS
+   * A session ends with a satisfying, skippable landing.
+   * ------------------------------------------------------------ */
+  static sessionLanding(plan: ExperiencePlan, completedSteps: number): {
+    headline: string;
+    bullets: string[];
+  } {
+    const pct = plan.steps.length ? Math.round((completedSteps / plan.steps.length) * 100) : 0;
+    return {
+      headline: completedSteps > 0 ? 'A small part of your world changed.' : 'You can simply close the app.',
+      bullets: [
+        `${completedSteps} of ${plan.steps.length} steps explored (${pct}%).`,
+        'That phrase will appear again in the world.',
+        'Cassidy saved something for next time.',
+      ],
+    };
   }
 }

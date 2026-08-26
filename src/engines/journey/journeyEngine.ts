@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from '../../lib/supabaseClient';
 import { LocalStore } from '../../lib/localStore';
+import { WaveStore, MemoryThread, DistilledMemory, LearningSouvenir } from '../../lib/waveStore';
 import type { JourneyEventsRow, Json } from '../../types/database';
 
 export interface JourneyEntry {
@@ -111,5 +112,61 @@ export class JourneyEngine {
     } catch {
       await LocalStore.addJourneyEvent(type, payload, producer);
     }
+  }
+
+  /**
+   * Memory Threads (Wave 5Y): connect verified journey events into a personal narrative.
+   */
+  async getMemoryThreads(): Promise<MemoryThread[]> {
+    return WaveStore.getThreads();
+  }
+
+  async addMemoryThread(title: string, theme: string, eventRefs: string[]): Promise<MemoryThread[]> {
+    return WaveStore.addThread({ title, theme, eventRefs });
+  }
+
+  /**
+   * Experience Memory Distillation (Wave 5Z): rank raw events and retain meaningful ones.
+   * Pipeline: raw event -> relevance -> canonical -> candidate -> ranked retention.
+   */
+  async distillMemories(userId: string): Promise<DistilledMemory[]> {
+    const rows = !isSupabaseConfigured
+      ? await LocalStore.getJourneyEvents()
+      : (await this.buildBook(userId), await LocalStore.getJourneyEvents());
+    const existing = await WaveStore.getDistilled();
+    const existingRefs = new Set(existing.map((d) => d.sourceEventId));
+    const RELEVANCE: Record<string, number> = {
+      'quest:completed': 5,
+      'achievement:earned': 5,
+      'conversation:completed': 4,
+      'story:progressed': 4,
+      'location:unlocked': 3,
+      'discovery:made': 3,
+      'learning:sessionCompleted': 2,
+    };
+    const candidates = rows
+      .filter((e) => !existingRefs.has(e.id))
+      .map((e) => ({
+        sourceEventId: e.id,
+        summary: `${e.type} · ${JSON.stringify(e.payload).slice(0, 80)}`,
+        rank: RELEVANCE[e.type] ?? 1,
+      }));
+    for (const c of candidates) {
+      await WaveStore.addDistilled(c);
+    }
+    return WaveStore.getDistilled();
+  }
+
+  /**
+   * Learning Souvenirs (Wave 5X): earn a meaningful artifact from an experience.
+   */
+  async getSouvenirs(): Promise<LearningSouvenir[]> {
+    return WaveStore.getSouvenirs();
+  }
+
+  async earnSouvenir(title: string, kind: LearningSouvenir['kind'], detail: string): Promise<LearningSouvenir[]> {
+    const result = await WaveStore.addSouvenir({ title, kind, detail });
+    await this.recordEvent('local-explorer-user', 'journey_engine', 'souvenir:earned', { title, kind });
+    return result;
   }
 }

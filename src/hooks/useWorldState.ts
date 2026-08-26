@@ -18,6 +18,9 @@ export function useWorldState() {
     if (resolved) {
       const cont = computeContinuity(resolved.lastActiveAt);
       setContinuity(cont);
+      // Persist the return timestamp AFTER computing continuity so the next
+      // return can calculate real elapsed time (Blueprint #5/#6: World Continuity).
+      await worldEngine.saveState(uid, { lastActiveAt: new Date().toISOString() });
     }
     setState(resolved);
     setLoading(false);

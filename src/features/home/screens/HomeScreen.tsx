@@ -12,11 +12,13 @@ import {
   SessionPlanStep,
 } from '../../../engines/director/experienceDirector';
 import { LocalStore, SessionBookmark } from '../../../lib/localStore';
+import { WaveStore } from '../../../lib/waveStore';
 import { CreativeStudioModal } from '../../learning/components/CreativeStudioModal';
 import { KnowledgeGraphModal } from '../../learning/components/KnowledgeGraphModal';
 import { TimeCapsuleModal } from '../../journey/components/TimeCapsuleModal';
 import { QuestShopModal } from '../../journey/components/QuestShopModal';
 import { SeasonalFestivalModal } from '../../world/components/SeasonalFestivalModal';
+import { DiscoveriesModal } from '../../discoveries/screens/DiscoveriesModal';
 import {
   Compass,
   Sparkles,
@@ -60,15 +62,24 @@ export function HomeScreen({ onNavigate, onStartScenario }: HomeScreenProps) {
   const [showTimeCapsuleModal, setShowTimeCapsuleModal] = useState(false);
   const [showQuestShopModal, setShowQuestShopModal] = useState(false);
   const [showFestivalModal, setShowFestivalModal] = useState(false);
+  const [showDiscoveriesModal, setShowDiscoveriesModal] = useState(false);
+  const [livingObjects, setLivingObjects] = useState<any[]>([]);
+  const [selfModel, setSelfModel] = useState<string | null>(null);
 
   useEffect(() => {
     ExperienceDirector.getTodayPrimaryMoment().then(setTodayMoment);
     ExperienceDirector.getContinuityCard().then(setContinuityCard);
+    WaveStore.getLivingObjects().then(setLivingObjects);
+    ExperienceDirector.selfModelReflection().then(setSelfModel);
   }, []);
 
   const handleIntentSelect = async (intent: ExperienceIntent) => {
     const plan = await ExperienceDirector.composeSession(intent, 5);
     setActivePlan(plan);
+    // Wave 4V: Return Signature — record the chosen arrival emphasis (bounded, reversible).
+    await ExperienceDirector.recordReturn(
+      intent === 'relax' ? 'calm' : intent === 'adventure' ? 'explore' : 'study'
+    );
   };
 
   const handleDjSubmit = () => {
@@ -126,6 +137,42 @@ export function HomeScreen({ onNavigate, onStartScenario }: HomeScreenProps) {
             </Text>
           </Pressable>
         </View>
+
+        {/* World Continuity Recaps — "While you were away" (Blueprint #5, #6) */}
+        {continuity && (continuity.newDay || continuity.isNewSeason || continuity.recap.length > 0) && (
+          <View className="mt-4 rounded-2xl border border-rose-500/40 bg-rose-950/25 p-4">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center gap-2">
+                <Sun size={15} color="#fb7185" />
+                <Text className="text-xs font-bold uppercase tracking-wider text-rose-300">
+                  Welcome Back
+                </Text>
+              </View>
+              <Text className="text-[10px] text-slate-400">While you were away</Text>
+            </View>
+
+            <Text className="mt-2 text-sm font-bold text-white">
+              {continuity.newDay
+                ? 'Your world entered a new day.'
+                : 'The world kept living while you were gone.'}
+            </Text>
+
+            {continuity.recap.length > 0 && (
+              <View className="mt-2 gap-1">
+                {continuity.recap.map((line, i) => (
+                  <Text key={i} className="text-xs text-slate-300">
+                    {'• '}
+                    {line}
+                  </Text>
+                ))}
+              </View>
+            )}
+
+            <Text className="mt-2.5 text-[11px] italic text-slate-400">
+              Nothing required your attention — the world simply continued.
+            </Text>
+          </View>
+        )}
 
         {/* Continuity Card (Wave 4F, 4K - Pick up where you left off) */}
         {continuityCard && (
@@ -230,6 +277,80 @@ export function HomeScreen({ onNavigate, onStartScenario }: HomeScreenProps) {
             <Text className="text-xs font-semibold text-slate-200">Quests & Shop</Text>
           </Pressable>
         </View>
+
+        <Pressable
+          onPress={() => setShowDiscoveriesModal(true)}
+          className="mt-2.5 flex-row items-center justify-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-950/30 py-3 active:bg-emerald-900/40"
+        >
+          <Sparkles size={14} color="#34d399" />
+          <Text className="text-xs font-semibold text-emerald-300">World Discoveries & Personal Archive</Text>
+        </Pressable>
+
+        {/* World Concierge (Wave 5L): Cassidy offers choices; never commands. */}
+        {todayMoment && (
+          <View className="mt-5 rounded-2xl border border-amber-500/30 bg-amber-950/20 p-4">
+            <Text className="text-xs font-bold uppercase tracking-wider text-amber-300">
+              Cassidy, your concierge
+            </Text>
+            <Text className="mt-1.5 text-sm text-white">Want something familiar, or something new?</Text>
+            <View className="mt-2.5 flex-row flex-wrap gap-2">
+              {[
+                { label: 'Something familiar', intent: 'conversation' as ExperienceIntent },
+                { label: 'Surprise me', intent: 'surprise_me' as ExperienceIntent },
+                { label: 'I have 5 minutes', intent: 'focus' as ExperienceIntent },
+                { label: 'More time today', intent: 'adventure' as ExperienceIntent },
+              ].map((o) => (
+                <Pressable
+                  key={o.label}
+                  onPress={() => handleIntentSelect(o.intent)}
+                  className="rounded-full bg-slate-800 px-3 py-1.5 active:bg-slate-700"
+                >
+                  <Text className="text-xs text-slate-200">{o.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Wave 3: Recursive Self-Model — Cassidy reflects on how she's been helping. */}
+        {selfModel && (
+          <View className="mt-5 rounded-2xl border border-sky-500/30 bg-sky-950/15 p-4">
+            <Text className="text-xs font-bold uppercase tracking-wider text-sky-300">
+              Cassidy, reflecting
+            </Text>
+            <Text className="mt-1.5 text-xs italic text-slate-200">“{selfModel}”</Text>
+          </View>
+        )}
+
+        {/* Wave 3: Living Object Contract — objects hold state and remember the learner. */}
+        {livingObjects.length > 0 && (
+          <View className="mt-5 rounded-2xl border border-fuchsia-500/30 bg-fuchsia-950/15 p-4">
+            <Text className="text-xs font-bold uppercase tracking-wider text-fuchsia-300">
+              Living in Your World
+            </Text>
+            <Text className="mt-1 text-[11px] text-slate-400">
+              These objects grow and remember across sessions.
+            </Text>
+            <View className="mt-3 gap-3">
+              {livingObjects.map((o) => (
+                <View key={o.id} className="rounded-xl bg-slate-900/70 border border-slate-800 p-3">
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-sm font-bold text-white">{o.name}</Text>
+                    <Text className="text-[10px] text-fuchsia-300">growth {o.growth}%</Text>
+                  </View>
+                  <View className="mt-2 h-1.5 w-full rounded-full bg-slate-800 overflow-hidden">
+                    <View className="h-1.5 rounded-full bg-fuchsia-500" style={{ width: `${o.growth}%` }} />
+                  </View>
+                  {o.memory.length > 0 && (
+                    <Text className="mt-2 text-[10px] italic text-slate-500">
+                      “{o.memory[o.memory.length - 1]}”
+                    </Text>
+                  )}
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* Intent Sizing Bar (Blueprint #95, #104, #141) */}
         <Text className="mt-6 text-xs font-semibold uppercase tracking-wider text-slate-400">
@@ -393,6 +514,10 @@ export function HomeScreen({ onNavigate, onStartScenario }: HomeScreenProps) {
       <SeasonalFestivalModal
         visible={showFestivalModal}
         onClose={() => setShowFestivalModal(false)}
+      />
+      <DiscoveriesModal
+        visible={showDiscoveriesModal}
+        onClose={() => setShowDiscoveriesModal(false)}
       />
     </SafeAreaView>
   );

@@ -3,6 +3,7 @@ import { View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { JourneyEngine, JourneyEntry, ThenVsNowItem } from '../../../engines/journey/journeyEngine';
 import { auth } from '../../../services/auth';
+import { LocalStore, CulturalArtifact } from '../../../lib/localStore';
 import { ConversationArchiveModal } from '../components/ConversationArchiveModal';
 import {
   BookOpen,
@@ -22,6 +23,8 @@ export function JourneyBookScreen() {
   const [thenVsNow, setThenVsNow] = useState<ThenVsNowItem[]>([]);
   const [activeTab, setActiveTab] = useState<'timeline' | 'thenVsNow'>('timeline');
   const [showArchiveModal, setShowArchiveModal] = useState(false);
+  const [artifacts, setArtifacts] = useState<CulturalArtifact[]>([]);
+  const [mastered, setMastered] = useState(0);
 
   useEffect(() => {
     const unsub = auth.onAuthStateChange(async (user) => {
@@ -30,6 +33,9 @@ export function JourneyBookScreen() {
       setTimeline(book.timeline);
       setMilestones(book.milestones);
       setThenVsNow(book.thenVsNow);
+      setArtifacts(await LocalStore.getCulturalArtifacts());
+      const nodes = await LocalStore.getKnowledgeNodes();
+      setMastered(nodes.filter((n) => n.masteryLevel >= 70).length);
     });
     return () => unsub.data.subscription.unsubscribe();
   }, []);
@@ -76,6 +82,55 @@ export function JourneyBookScreen() {
             ))}
           </View>
         </ScrollView>
+
+        {/* Wave 5N: Tangible State Representations — progress shown as spatial objects, not bars. */}
+        <View className="mt-5 rounded-2xl border border-emerald-500/30 bg-slate-900 p-4">
+          <Text className="text-xs font-bold uppercase tracking-wider text-emerald-300">
+            Your Tangible State
+          </Text>
+
+          {/* Cultural Shelf */}
+          <Text className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
+            Cultural Shelf · {artifacts.length} collected
+          </Text>
+          {artifacts.length === 0 ? (
+            <Text className="mt-1 text-xs text-slate-500">Nothing collected yet — explore the world to gather keepsakes.</Text>
+          ) : (
+            <View className="mt-2 flex-row flex-wrap gap-2">
+              {artifacts.slice(0, 8).map((a) => (
+                <View key={a.id} className="items-center rounded-xl bg-amber-950/30 px-2 py-1.5 border border-amber-500/20">
+                  <Text className="text-lg">🏺</Text>
+                  <Text className="mt-0.5 max-w-[64px] text-[9px] text-amber-200">{a.name}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Journey Markers */}
+          <Text className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-indigo-400">
+            Journey Markers · {milestones.length} milestones
+          </Text>
+          <View className="mt-2 flex-row flex-wrap gap-2">
+            {milestones.length === 0 ? (
+              <Text className="text-xs text-slate-500">Your path is just beginning.</Text>
+            ) : (
+              milestones.map((m, idx) => (
+                <View key={idx} className="flex-row items-center gap-1 rounded-full bg-indigo-950/40 px-2.5 py-1 border border-indigo-500/20">
+                  <Text className="text-xs">📍</Text>
+                  <Text className="text-[10px] text-indigo-200">{m}</Text>
+                </View>
+              ))
+            )}
+          </View>
+
+          {/* Growth Board */}
+          <Text className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
+            Growth Board · {mastered} concepts mastered
+          </Text>
+          <View className="mt-2 h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+            <View className="h-2 rounded-full bg-emerald-500" style={{ width: `${Math.min(100, mastered * 12)}%` }} />
+          </View>
+        </View>
 
         {/* Tab Toggle: Timeline vs Then-vs-Now */}
         <View className="mt-5 flex-row rounded-xl bg-slate-900 p-1 border border-slate-800">
