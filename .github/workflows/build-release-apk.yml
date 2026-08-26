@@ -154,12 +154,14 @@ jobs:
             echo "MYAPP_UPLOAD_KEY_PASSWORD=$KEY_PASS"
             echo "expo.inlineModules.watchedDirectories=[]"
             echo "org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m"
+            # Build only the dominant ABI to cut CI time and memory (avoids OOM).
+            echo "reactNativeArchitectures=arm64-v8a"
           } >> android/gradle.properties
 
       - name: Build signed release APK
         run: |
           chmod +x android/gradlew
-          cd android && ./gradlew assembleRelease --no-daemon --stacktrace --info
+          cd android && ./gradlew assembleRelease --no-daemon --stacktrace
 
       - name: Verify APK
         run: |
