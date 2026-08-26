@@ -14,6 +14,7 @@ import { SettingsScreen } from './src/features/settings/screens/SettingsScreen';
 import { LearningScenarioModal } from './src/features/learning/screens/LearningScenarioModal';
 import { LivingCompanion } from './src/components/LivingCompanion';
 import { AmbientBackground } from './src/components/AmbientBackground';
+import { CassidyHomeScreen } from './src/features/cassidy/screens/CassidyHomeScreen';
 
 import {
   Home,
@@ -25,7 +26,7 @@ import {
   Settings as SettingsIcon,
 } from 'lucide-react-native';
 
-type TabKey = 'home' | 'study' | 'world' | 'journey' | 'museum' | 'characters' | 'settings';
+type TabKey = 'home' | 'cassidy' | 'study' | 'world' | 'journey' | 'museum' | 'characters' | 'settings';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabKey>('home');
@@ -49,6 +50,7 @@ export default function App() {
     const target = tab === 'map' ? 'world' : tab;
     if (
       target === 'home' ||
+      target === 'cassidy' ||
       target === 'study' ||
       target === 'world' ||
       target === 'journey' ||
@@ -65,6 +67,8 @@ export default function App() {
     switch (activeTab) {
       case 'home':
         return <HomeScreen onNavigate={handleNavigate} onStartScenario={handleStartScenario} />;
+      case 'cassidy':
+        return <CassidyHomeScreen />;
       case 'study':
         return <StudyScreen />;
       case 'world':
@@ -84,6 +88,7 @@ export default function App() {
 
   const TABS = [
     { key: 'home', label: 'Home', Icon: Home },
+    { key: 'cassidy', label: 'Cassidy', Icon: Home },
     { key: 'study', label: 'Study', Icon: BookOpen },
     { key: 'world', label: 'World', Icon: MapPin },
     { key: 'journey', label: 'Journey', Icon: Sparkles },
@@ -136,8 +141,8 @@ export default function App() {
           })}
         </View>
 
-        {/* Living companion — Cassidy is always with you */}
-        <LivingCompanion onTap={() => setActiveTab('home')} />
+        {/* Living companion — Cassidy is always with you (except in her own home) */}
+        {activeTab !== 'cassidy' && <LivingCompanion onTap={() => setActiveTab('home')} />}
 
         {/* Interactive Dialogue Scenario Modal */}
         <LearningScenarioModal
