@@ -12,6 +12,8 @@ import { MemoryMuseumScreen } from './src/features/journey/screens/MemoryMuseumS
 import { CharacterScreen } from './src/features/characters/screens/CharacterScreen';
 import { SettingsScreen } from './src/features/settings/screens/SettingsScreen';
 import { LearningScenarioModal } from './src/features/learning/screens/LearningScenarioModal';
+import { LivingCompanion } from './src/components/LivingCompanion';
+import { AmbientBackground } from './src/components/AmbientBackground';
 
 import {
   Home,
@@ -95,11 +97,14 @@ export default function App() {
       <View className="flex-1 bg-slate-950">
         <StatusBar style="light" />
 
+        {/* Living atmosphere behind everything */}
+        <AmbientBackground />
+
         {/* Active Screen View */}
         <View className="flex-1">{renderActiveScreen()}</View>
 
-        {/* Bottom Tab Bar Navigation */}
-        <View className="flex-row items-center justify-around border-t border-slate-800/90 bg-slate-900/95 px-2 py-2.5">
+        {/* Bottom Tab Bar Navigation — floating, soft, alive */}
+        <View className="mx-3 mb-2 flex-row items-center justify-around rounded-3xl border border-slate-800/60 bg-slate-900/80 px-1.5 py-2">
           {TABS.map(({ key, label, Icon }) => {
             const isSelected = activeTab === key;
             return (
@@ -108,22 +113,31 @@ export default function App() {
                 onPress={() => setActiveTab(key as TabKey)}
                 className="items-center justify-center px-1.5 py-1"
               >
-                <Icon
-                  size={19}
-                  color={isSelected ? '#34d399' : '#64748b'}
-                  strokeWidth={isSelected ? 2.4 : 1.8}
-                />
-                <Text
-                  className={`mt-1 text-[10px] font-medium ${
-                    isSelected ? 'text-emerald-400 font-bold' : 'text-slate-500'
+                <View
+                  className={`items-center justify-center rounded-full px-3 py-1.5 ${
+                    isSelected ? 'bg-emerald-500/15' : ''
                   }`}
                 >
-                  {label}
-                </Text>
+                  <Icon
+                    size={19}
+                    color={isSelected ? '#34d399' : '#64748b'}
+                    strokeWidth={isSelected ? 2.4 : 1.8}
+                  />
+                  <Text
+                    className={`mt-1 text-[10px] font-medium ${
+                      isSelected ? 'text-emerald-400 font-bold' : 'text-slate-500'
+                    }`}
+                  >
+                    {label}
+                  </Text>
+                </View>
               </Pressable>
             );
           })}
         </View>
+
+        {/* Living companion — Cassidy is always with you */}
+        <LivingCompanion onTap={() => setActiveTab('home')} />
 
         {/* Interactive Dialogue Scenario Modal */}
         <LearningScenarioModal

@@ -104,7 +104,7 @@ export function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-950">
+    <SafeAreaView className="flex-1 bg-transparent">
       <ScrollView
         className="flex-1 px-5 pt-3"
         showsVerticalScrollIndicator={false}

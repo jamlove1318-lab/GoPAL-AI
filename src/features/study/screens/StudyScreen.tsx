@@ -54,7 +54,7 @@ export function StudyScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-950">
+    <SafeAreaView className="flex-1 bg-transparent">
       <AtmosphereLayer
         season={state?.season ?? 'spring'}
         timeOfDay={state?.timeOfDay ?? 'morning'}
