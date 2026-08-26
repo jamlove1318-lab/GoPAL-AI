@@ -1,5 +1,5 @@
 import './global.css';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -15,6 +15,7 @@ import { LearningScenarioModal } from './src/features/learning/screens/LearningS
 import { LivingCompanion } from './src/components/LivingCompanion';
 import { AmbientBackground } from './src/components/AmbientBackground';
 import { CassidyHomeScreen } from './src/features/cassidy/screens/CassidyHomeScreen';
+import { loadCassidySnapshot, worldIntensity, CassidySnapshot } from './src/characters/cassidyContext';
 
 import {
   Home,
@@ -30,10 +31,17 @@ type TabKey = 'home' | 'cassidy' | 'study' | 'world' | 'journey' | 'museum' | 'c
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabKey>('home');
+  const [snapshot, setSnapshot] = useState<CassidySnapshot | null>(null);
   const [scenarioState, setScenarioState] = useState<{ visible: boolean; scenarioKey: string }>({
     visible: false,
     scenarioKey: 'scen-cafe-order',
   });
+
+  // Keep a live picture of the learner's world — Cassidy and the ambient
+  // light both read from this so the app feels alive everywhere.
+  useEffect(() => {
+    loadCassidySnapshot().then(setSnapshot);
+  }, [activeTab]);
 
   const handleStartScenario = (scenarioKey: string) => {
     setScenarioState({
@@ -44,6 +52,8 @@ export default function App() {
 
   const handleCloseScenario = () => {
     setScenarioState((prev) => ({ ...prev, visible: false }));
+    // The world changed (bonsai grew, souvenir earned) — refresh Cassidy's view.
+    loadCassidySnapshot().then(setSnapshot);
   };
 
   const handleNavigate = (tab: string, extra?: Record<string, unknown>) => {
@@ -66,7 +76,7 @@ export default function App() {
   const renderActiveScreen = () => {
     switch (activeTab) {
       case 'home':
-        return <HomeScreen onNavigate={handleNavigate} onStartScenario={handleStartScenario} />;
+        return <HomeScreen snapshot={snapshot} onNavigate={handleNavigate} onStartScenario={handleStartScenario} />;
       case 'cassidy':
         return <CassidyHomeScreen />;
       case 'study':
@@ -102,8 +112,8 @@ export default function App() {
       <View className="flex-1 bg-slate-950">
         <StatusBar style="light" />
 
-        {/* Living atmosphere behind everything */}
-        <AmbientBackground />
+        {/* Living atmosphere behind everything — brighter the more you've lived */}
+        <AmbientBackground intensity={worldIntensity(snapshot)} />
 
         {/* Active Screen View */}
         <View className="flex-1">{renderActiveScreen()}</View>
@@ -142,7 +152,9 @@ export default function App() {
         </View>
 
         {/* Living companion — Cassidy is always with you (except in her own home) */}
-        {activeTab !== 'cassidy' && <LivingCompanion onTap={() => setActiveTab('home')} />}
+        {activeTab !== 'cassidy' && (
+          <LivingCompanion activeTab={activeTab} snapshot={snapshot} onTap={() => setActiveTab('home')} />
+        )}
 
         {/* Interactive Dialogue Scenario Modal */}
         <LearningScenarioModal

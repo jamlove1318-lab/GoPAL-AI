@@ -13,6 +13,9 @@ import {
 } from '../../../engines/director/experienceDirector';
 import { LocalStore, SessionBookmark } from '../../../lib/localStore';
 import { WaveStore } from '../../../lib/waveStore';
+import { Cassidy } from '../../../characters/cassidy';
+import { CassidyCharacter } from '../../../components/CassidyCharacter';
+import type { CassidySnapshot } from '../../../characters/cassidyContext';
 import { CreativeStudioModal } from '../../learning/components/CreativeStudioModal';
 import { KnowledgeGraphModal } from '../../learning/components/KnowledgeGraphModal';
 import { TimeCapsuleModal } from '../../journey/components/TimeCapsuleModal';
@@ -41,11 +44,12 @@ import {
 } from 'lucide-react-native';
 
 interface HomeScreenProps {
+  snapshot?: CassidySnapshot | null;
   onNavigate?: (tab: string, extra?: Record<string, unknown>) => void;
   onStartScenario?: (scenarioKey: string) => void;
 }
 
-export function HomeScreen({ onNavigate, onStartScenario }: HomeScreenProps) {
+export function HomeScreen({ snapshot, onNavigate, onStartScenario }: HomeScreenProps) {
   const { state, loading, continuity } = useWorldState();
   const { view } = useCassidy();
 
@@ -136,6 +140,17 @@ export function HomeScreen({ onNavigate, onStartScenario }: HomeScreenProps) {
               {season} · {timeOfDay} ✨
             </Text>
           </Pressable>
+        </View>
+
+        {/* Cassidy — present, and she knows this place and you */}
+        <View className="mt-4 flex-row items-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-950/25 p-3">
+          <CassidyCharacter height={60} action="idle" speaking={false} expression="warm" />
+          <View className="flex-1">
+            <Text className="text-[11px] font-semibold text-emerald-300">Cassidy</Text>
+            <Text className="text-[12px] italic text-emerald-100">
+              {snapshot ? Cassidy.placeLine('home', snapshot) : 'The valley is waking up with you.'}
+            </Text>
+          </View>
         </View>
 
         {/* World Continuity Recaps — "While you were away" (Blueprint #5, #6) */}

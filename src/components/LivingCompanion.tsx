@@ -1,19 +1,43 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { View, Text, Pressable, Animated, Easing } from 'react-native';
 import { Cassidy, CassidyMood } from '../characters/cassidy';
 import { CassidyCharacter } from './CassidyCharacter';
+import type { CassidySnapshot, Place } from '../characters/cassidyContext';
 
-const MOODS: CassidyMood[] = ['warm', 'calm', 'happy', 'thinking', 'excited'];
-
-// Cassidy — a living person who follows you through the app.
-// Uses core RN Animated (no worklets) so it can never crash the bundle.
-export function LivingCompanion({ onTap }: { onTap?: () => void }) {
+// Cassidy — a living person who follows you through the whole app and knows
+// where you are and what you've done. Uses core RN Animated (no worklets) so
+// it can never crash the bundle.
+export function LivingCompanion({
+  activeTab = 'home',
+  snapshot,
+  onTap,
+}: {
+  activeTab?: Place;
+  snapshot?: CassidySnapshot | null;
+  onTap?: () => void;
+}) {
   const [line, setLine] = useState(Cassidy.pickGreeting());
   const [showBubble, setShowBubble] = useState(true);
   const [speaking, setSpeaking] = useState(false);
   const [mood, setMood] = useState<CassidyMood>('warm');
   const float = useRef(new Animated.Value(0)).current;
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  // Speak for the current place, grounded in what the learner has done.
+  const sayHere = useCallback(() => {
+    const m = Cassidy.moodFor(activeTab);
+    setMood(m);
+    setLine(snapshot ? Cassidy.placeLine(activeTab, snapshot) : Cassidy.lineFor(m));
+    setShowBubble(true);
+    setSpeaking(true);
+    const t = setTimeout(() => setSpeaking(false), 2600);
+    timers.current.push(t);
+  }, [activeTab, snapshot]);
+
+  // When you move, she notices and reacts.
+  useEffect(() => {
+    sayHere();
+  }, [sayHere]);
 
   useEffect(() => {
     const floatAnim = Animated.loop(
@@ -24,22 +48,26 @@ export function LivingCompanion({ onTap }: { onTap?: () => void }) {
     );
     floatAnim.start();
 
+    // Every so often she shares a small thought — sometimes about the place,
+    // sometimes just a friendly murmur.
     const id = setInterval(() => {
-      // She says something, then settles into a thoughtful quiet.
       setShowBubble(false);
       setSpeaking(false);
       const t = setTimeout(() => {
-        const m = MOODS[Math.floor(Math.random() * MOODS.length)];
-        setMood(m);
-        setLine(Cassidy.lineFor(m));
-        setShowBubble(true);
-        setSpeaking(true);
-        // stop "talking" after a beat so her mouth rests
-        const t2 = setTimeout(() => setSpeaking(false), 2600);
-        timers.current.push(t2);
+        if (snapshot && Math.random() < 0.4) {
+          sayHere();
+        } else {
+          const m = Cassidy.moodFor(activeTab);
+          setMood(m);
+          setLine(Cassidy.lineFor(m));
+          setShowBubble(true);
+          setSpeaking(true);
+          const t2 = setTimeout(() => setSpeaking(false), 2600);
+          timers.current.push(t2);
+        }
       }, 450);
       timers.current.push(t);
-    }, 8000);
+    }, 12000);
 
     return () => {
       floatAnim.stop();
@@ -47,7 +75,7 @@ export function LivingCompanion({ onTap }: { onTap?: () => void }) {
       timers.current.forEach(clearTimeout);
       timers.current = [];
     };
-  }, [float]);
+  }, [float, sayHere, activeTab, snapshot]);
 
   const translateY = float.interpolate({ inputRange: [0, 1], outputRange: [0, -10] });
 
@@ -70,4 +98,3 @@ export function LivingCompanion({ onTap }: { onTap?: () => void }) {
     </View>
   );
 }
-

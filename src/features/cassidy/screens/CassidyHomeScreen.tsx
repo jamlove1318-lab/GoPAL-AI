@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { View, Text, Pressable, ScrollView, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WaveStore } from '../../../lib/waveStore';
 import { Cassidy, CassidyMood } from '../../../characters/cassidy';
@@ -7,6 +7,22 @@ import { CassidyCharacter } from '../../../components/CassidyCharacter';
 import { Radio, BookOpen } from 'lucide-react-native';
 
 type Action = 'idle' | 'talking' | 'waving';
+
+const PERIOD = (() => {
+  const h = new Date().getHours();
+  if (h < 5) return 'night' as const;
+  if (h < 12) return 'morning' as const;
+  if (h < 17) return 'afternoon' as const;
+  if (h < 20) return 'evening' as const;
+  return 'night' as const;
+})();
+
+const THEME: Record<typeof PERIOD, { wall: string; sky: string; orb: string; orbRight: number; orbTop: number; lamp: number; word: string }> = {
+  morning: { wall: '#3a3357', sky: '#fde6b8', orb: '#fff0c0', orbRight: -3, orbTop: 3, lamp: 0.08, word: 'morning' },
+  afternoon: { wall: '#473a63', sky: '#cfe8f7', orb: '#fff6d8', orbRight: 6, orbTop: -2, lamp: 0.04, word: 'afternoon' },
+  evening: { wall: '#3a2c4d', sky: '#f7c79b', orb: '#ffd9a0', orbRight: 8, orbTop: 6, lamp: 0.32, word: 'evening' },
+  night: { wall: '#241d38', sky: '#33406b', orb: '#dfe6ff', orbRight: 10, orbTop: 2, lamp: 0.5, word: 'night' },
+};
 
 export function CassidyHomeScreen() {
   const [objects, setObjects] = useState<any[]>([]);
@@ -17,6 +33,19 @@ export function CassidyHomeScreen() {
   useEffect(() => {
     WaveStore.getLivingObjects().then(setObjects);
   }, []);
+
+  // Ambient life: every so often she glances up and gives a little wave.
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (action === 'idle' && Math.random() < 0.5) {
+        setAction('waving');
+        setTimeout(() => setAction('idle'), 2200);
+      }
+    }, 9000);
+    return () => clearInterval(id);
+  }, [action]);
+
+  const t = THEME[PERIOD];
 
   const bonsai = objects.find((o) => o.id === 'living-bonsai');
   const radio = objects.find((o) => o.id === 'living-radio');
@@ -33,17 +62,22 @@ export function CassidyHomeScreen() {
   return (
     <SafeAreaView className="flex-1 bg-transparent">
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
-        {/* Room */}
-        <View className="relative flex-1">
+        <View className="relative" style={{ minHeight: Dimensions.get('window').height - 160 }}>
           {/* Wall */}
-          <View className="h-[58%] bg-[#2e2740]" />
+          <View className="h-[58%]" style={{ backgroundColor: t.wall }} />
           {/* Floor (wood) */}
           <View className="h-[42%] bg-[#4a3a2c]" />
 
-          {/* Window with warm light */}
-          <View className="absolute left-6 top-10 h-36 w-28 overflow-hidden rounded-2xl border-2 border-[#6b5a8a] bg-[#fcd9a8]">
-            <View className="absolute -right-3 top-3 h-10 w-10 rounded-full bg-[#ffe9c2] opacity-80" />
-            <View className="absolute bottom-0 left-0 right-0 h-10 bg-[#b9d6e8] opacity-60" />
+          {/* Window with the sky of this hour */}
+          <View
+            className="absolute left-6 top-10 h-36 w-28 overflow-hidden rounded-2xl border-2 border-[#6b5a8a]"
+            style={{ backgroundColor: t.sky }}
+          >
+            <View
+              className="absolute h-10 w-10 rounded-full opacity-90"
+              style={{ right: t.orbRight, top: t.orbTop, backgroundColor: t.orb }}
+            />
+            <View className="absolute bottom-0 left-0 right-0 h-10 bg-[#b9d6e8] opacity-50" />
             <View className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-[#6b5a8a] opacity-60" />
             <View className="absolute top-1/2 left-0 right-0 h-0.5 bg-[#6b5a8a] opacity-60" />
           </View>
@@ -90,8 +124,12 @@ export function CassidyHomeScreen() {
             <Text className="text-[9px] text-slate-400">tap her to say hello</Text>
           </View>
 
-          {/* Soft lamp glow */}
-          <View className="absolute right-10 top-40 h-24 w-24 rounded-full bg-amber-300/20" pointerEvents="none" />
+          {/* Lamp glow — brighter after dark */}
+          <View
+            className="absolute right-10 top-40 h-24 w-24 rounded-full bg-amber-300"
+            style={{ opacity: t.lamp }}
+            pointerEvents="none"
+          />
         </View>
       </ScrollView>
     </SafeAreaView>

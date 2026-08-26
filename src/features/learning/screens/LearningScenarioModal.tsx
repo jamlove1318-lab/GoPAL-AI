@@ -7,6 +7,8 @@ import { ExperienceDirector } from '../../../engines/director/experienceDirector
 import { TutorEngine } from '../../../engines/tutor/tutorEngine';
 import { LocalStore } from '../../../lib/localStore';
 import { WaveStore } from '../../../lib/waveStore';
+import { Cassidy } from '../../../characters/cassidy';
+import { CassidyCharacter } from '../../../components/CassidyCharacter';
 import {
   X,
   Sparkles,
@@ -333,6 +335,16 @@ export function LearningScenarioModal({
           ) : (
             /* Celebration Screen on Completion */
             <View className="items-center justify-center py-8">
+              {/* Cassidy is there for the win — she grows with you */}
+              <View className="mb-3 items-center">
+                <CassidyCharacter height={120} action="waving" speaking={true} expression="excited" />
+                <View className="mt-1 max-w-[260px] rounded-2xl rounded-tl-sm border border-emerald-500/30 bg-emerald-900/85 px-3 py-2">
+                  <Text className="text-center text-[12px] italic text-emerald-100">
+                    {Cassidy.lineFor('excited')}
+                  </Text>
+                </View>
+              </View>
+
               <View className="h-20 w-20 items-center justify-center rounded-3xl bg-emerald-500/20 border border-emerald-500/40">
                 <Award size={44} color="#34d399" />
               </View>

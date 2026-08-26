@@ -3,7 +3,9 @@ import { View, Animated, Easing } from 'react-native';
 
 // Slow, breathing ambient light behind every screen. Pure core Animated —
 // no worklets, no babel plugin required, cannot crash the bundle.
-export function AmbientBackground() {
+// `intensity` (0..1) makes the world glow brighter the more the learner
+// has lived in it.
+export function AmbientBackground({ intensity = 0.5 }: { intensity?: number }) {
   const a = useRef(new Animated.Value(0)).current;
   const b = useRef(new Animated.Value(0)).current;
   const c = useRef(new Animated.Value(0)).current;
@@ -31,15 +33,15 @@ export function AmbientBackground() {
   return (
     <View className="absolute inset-0 overflow-hidden" pointerEvents="none">
       <Animated.View
-        style={{ transform: [{ translateX: aX }, { translateY: aY }] }}
+        style={{ transform: [{ translateX: aX }, { translateY: aY }], opacity: intensity }}
         className="absolute -left-24 -top-28 h-80 w-80 rounded-full bg-emerald-700/20"
       />
       <Animated.View
-        style={{ transform: [{ translateX: bX }, { translateY: bY }] }}
+        style={{ transform: [{ translateX: bX }, { translateY: bY }], opacity: Math.min(1, intensity * 0.8) }}
         className="absolute -right-28 top-1/3 h-96 w-96 rounded-full bg-indigo-700/15"
       />
       <Animated.View
-        style={{ transform: [{ translateX: cX }, { translateY: cY }] }}
+        style={{ transform: [{ translateX: cX }, { translateY: cY }], opacity: Math.min(1, intensity * 0.6) }}
         className="absolute bottom-[-120px] left-1/3 h-80 w-80 rounded-full bg-teal-700/10"
       />
     </View>
