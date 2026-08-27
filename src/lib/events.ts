@@ -4,6 +4,7 @@ export interface AppEventMap {
   'story:progressed': { storyId: string; node: string; userId: string };
   'achievement:earned': { achievementId: string; userId: string; context?: Record<string, unknown> };
   'location:unlocked': { locationId: string; userId: string };
+  'world:locationChanged': { locationId: string; userId: string; previousLocationId?: string };
   'conversation:completed': { conversationId: string; userId: string };
   'discovery:made': { discoveryId: string; type: string; ref: string; userId: string };
   'world:eventStarted': { eventId: string; worldId: string };
