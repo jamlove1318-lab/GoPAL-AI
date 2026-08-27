@@ -1,29 +1,38 @@
 import { useEffect, useState, useCallback } from 'react';
-import { WorldEngine } from '../engines/world/worldEngine';
 import type { ResolvedWorldState } from '../engines/world/worldEngine';
-import { computeContinuity, ContinuityResult } from '../engines/world/continuityEngine';
+import type { ContinuityResult } from '../engines/world/continuityEngine';
+import type { WorldSnapshot } from '../engines/world/livingWorldRuntime';
+import { LivingWorldRuntime } from '../engines/world/livingWorldRuntime';
 import { auth } from '../services/auth';
 
-const worldEngine = new WorldEngine();
+const livingWorldRuntime = new LivingWorldRuntime();
 
 export function useWorldState() {
   const [state, setState] = useState<ResolvedWorldState | null>(null);
+  const [snapshot, setSnapshot] = useState<WorldSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string>('local-explorer-user');
   const [continuity, setContinuity] = useState<ContinuityResult | null>(null);
 
   const load = useCallback(async (uid: string) => {
     setLoading(true);
-    const resolved = await worldEngine.loadState(uid);
-    if (resolved) {
-      const cont = computeContinuity(resolved.lastActiveAt);
-      setContinuity(cont);
-      // Persist the return timestamp AFTER computing continuity so the next
-      // return can calculate real elapsed time (Blueprint #5/#6: World Continuity).
-      await worldEngine.saveState(uid, { lastActiveAt: new Date().toISOString() });
+    try {
+      const worldSnapshot = await livingWorldRuntime.load(uid);
+      if (worldSnapshot) {
+        setSnapshot(worldSnapshot);
+        setState(worldSnapshot.resolved);
+        setContinuity(worldSnapshot.continuity);
+        // Persist the return timestamp only after the snapshot has been composed,
+        // so the next visit can see the real gap between sessions.
+        await livingWorldRuntime.markActive(uid);
+      } else {
+        setSnapshot(null);
+        setState(null);
+        setContinuity(null);
+      }
+    } finally {
+      setLoading(false);
     }
-    setState(resolved);
-    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -31,9 +40,7 @@ export function useWorldState() {
     const unsub = auth.onAuthStateChange(async (user) => {
       const uid = user ? user.id : 'local-explorer-user';
       setUserId(uid);
-      if (active) {
-        await load(uid);
-      }
+      if (active) await load(uid);
     });
     return () => {
       active = false;
@@ -43,20 +50,20 @@ export function useWorldState() {
 
   const changeLocation = useCallback(
     async (locationId: string) => {
-      if (!userId) return;
-      await worldEngine.setLocation(userId, locationId);
+      if (!userId || !state) return;
+      await livingWorldRuntime['worldEngine'].setLocation(userId, locationId);
       await load(userId);
     },
-    [userId, load]
+    [userId, state, load]
   );
 
   return {
     state,
+    snapshot,
     loading,
     continuity,
-    worldEngine,
+    worldEngine: livingWorldRuntime['worldEngine'],
     changeLocation,
     refresh: () => load(userId),
   };
 }
-
