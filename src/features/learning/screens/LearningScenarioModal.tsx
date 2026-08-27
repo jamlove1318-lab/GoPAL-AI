@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, Modal } from 'react-native';
 import { useLearningSession } from '../../../hooks/useLearningSession';
-import { KnowledgeEngine } from '../../../engines/knowledge/knowledgeEngine';
-import { JourneyEngine } from '../../../engines/journey/journeyEngine';
 import { TutorEngine } from '../../../engines/tutor/tutorEngine';
-import { LocalStore } from '../../../lib/localStore';
-import { WaveStore } from '../../../lib/waveStore';
-import { eventBus } from '../../../engines/events/eventBus';
 import { CassidyCharacter } from '../../../components/CassidyCharacter';
 import { X, Send, CheckCircle, HelpCircle, Award, ChevronRight } from 'lucide-react-native';
 
@@ -19,34 +14,16 @@ export function LearningScenarioModal({ visible, scenarioKey, onClose }: Learnin
   const [showTranslation, setShowTranslation] = useState(true);
   const [thinkTogetherLevel, setThinkTogetherLevel] = React.useState<(typeof TutorEngine.HINT_LEVELS)[number] | null>(null);
   const [thinkTogetherText, setThinkTogetherText] = React.useState('');
-  const recordedRef = React.useRef(false);
 
   React.useEffect(() => {
     if (visible && scenarioKey) {
       startScenario(scenarioKey);
-      setInputVal(''); setShowHint(false); setThinkTogetherLevel(null); setThinkTogetherText(''); recordedRef.current = false;
+      setInputVal('');
+      setShowHint(false);
+      setThinkTogetherLevel(null);
+      setThinkTogetherText('');
     }
   }, [visible, scenarioKey, startScenario]);
-
-  React.useEffect(() => {
-    if (sessionCompleted && activeScenario && !recordedRef.current) {
-      recordedRef.current = true;
-      (async () => {
-        const nodes = await LocalStore.getKnowledgeNodes();
-        const context = `scenario:${activeScenario.id}`;
-        for (const step of activeScenario.steps) {
-          for (const c of step.expectedConcepts) {
-            const node = nodes.find((n) => n.key === c);
-            const label = node ? `${node.term} (${node.reading})` : c;
-            await KnowledgeEngine.recordLearningEcho(c, label, context);
-          }
-        }
-        await new JourneyEngine().earnSouvenir(`Conversation: ${activeScenario.title}`, 'memory', `Held a full dialogue with ${activeScenario.characterName} at ${activeScenario.locationName}.`);
-        await WaveStore.recordDecision(`Completed "${activeScenario.title}" and chose to follow it through.`);
-        eventBus.emit('learning:sessionCompleted', { sessionId: activeScenario.id, accuracy: evaluation?.accuracy ?? 0, activityType: 'real-world-dialogue' }, 'learning');
-      })();
-    }
-  }, [sessionCompleted, activeScenario, evaluation]);
 
   const handleClose = () => { endSession(); onClose(); };
   const handleSend = async (textToSend?: string) => { const text = textToSend || inputVal; if (!text.trim()) return; await submitResponse(text); setInputVal(''); };
