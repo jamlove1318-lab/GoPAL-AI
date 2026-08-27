@@ -11,6 +11,7 @@ import { JourneyBookScreen } from './src/features/journey/screens/JourneyBookScr
 import { MemoryMuseumScreen } from './src/features/journey/screens/MemoryMuseumScreen';
 import { CharacterScreen } from './src/features/characters/screens/CharacterScreen';
 import { SettingsScreen } from './src/features/settings/screens/SettingsScreen';
+import { CassidyHomeScreen } from './src/features/cassidy/screens/CassidyHomeScreen';
 import { LearningScenarioModal } from './src/features/learning/screens/LearningScenarioModal';
 import { LivingCompanion } from './src/components/LivingCompanion';
 import { AmbientBackground } from './src/components/AmbientBackground';
@@ -62,7 +63,7 @@ export default function App() {
       case 'home':
         return <HomeScreen onNavigate={handleNavigate} onStartScenario={handleStartScenario} />;
       case 'cassidy':
-        return <CharacterScreen />;
+        return <CassidyHomeScreen />;
       case 'study':
         return <StudyScreen />;
       case 'world':
