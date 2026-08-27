@@ -11,53 +11,37 @@ export function LivingCompanion({ activeTab = 'home', snapshot, onTap }: { activ
   const [speaking, setSpeaking] = useState(false);
   const [mood, setMood] = useState<CassidyMood>('warm');
   const [eventAction, setEventAction] = useState<CassidyAction | null>(null);
+  const [reactionPulse, setReactionPulse] = useState(false);
   const float = useRef(new Animated.Value(0)).current;
   const entrance = useRef(new Animated.Value(0)).current;
   const tapPulse = useRef(new Animated.Value(0)).current;
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const speak = useCallback((nextLine: string, nextMood: CassidyMood, action: CassidyAction = 'talking') => {
-    setMood(nextMood);
-    setLine(nextLine);
-    setShowBubble(true);
-    setSpeaking(true);
-    setEventAction(action);
-    const timer = setTimeout(() => { setSpeaking(false); setEventAction(null); }, 2800);
+    setMood(nextMood); setLine(nextLine); setShowBubble(true); setSpeaking(true); setEventAction(action); setReactionPulse(true);
+    const timer = setTimeout(() => { setSpeaking(false); setEventAction(null); setReactionPulse(false); }, 2800);
     timers.current.push(timer);
   }, []);
 
   const sayHere = useCallback(() => {
     const m = Cassidy.moodFor(activeTab);
-    setMood(m);
-    setLine(snapshot ? Cassidy.placeLine(activeTab, snapshot) : Cassidy.lineFor(m));
-    setShowBubble(true);
-    setSpeaking(true);
-    setEventAction(null);
+    setMood(m); setLine(snapshot ? Cassidy.placeLine(activeTab, snapshot) : Cassidy.lineFor(m)); setShowBubble(true); setSpeaking(true); setEventAction(null);
     const timer = setTimeout(() => setSpeaking(false), 2600);
     timers.current.push(timer);
   }, [activeTab, snapshot]);
 
   useEffect(() => { sayHere(); }, [sayHere]);
 
-  // Cassidy listens to the same domain events as the world. This keeps her
-  // reactions caused by real activity instead of adding another parallel state system.
   useEffect(() => {
-    const offLearning = eventBus.on('learning:sessionCompleted', ({ accuracy }) => {
-      speak(accuracy >= 0.85 ? Cassidy.lineFor('excited') : Cassidy.lineFor('happy'), accuracy >= 0.85 ? 'excited' : 'happy');
-    });
-    const offDiscovery = eventBus.on('discovery:made', () => {
-      speak('Wait — did you see that? That belongs in your story.', 'excited', 'walking');
-    });
-    const offLocation = eventBus.on('location:unlocked', () => {
-      speak('A new place just opened. Shall we see what is there?', 'excited', 'walking');
-    });
-    const offMemory = eventBus.on('memory:recorded', () => {
-      speak('I’ll remember this one with you.', 'warm');
-    });
-    const offReturn = eventBus.on('world:returned', () => {
-      speak('There you are. The valley is glad to have you back.', 'warm', 'waving');
-    });
-    return () => { offLearning(); offDiscovery(); offLocation(); offMemory(); offReturn(); };
+    const offLearning = eventBus.on('learning:sessionCompleted', ({ accuracy }) => speak(accuracy >= 0.85 ? Cassidy.lineFor('excited') : Cassidy.lineFor('happy'), accuracy >= 0.85 ? 'excited' : 'happy'));
+    const offDiscovery = eventBus.on('discovery:made', () => speak('Wait — did you see that? That belongs in your story.', 'excited', 'walking'));
+    const offLocation = eventBus.on('location:unlocked', () => speak('A new place just opened. Shall we see what is there?', 'excited', 'walking'));
+    const offMemory = eventBus.on('memory:recorded', () => speak('I’ll remember this one with you.', 'warm'));
+    const offReturn = eventBus.on('world:returned', () => speak('There you are. The valley is glad to have you back.', 'warm', 'waving'));
+    const offQuest = eventBus.on('quest:completed', () => speak('You did it. I knew that thread would lead somewhere.', 'excited', 'waving'));
+    const offStory = eventBus.on('story:progressed', () => speak('The story moved because you did. Keep following it.', 'warm', 'walking'));
+    const offAchievement = eventBus.on('achievement:earned', () => speak('That is worth remembering.', 'excited', 'waving'));
+    return () => { offLearning(); offDiscovery(); offLocation(); offMemory(); offReturn(); offQuest(); offStory(); offAchievement(); };
   }, [speak]);
 
   useEffect(() => {
@@ -71,10 +55,7 @@ export function LivingCompanion({ activeTab = 'home', snapshot, onTap }: { activ
       setShowBubble(false); setSpeaking(false);
       const t = setTimeout(() => {
         if (snapshot && Math.random() < 0.4) sayHere();
-        else {
-          const m = Cassidy.moodFor(activeTab); setMood(m); setLine(Cassidy.lineFor(m));
-          setShowBubble(true); setSpeaking(true); timers.current.push(setTimeout(() => setSpeaking(false), 2600));
-        }
+        else { const m = Cassidy.moodFor(activeTab); setMood(m); setLine(Cassidy.lineFor(m)); setShowBubble(true); setSpeaking(true); timers.current.push(setTimeout(() => setSpeaking(false), 2600)); }
       }, 450);
       timers.current.push(t);
     }, 12000);
@@ -88,10 +69,7 @@ export function LivingCompanion({ activeTab = 'home', snapshot, onTap }: { activ
   const action = eventAction ?? defaultAction;
 
   const handleTap = () => {
-    Animated.sequence([
-      Animated.timing(tapPulse, { toValue: 1, duration: 100, useNativeDriver: true }),
-      Animated.spring(tapPulse, { toValue: 0, useNativeDriver: true, speed: 30, bounciness: 9 }),
-    ]).start();
+    Animated.sequence([Animated.timing(tapPulse, { toValue: 1, duration: 100, useNativeDriver: true }), Animated.spring(tapPulse, { toValue: 0, useNativeDriver: true, speed: 30, bounciness: 9 })]).start();
     sayHere(); onTap?.();
   };
 
@@ -101,7 +79,7 @@ export function LivingCompanion({ activeTab = 'home', snapshot, onTap }: { activ
     </Animated.View>
     <Pressable onPress={handleTap} className="active:opacity-90">
       <Animated.View style={{ transform: [{ translateY: Animated.add(translateY, entranceY) }, { scale: Animated.multiply(entranceScale, tapPulse.interpolate({ inputRange: [0, 1], outputRange: [1, .94] })) }] }}>
-        <CassidyCharacter height={128} action={action} speaking={speaking} expression={mood} />
+        <Animated.View style={{ opacity: reactionPulse ? 1 : .94 }}><CassidyCharacter height={128} action={action} speaking={speaking} expression={mood} /></Animated.View>
       </Animated.View>
     </Pressable>
   </View>;
