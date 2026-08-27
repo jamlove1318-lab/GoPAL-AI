@@ -11,33 +11,12 @@ export interface CassidyView {
 
 export class CharacterEngine {
   async loadCassidy(userId: string, characterKey = 'cassidy'): Promise<CassidyView> {
-    if (!isSupabaseConfigured) {
-      return LocalStore.getCassidyView();
-    }
-
+    if (!isSupabaseConfigured) return LocalStore.getCassidyView();
     try {
-      const { data: character } = await supabase
-        .from('characters')
-        .select('*')
-        .eq('canonical_key', characterKey)
-        .maybeSingle();
-
-
+      const { data: character } = await supabase.from('characters').select('*').eq('key', characterKey).maybeSingle();
       if (!character) return LocalStore.getCassidyView();
-
-      const { data: state } = await supabase
-        .from('character_state')
-        .select('*')
-        .eq('character_id', character.id)
-        .maybeSingle();
-
-      const { data: relationship } = await supabase
-        .from('character_relationships')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('character_id', character.id)
-        .maybeSingle();
-
+      const { data: state } = await supabase.from('character_state').select('*').eq('character_id', character.id).maybeSingle();
+      const { data: relationship } = await supabase.from('character_relationships').select('*').eq('user_id', userId).eq('character_id', character.id).maybeSingle();
       return { character, state, relationship };
     } catch {
       return LocalStore.getCassidyView();
@@ -46,44 +25,23 @@ export class CharacterEngine {
 
   async setMood(characterId: string, mood: Mood, energy: number, activity: string | null): Promise<void> {
     if (!isSupabaseConfigured) {
-      await LocalStore.updateCassidyState({
-        mood,
-        energy,
-        current_activity: activity,
-      });
+      await LocalStore.updateCassidyState({ mood, energy, current_activity: activity });
       return;
     }
-
     try {
-      await supabase.from('character_state').upsert({
-        character_id: characterId,
-        mood,
-        energy,
-        current_activity: activity,
-        updated_at: new Date().toISOString(),
-      });
+      await supabase.from('character_state').upsert({ character_id: characterId, mood, energy, current_activity: activity, updated_at: new Date().toISOString() });
     } catch {
       await LocalStore.updateCassidyState({ mood, energy, current_activity: activity });
     }
   }
 
-  async recordRelationship(
-    userId: string,
-    characterId: string,
-    patch: Partial<Pick<CharacterRelationshipsRow, 'familiarity' | 'trust' | 'friendship'>>,
-  ): Promise<void> {
+  async recordRelationship(userId: string, characterId: string, patch: Partial<Pick<CharacterRelationshipsRow, 'familiarity' | 'trust' | 'friendship'>>): Promise<void> {
     if (!isSupabaseConfigured) {
       await LocalStore.updateCassidyRelationship(patch);
       return;
     }
-
     try {
-      await supabase.from('character_relationships').upsert({
-        user_id: userId,
-        character_id: characterId,
-        ...patch,
-        updated_at: new Date().toISOString(),
-      });
+      await supabase.from('character_relationships').upsert({ user_id: userId, character_id: characterId, ...patch, updated_at: new Date().toISOString() });
     } catch {
       await LocalStore.updateCassidyRelationship(patch);
     }
@@ -96,12 +54,8 @@ export class CharacterEngine {
       evening: 'Good evening. The lights are warm—let us review what we discovered today.',
       night: 'Peaceful night. Perfect for calm reflection or a gentle story before sleep.',
     };
-
     const base = timeGreetings[timeOfDay] || 'Hello! It is wonderful to see you.';
-    if (locationName && !locationName.includes('Study')) {
-      return `${base} We are currently at ${locationName}. Ready to explore?`;
-    }
+    if (locationName && !locationName.includes('Study')) return `${base} We are currently at ${locationName}. Ready to explore?`;
     return base;
   }
 }
-
