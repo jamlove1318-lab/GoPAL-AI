@@ -7,6 +7,7 @@ export { EnvironmentEngine } from './world/environmentEngine';
 export type { EnvironmentContext } from './world/environmentEngine';
 export { computeContinuity } from './world/continuityEngine';
 export type { ContinuityResult } from './world/continuityEngine';
+export { startLivingWorldReactor } from './world/livingWorldReactor';
 
 export { MemoryEngine } from './memory/memoryEngine';
 export type { MemoryLayer } from './memory/memoryEngine';
@@ -28,5 +29,3 @@ export type { CreationTemplate } from './creation/creationStudio';
 
 export { KnowledgeEngine } from './knowledge/knowledgeEngine';
 export type { SearchResultCategory } from './knowledge/knowledgeEngine';
-
-
