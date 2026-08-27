@@ -86,24 +86,25 @@ export class QuestEngine {
 
   static async completeQuest(questId: string): Promise<Quest[]> {
     const quests = await this.getQuests();
+    const target = quests.find((q) => q.id === questId);
+
+    // Completion is idempotent: retries must not create duplicate journey events.
+    if (!target || target.completed) return quests;
+
     const updated = quests.map((q) =>
       q.id === questId ? { ...q, completed: true, currentCount: q.targetCount } : q
     );
     await LocalStore.set('user_quests', updated);
 
-    // Record journey event for quest completion
-    const target = quests.find((q) => q.id === questId);
-    if (target) {
-      await LocalStore.addJourneyEvent(
-        'quest_completed',
-        {
-          questId: target.id,
-          title: target.title,
-          rewardSparkles: target.rewardSparkles,
-        },
-        'quest_engine'
-      );
-    }
+    await LocalStore.addJourneyEvent(
+      'quest_completed',
+      {
+        questId: target.id,
+        title: target.title,
+        rewardSparkles: target.rewardSparkles,
+      },
+      'quest_engine'
+    );
 
     return updated;
   }
