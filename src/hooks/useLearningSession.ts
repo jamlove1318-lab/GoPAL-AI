@@ -60,6 +60,15 @@ export function useLearningSession(userId = 'local-explorer-user') {
               const node = nodes.find((nodeItem) => nodeItem.key === conceptKey);
               const label = node ? `${node.term} (${node.reading})` : conceptKey;
               await KnowledgeEngine.recordLearningEcho(conceptKey, label, context);
+
+              const conceptEvidence = evidence.find((item) => item.matchedConcepts.includes(conceptKey)) ?? finalEvaluation;
+              await KnowledgeEngine.recordKnowledgeRecall(conceptKey, conceptEvidence.isCorrect, {
+                accuracy: conceptEvidence.accuracy,
+                confidence: conceptEvidence.confidence,
+                hintDependency: conceptEvidence.hintDependency,
+                partialUnderstanding: conceptEvidence.partialUnderstanding,
+                difficulty: conceptEvidence.difficulty,
+              });
             }
           })()
         );
