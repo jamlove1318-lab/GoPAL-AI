@@ -1,5 +1,16 @@
+export interface LearningSessionCompletedEvent {
+  sessionId: string;
+  userId?: string;
+  accuracy: number;
+  activityType: string;
+  conceptsDemonstrated?: string[];
+  masteryChanges?: Record<string, number>;
+  xpGained?: number;
+  hintsUsed?: boolean;
+}
+
 export interface AppEventMap {
-  'learning:sessionCompleted': { sessionId: string; accuracy: number; activityType: string };
+  'learning:sessionCompleted': LearningSessionCompletedEvent;
   'quest:completed': { questId: string; userId: string };
   'story:progressed': { storyId: string; node: string; userId: string };
   'achievement:earned': { achievementId: string; userId: string; context?: Record<string, unknown> };
