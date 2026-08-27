@@ -1,6 +1,7 @@
 import { WorldEngine, type ResolvedWorldState } from './worldEngine';
 import { EnvironmentEngine, type EnvironmentContext } from './environmentEngine';
 import { computeContinuity, type ContinuityResult } from './continuityEngine';
+import { eventBus } from '../events/eventBus';
 import { loadCassidySnapshot, type CassidySnapshot } from '../../characters/cassidyContext';
 import type { TimeOfDay, Season } from '../../lib/types';
 
@@ -12,9 +13,8 @@ export interface ReturnMoment {
 
 /**
  * The read-model of GoPAL-AI's living world.
- *
- * Engines continue to own domain state. This runtime only composes their
- * current state into one coherent snapshot for the experience layer.
+ * Engines continue to own domain state. This runtime composes their current
+ * state into one coherent snapshot for the experience layer.
  */
 export interface WorldSnapshot {
   generatedAt: string;
@@ -52,15 +52,24 @@ export class LivingWorldRuntime {
     const cassidy = options.includeCassidy === false
       ? emptyCassidySnapshot()
       : await loadCassidySnapshot();
+    const snapshot = this.compose(world, environment, continuity, cassidy, now);
 
-    return this.compose(world, environment, continuity, cassidy, now);
+    // Arrival is a real world event. Other engines may observe it without the
+    // runtime needing to know how they choose to react.
+    eventBus.emit('world:returned', {
+      userId,
+      lastActiveAt: world.lastActiveAt,
+    }, 'world');
+
+    return snapshot;
   }
 
   /** Persist the fact that the learner has returned after the snapshot exists. */
   async markActive(userId: string, now: Date = new Date()): Promise<void> {
+    const environment = this.environmentEngine.resolve(now);
     await this.worldEngine.saveState(userId, {
-      timeOfDay: this.environmentEngine.resolve(now).timeOfDay,
-      season: this.environmentEngine.resolve(now).season,
+      timeOfDay: environment.timeOfDay,
+      season: environment.season,
       lastActiveAt: now.toISOString(),
     });
   }
