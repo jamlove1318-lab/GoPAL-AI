@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { LivingWorldRuntime, type WorldSnapshot } from '../engines/world/livingWorldRuntime';
 import type { ResolvedWorldState } from '../engines/world/worldEngine';
 import { auth } from '../services/auth';
+import { eventBus } from '../engines/events/eventBus';
 
 const livingWorld = new LivingWorldRuntime();
 
@@ -45,17 +46,19 @@ export function useWorldState() {
     if (!userId) return;
     setLoading(true);
     setError(null);
+    const previousLocationId = state?.location?.id;
     try {
       const next = await livingWorld.changeLocation(userId, locationId);
       setSnapshot(next);
       setState(next?.resolved ?? null);
+      eventBus.emit('world:locationChanged', { locationId, userId, previousLocationId }, 'world');
     } catch (cause) {
       const nextError = cause instanceof Error ? cause : new Error('Unable to travel to that place.');
       setError(nextError);
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [state?.location?.id, userId]);
 
   const refresh = useCallback(() => load(userId), [load, userId]);
 
