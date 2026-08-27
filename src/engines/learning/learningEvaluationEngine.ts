@@ -1,6 +1,7 @@
 import type { ScenarioStep, DialogueEvaluation } from '../tutor/tutorEngine';
 
 export interface LearningEvidence extends DialogueEvaluation {
+  accuracy: number;
   confidence: number;
   matchedConcepts: string[];
   missingConcepts: string[];
@@ -55,6 +56,7 @@ export class LearningEvaluationEngine {
       return {
         isCorrect: false,
         score: 0,
+        accuracy: 0,
         confidence: 0,
         matchedConcepts: [],
         missingConcepts: step.expectedConcepts,
@@ -81,8 +83,6 @@ export class LearningEvaluationEngine {
       ? matchedConcepts.length / step.expectedConcepts.length
       : 0;
 
-    // Samples are strong evidence, while concept coverage supports natural variations.
-    // Difficulty slightly raises the evidence threshold for an unassisted answer.
     const difficultyBonus = difficulty === 'advanced' ? 0.08 : difficulty === 'intermediate' ? 0.04 : 0;
     const strongEnough = sampleMatch || conceptCoverage >= Math.max(0.5, 0.6 + difficultyBonus);
     const partial = !strongEnough && conceptCoverage > 0;
@@ -95,13 +95,13 @@ export class LearningEvaluationEngine {
     const confidence = Math.max(0, Math.min(1,
       (sampleMatch ? 0.95 : 0.45 + conceptCoverage * 0.5) - (hintUsed ? 0.08 : 0)
     ));
-
     const hintDependency = !hintUsed ? 'none' : strongEnough ? 'light' : partial ? 'moderate' : 'high';
 
     if (strongEnough) {
       return {
         isCorrect: true,
         score,
+        accuracy: score,
         confidence,
         matchedConcepts,
         missingConcepts,
@@ -120,6 +120,7 @@ export class LearningEvaluationEngine {
       return {
         isCorrect: false,
         score,
+        accuracy: score,
         confidence,
         matchedConcepts,
         missingConcepts,
@@ -135,6 +136,7 @@ export class LearningEvaluationEngine {
     return {
       isCorrect: false,
       score,
+      accuracy: score,
       confidence,
       matchedConcepts,
       missingConcepts,
