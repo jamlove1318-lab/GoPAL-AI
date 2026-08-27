@@ -18,10 +18,7 @@ export interface EconomyState {
   claimedRewards?: Record<string, number>;
 }
 
-export interface SparkleClaimResult {
-  claimed: boolean;
-  state: EconomyState;
-}
+export interface SparkleClaimResult { claimed: boolean; state: EconomyState; }
 
 export const SEED_SHOP_ITEMS: InventoryItem[] = [
   { id: 'item-emerald-seed', name: 'Emerald Blossom Seed', category: 'seed', description: 'A rare plant seed that blossoms with vibrant emerald petals.', costSparkles: 50, quantity: 1, icon: '🌱' },
@@ -38,15 +35,15 @@ export const SEED_ECONOMY: EconomyState = {
 };
 
 export class EconomyEngine {
+  /** Prevent concurrent read-modify-write claims for the same reward in this runtime. */
+  private static pendingClaims = new Set<string>();
+
   static async getEconomyState(): Promise<EconomyState> {
     const state = await LocalStore.get<EconomyState>('economy_state', SEED_ECONOMY);
     return { ...state, claimedRewards: state.claimedRewards ?? {} };
   }
 
-  /**
-   * Low-level additive award. Use claimSparkles for rewards that must only be
-   * granted once for a specific achievement, ritual, or activity completion.
-   */
+  /** Low-level additive award for intentionally repeatable rewards. */
   static async awardSparkles(amount: number, reason: string): Promise<EconomyState> {
     if (!Number.isFinite(amount) || amount <= 0) throw new Error('Sparkle award amount must be positive');
     const state = await this.getEconomyState();
@@ -55,23 +52,32 @@ export class EconomyEngine {
     return updated;
   }
 
-  /** Atomically persists a durable claim key with its reward in one economy write. */
+  /**
+   * Claims a one-time reward. Durable keys survive remounts; pendingClaims closes
+   * the same-runtime async race between two rapid presses before persistence finishes.
+   */
   static async claimSparkles(claimKey: string, amount: number, reason: string): Promise<SparkleClaimResult> {
     if (!claimKey.trim()) throw new Error('Reward claim key is required');
     if (!Number.isFinite(amount) || amount <= 0) throw new Error('Sparkle claim amount must be positive');
+    if (this.pendingClaims.has(claimKey)) return { claimed: false, state: await this.getEconomyState() };
 
-    const state = await this.getEconomyState();
-    const claimedRewards = state.claimedRewards ?? {};
-    if (claimedRewards[claimKey]) return { claimed: false, state };
+    this.pendingClaims.add(claimKey);
+    try {
+      const state = await this.getEconomyState();
+      const claimedRewards = state.claimedRewards ?? {};
+      if (claimedRewards[claimKey]) return { claimed: false, state };
 
-    const updated: EconomyState = {
-      ...state,
-      sparkles: state.sparkles + amount,
-      totalEarned: state.totalEarned + amount,
-      claimedRewards: { ...claimedRewards, [claimKey]: Date.now() },
-    };
-    await LocalStore.set('economy_state', updated);
-    return { claimed: true, state: updated };
+      const updated: EconomyState = {
+        ...state,
+        sparkles: state.sparkles + amount,
+        totalEarned: state.totalEarned + amount,
+        claimedRewards: { ...claimedRewards, [claimKey]: Date.now() },
+      };
+      await LocalStore.set('economy_state', updated);
+      return { claimed: true, state: updated };
+    } finally {
+      this.pendingClaims.delete(claimKey);
+    }
   }
 
   static async purchaseItem(itemId: string): Promise<{ success: boolean; error?: string; state: EconomyState }> {
@@ -79,12 +85,10 @@ export class EconomyEngine {
     const shopItem = SEED_SHOP_ITEMS.find((i) => i.id === itemId);
     if (!shopItem) return { success: false, error: 'Item not found in catalog', state };
     if (state.sparkles < shopItem.costSparkles) return { success: false, error: 'Not enough sparkles', state };
-
     const existingIndex = state.inventory.findIndex((i) => i.id === itemId);
     const newInventory = [...state.inventory];
     if (existingIndex >= 0) newInventory[existingIndex] = { ...newInventory[existingIndex], quantity: newInventory[existingIndex].quantity + 1 };
     else newInventory.push({ ...shopItem, quantity: 1 });
-
     const updatedState: EconomyState = { ...state, sparkles: state.sparkles - shopItem.costSparkles, inventory: newInventory };
     await LocalStore.set('economy_state', updatedState);
     await LocalStore.addJourneyEvent('item_purchased', { itemId, name: shopItem.name, cost: shopItem.costSparkles }, 'economy_engine');
