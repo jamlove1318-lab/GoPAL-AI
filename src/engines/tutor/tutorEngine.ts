@@ -182,12 +182,13 @@ export class TutorEngine {
       };
     }
 
-    // Fallback encouraging score
+    // Unmatched input is an attempt, not a correct answer.
     return {
-      isCorrect: true,
-      score: 80,
-      feedback: 'Good attempt! Notice how native speakers also use: ' + step.sampleResponses[0].text,
+      isCorrect: false,
+      score: 40,
+      feedback: 'Good attempt! Your meaning may be understandable, but try one of these natural patterns: ' + step.sampleResponses[0].text,
       cassidyHint: step.hint,
+      suggestedFollowUp: 'Try again using the hint, or choose a sample phrase as a model.',
     };
   }
 
