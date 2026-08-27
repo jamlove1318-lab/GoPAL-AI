@@ -13,6 +13,7 @@ import { CharacterScreen } from './src/features/characters/screens/CharacterScre
 import { SettingsScreen } from './src/features/settings/screens/SettingsScreen';
 import { LearningScenarioModal } from './src/features/learning/screens/LearningScenarioModal';
 import { LivingCompanion } from './src/components/LivingCompanion';
+import { LivingWorldPulse } from './src/components/LivingWorldPulse';
 import { AmbientBackground } from './src/components/AmbientBackground';
 import { loadCassidySnapshot, worldIntensity, CassidySnapshot } from './src/characters/cassidyContext';
 import { startLivingWorldReactor } from './src/engines';
@@ -84,6 +85,7 @@ export default function App() {
       <View className="flex-1 bg-slate-950">
         <StatusBar style="light" />
         <AmbientBackground intensity={worldIntensity(snapshot)} />
+        <LivingWorldPulse />
         <Animated.View className="flex-1" style={{ opacity: screenMotion, transform: [{ translateY: screenMotion.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }] }}>
           {renderActiveScreen()}
         </Animated.View>
