@@ -1,4 +1,5 @@
 import { LocalStore } from '../../lib/localStore';
+import { EconomyEngine } from '../economy/economyEngine';
 
 export type QuestCategory =
   | 'daily'
@@ -23,59 +24,29 @@ export interface Quest {
 
 export const SEED_QUESTS: Quest[] = [
   {
-    id: 'qst-1',
-    category: 'daily',
-    title: 'Morning Greetings',
+    id: 'qst-1', category: 'daily', title: 'Morning Greetings',
     description: 'Greet Barista Ren or Wisdom Keeper Emi in an interactive dialogue scenario.',
-    targetCount: 1,
-    currentCount: 1,
-    completed: true,
-    rewardSparkles: 25,
-    rewardStamp: '🍵 Komorebi Cup',
+    targetCount: 1, currentCount: 1, completed: true, rewardSparkles: 25, rewardStamp: '🍵 Komorebi Cup',
   },
   {
-    id: 'qst-2',
-    category: 'conversation',
-    title: 'Natural Orders',
+    id: 'qst-2', category: 'conversation', title: 'Natural Orders',
     description: 'Order a beverage at Café Komorebi and score 80%+ on conversational naturalness.',
-    targetCount: 1,
-    currentCount: 1,
-    completed: true,
-    rewardSparkles: 50,
-    rewardStamp: '✨ Conversationalist',
+    targetCount: 1, currentCount: 1, completed: true, rewardSparkles: 50, rewardStamp: '✨ Conversationalist',
   },
   {
-    id: 'qst-3',
-    category: 'cultural',
-    title: 'The Whisk Mystery',
+    id: 'qst-3', category: 'cultural', title: 'The Whisk Mystery',
     description: 'Inspect the Artisan Bamboo Whisk (Chasen) and solve its Wonder Prompt.',
-    targetCount: 1,
-    currentCount: 0,
-    completed: false,
-    rewardSparkles: 40,
-    rewardStamp: '🎋 Bamboo Master',
+    targetCount: 1, currentCount: 0, completed: false, rewardSparkles: 40, rewardStamp: '🎋 Bamboo Master',
   },
   {
-    id: 'qst-4',
-    category: 'exploration',
-    title: 'Emerald Valley Traveler',
+    id: 'qst-4', category: 'exploration', title: 'Emerald Valley Traveler',
     description: 'Travel to 3 different locations across the living world map.',
-    targetCount: 3,
-    currentCount: 2,
-    completed: false,
-    rewardSparkles: 60,
-    rewardStamp: '🧭 Valley Explorer',
+    targetCount: 3, currentCount: 2, completed: false, rewardSparkles: 60, rewardStamp: '🧭 Valley Explorer',
   },
   {
-    id: 'qst-5',
-    category: 'personal',
-    title: 'Mindful Care',
+    id: 'qst-5', category: 'personal', title: 'Mindful Care',
     description: 'Water your Bonsai plant in the Sunlit Study room today.',
-    targetCount: 1,
-    currentCount: 1,
-    completed: true,
-    rewardSparkles: 20,
-    rewardStamp: '🪴 Green Thumb',
+    targetCount: 1, currentCount: 1, completed: true, rewardSparkles: 20, rewardStamp: '🪴 Green Thumb',
   },
 ];
 
@@ -88,13 +59,21 @@ export class QuestEngine {
     const quests = await this.getQuests();
     const target = quests.find((q) => q.id === questId);
 
-    // Completion is idempotent: retries must not create duplicate journey events.
+    // Completion is idempotent: retries cannot create another quest event or reward.
     if (!target || target.completed) return quests;
 
     const updated = quests.map((q) =>
       q.id === questId ? { ...q, completed: true, currentCount: q.targetCount } : q
     );
     await LocalStore.set('user_quests', updated);
+
+    // The quest engine owns the reward side effect. The durable claim key makes
+    // reward delivery safe across remounts/restarts as well as repeated calls.
+    await EconomyEngine.claimSparkles(
+      `quest:${target.id}`,
+      target.rewardSparkles,
+      `Quest completion: ${target.title}`
+    );
 
     await LocalStore.addJourneyEvent(
       'quest_completed',
