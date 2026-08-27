@@ -43,7 +43,6 @@ export function LearningScenarioModal({ visible, scenarioKey, onClose }: Learnin
         }
         await new JourneyEngine().earnSouvenir(`Conversation: ${activeScenario.title}`, 'memory', `Held a full dialogue with ${activeScenario.characterName} at ${activeScenario.locationName}.`);
         await WaveStore.recordDecision(`Completed "${activeScenario.title}" and chose to follow it through.`);
-        await WaveStore.tickLivingObject('living-bonsai', `Grew after "${activeScenario.title}".`);
         eventBus.emit('learning:sessionCompleted', { sessionId: activeScenario.id, accuracy: evaluation?.accuracy ?? 0, activityType: 'real-world-dialogue' }, 'learning');
       })();
     }
