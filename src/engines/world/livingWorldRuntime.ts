@@ -11,6 +11,16 @@ export interface ReturnMoment {
   message: string;
 }
 
+export type AmbientLifeCue =
+  | 'birds'
+  | 'fireflies'
+  | 'rain'
+  | 'snow'
+  | 'falling-leaves'
+  | 'evening-lanterns'
+  | 'night-wind'
+  | 'morning-breeze';
+
 /** The read-model composing domain engines into one coherent living-world state. */
 export interface WorldSnapshot {
   generatedAt: string;
@@ -22,6 +32,7 @@ export interface WorldSnapshot {
   season: Season;
   weather: string;
   ambientAudioKey: string;
+  ambientLife: AmbientLifeCue[];
   lastActiveAt: string;
   elapsedMs: number;
   continuity: ContinuityResult;
@@ -41,7 +52,14 @@ export class LivingWorldRuntime {
     if (!world) return null;
     const continuity = computeContinuity(world.lastActiveAt, now);
     const environment = this.environmentEngine.resolve(now, world.weather);
-    const cassidy = options.includeCassidy === false ? emptyCassidySnapshot() : await loadCassidySnapshot();
+    let cassidy = emptyCassidySnapshot();
+    if (options.includeCassidy !== false) {
+      try {
+        cassidy = await loadCassidySnapshot();
+      } catch {
+        // A secondary companion subsystem must not prevent the learner from entering the world.
+      }
+    }
     const snapshot = this.compose(world, environment, continuity, cassidy, now);
     eventBus.emit('world:returned', { userId, lastActiveAt: world.lastActiveAt }, 'world');
     return snapshot;
@@ -63,6 +81,7 @@ export class LivingWorldRuntime {
       season: environment.season,
       weather: environment.weather,
       ambientAudioKey: this.environmentEngine.ambientAudioKey(environment),
+      ambientLife: resolveAmbientLife(environment.timeOfDay, environment.season, environment.weather),
       lastActiveAt: world.lastActiveAt,
       elapsedMs: continuity.elapsedMs,
       continuity,
@@ -70,6 +89,20 @@ export class LivingWorldRuntime {
       returnMoment: selectReturnMoment(continuity, cassidy),
     };
   }
+}
+
+function resolveAmbientLife(timeOfDay: TimeOfDay, season: Season, weather: string): AmbientLifeCue[] {
+  const cues: AmbientLifeCue[] = [];
+  const normalizedWeather = weather.toLowerCase();
+  const rainy = /rain|storm|drizzle/.test(normalizedWeather);
+  const snowy = /snow/.test(normalizedWeather) || season === 'winter';
+  if (rainy) cues.push('rain');
+  if (snowy) cues.push('snow');
+  if (season === 'autumn') cues.push('falling-leaves');
+  if (timeOfDay === 'morning' && !rainy && !snowy) cues.push('birds', 'morning-breeze');
+  if (timeOfDay === 'evening') cues.push('evening-lanterns');
+  if (timeOfDay === 'night') cues.push('fireflies', 'night-wind');
+  return cues;
 }
 
 function selectReturnMoment(continuity: ContinuityResult, cassidy: CassidySnapshot): ReturnMoment {
