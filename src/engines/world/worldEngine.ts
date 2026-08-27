@@ -24,58 +24,56 @@ export interface WorldStatePatch {
 }
 
 export class WorldEngine {
+  private async loadLocalState(): Promise<ResolvedWorldState> {
+    const state = await LocalStore.getWorldState();
+    const locations = await LocalStore.getLocations();
+    const currentLocation = locations.find((l) => l.id === state.location_id) ?? locations[0] ?? null;
+    return {
+      world: SEED_WORLD,
+      location: currentLocation,
+      timeOfDay: state.time_of_day,
+      season: state.season,
+      weather: state.weather,
+      lastActiveAt: state.last_active_at,
+    };
+  }
+
   async loadState(userId: string): Promise<ResolvedWorldState | null> {
-    if (!isSupabaseConfigured) {
-      const state = await LocalStore.getWorldState();
-      const locations = await LocalStore.getLocations();
-      const currentLocation = locations.find((l) => l.id === state.location_id) ?? locations[0] ?? null;
-      return {
-        world: SEED_WORLD,
-        location: currentLocation,
-        timeOfDay: state.time_of_day,
-        season: state.season,
-        weather: state.weather,
-        lastActiveAt: state.last_active_at,
-      };
-    }
+    if (!isSupabaseConfigured) return this.loadLocalState();
 
     try {
-      const { data: state } = await supabase
+      const { data: state, error: stateError } = await supabase
         .from('world_state')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();
-
+      if (stateError) throw stateError;
       if (!state) return null;
 
-      const { data: world } = state.world_id
-        ? await supabase.from('worlds').select('*').eq('id', state.world_id).maybeSingle()
-        : { data: null };
+      let world: WorldsRow | null = null;
+      if (state.world_id) {
+        const result = await supabase.from('worlds').select('*').eq('id', state.world_id).maybeSingle();
+        if (result.error) throw result.error;
+        world = result.data;
+      }
 
-      const { data: location } = state.location_id
-        ? await supabase.from('locations').select('*').eq('id', state.location_id).maybeSingle()
-        : { data: null };
+      let location: LocationsRow | null = null;
+      if (state.location_id) {
+        const result = await supabase.from('locations').select('*').eq('id', state.location_id).maybeSingle();
+        if (result.error) throw result.error;
+        location = result.data;
+      }
 
       return {
         world: world ?? SEED_WORLD,
-        location: location ?? null,
+        location,
         timeOfDay: state.time_of_day,
         season: state.season,
         weather: state.weather,
         lastActiveAt: state.last_active_at,
       };
     } catch {
-      const state = await LocalStore.getWorldState();
-      const locations = await LocalStore.getLocations();
-      const currentLocation = locations.find((l) => l.id === state.location_id) ?? locations[0] ?? null;
-      return {
-        world: SEED_WORLD,
-        location: currentLocation,
-        timeOfDay: state.time_of_day,
-        season: state.season,
-        weather: state.weather,
-        lastActiveAt: state.last_active_at,
-      };
+      return this.loadLocalState();
     }
   }
 
@@ -85,46 +83,48 @@ export class WorldEngine {
 
     const timeOfDay = resolveTimeOfDay();
     const season = resolveSeason();
+    const now = new Date().toISOString();
+    const initialPatch: Partial<WorldStateRow> = {
+      world_id: worldId,
+      location_id: locationId,
+      time_of_day: timeOfDay,
+      season,
+      weather: 'gentle_breeze',
+      last_active_at: now,
+      daily_refresh_token: '',
+    };
 
     if (!isSupabaseConfigured) {
-      await LocalStore.saveWorldState({
-        world_id: worldId,
-        location_id: locationId,
-        time_of_day: timeOfDay,
-        season,
-        weather: 'gentle_breeze',
-        last_active_at: new Date().toISOString(),
-      });
-      return (await this.loadState(userId))!;
+      await LocalStore.saveWorldState(initialPatch);
+      return this.loadLocalState();
     }
 
     try {
-      await supabase.from('world_state').upsert({
+      const { error } = await supabase.from('world_state').upsert({
         user_id: userId,
-        world_id: worldId,
-        location_id: locationId,
-        time_of_day: timeOfDay,
-        season,
-        weather: 'gentle_breeze',
-        last_active_at: new Date().toISOString(),
-        daily_refresh_token: '',
-        updated_at: new Date().toISOString(),
+        ...initialPatch,
+        updated_at: now,
       });
-      return (await this.loadState(userId))!;
+      if (error) throw error;
+
+      const state = await this.loadState(userId);
+      if (state) return state;
+      throw new Error('World state was not readable after initialization.');
     } catch {
-      return (await this.loadState(userId))!;
+      await LocalStore.saveWorldState(initialPatch);
+      return this.loadLocalState();
     }
   }
 
   async saveState(userId: string, patch: WorldStatePatch): Promise<void> {
     const snakePatch: Partial<WorldStateRow> = {
-      ...(patch.worldId ? { world_id: patch.worldId } : {}),
-      ...(patch.locationId ? { location_id: patch.locationId } : {}),
-      ...(patch.timeOfDay ? { time_of_day: patch.timeOfDay } : {}),
-      ...(patch.season ? { season: patch.season } : {}),
-      ...(patch.weather ? { weather: patch.weather } : {}),
-      ...(patch.dailyRefreshToken ? { daily_refresh_token: patch.dailyRefreshToken } : {}),
-      ...(patch.lastActiveAt ? { last_active_at: patch.lastActiveAt } : {}),
+      ...(patch.worldId !== undefined ? { world_id: patch.worldId } : {}),
+      ...(patch.locationId !== undefined ? { location_id: patch.locationId } : {}),
+      ...(patch.timeOfDay !== undefined ? { time_of_day: patch.timeOfDay } : {}),
+      ...(patch.season !== undefined ? { season: patch.season } : {}),
+      ...(patch.weather !== undefined ? { weather: patch.weather } : {}),
+      ...(patch.dailyRefreshToken !== undefined ? { daily_refresh_token: patch.dailyRefreshToken } : {}),
+      ...(patch.lastActiveAt !== undefined ? { last_active_at: patch.lastActiveAt } : {}),
     };
 
     if (!isSupabaseConfigured) {
@@ -133,21 +133,22 @@ export class WorldEngine {
     }
 
     try {
-      await supabase
+      const { error } = await supabase
         .from('world_state')
         .upsert({ user_id: userId, ...snakePatch, updated_at: new Date().toISOString() });
+      if (error) throw error;
     } catch {
       await LocalStore.saveWorldState(snakePatch);
     }
   }
 
   async listLocations(worldId: string): Promise<LocationsRow[]> {
-    if (!isSupabaseConfigured) {
-      return LocalStore.getLocations();
-    }
+    if (!isSupabaseConfigured) return LocalStore.getLocations();
+
     try {
-      const { data } = await supabase.from('locations').select('*').eq('world_id', worldId);
-      return data && data.length ? data : LocalStore.getLocations();
+      const { data, error } = await supabase.from('locations').select('*').eq('world_id', worldId);
+      if (error) throw error;
+      return data ?? [];
     } catch {
       return LocalStore.getLocations();
     }
@@ -157,11 +158,6 @@ export class WorldEngine {
     await this.saveState(userId, { locationId });
   }
 
-  /* ------------------------------------------------------------
-   * Wave 5C: STORY LAYERS IN SPACE
-   * Every location carries four optional layers rather than duplicate
-   * versions for every story/learner.
-   * ------------------------------------------------------------ */
   async getStoryLayer(locationKey: string): Promise<StoryLayerState | null> {
     return WaveStore.getStoryLayer(locationKey);
   }
@@ -170,12 +166,6 @@ export class WorldEngine {
     return WaveStore.saveStoryLayer(layer);
   }
 
-  /* ------------------------------------------------------------
-   * Wave 5Y: REVISIT DIFFERENCE SYSTEM
-   * When revisiting, surface subtle differences from familiarity,
-   * time since last visit, changed knowledge, and story state.
-   * Deterministic and explicit — the location stays recognizable.
-   * ------------------------------------------------------------ */
   async getRevisitDifference(locationKey: string): Promise<{ note: string | null; visitCount: number }> {
     const stats = await LocalStore.getRevisitStats();
     const rec = stats[locationKey];
