@@ -5,29 +5,13 @@ import { eventBus } from '../events/eventBus';
 import { loadCassidySnapshot, type CassidySnapshot } from '../../characters/cassidyContext';
 import type { TimeOfDay, Season } from '../../lib/types';
 
-export interface ReturnMoment { kind: 'none' | 'welcome' | 'continuity' | 'discovery'; title: string; message: string; }
+export interface ReturnMoment { kind: 'none' | 'welcome' | 'continuity' | 'discovery'; title: string; message: string; action?: 'wander' | 'learn' | 'cassidy' | 'journey'; }
 export type AmbientLifeCue = 'birds' | 'fireflies' | 'rain' | 'snow' | 'falling-leaves' | 'evening-lanterns' | 'night-wind' | 'morning-breeze';
-
-/** The read-model composing domain engines into one coherent living-world state. */
 export interface WorldSnapshot {
-  generatedAt: string;
-  resolved: ResolvedWorldState;
-  worldId: string | null;
-  worldName: string | null;
-  locationId: string | null;
-  locationName: string | null;
-  timeOfDay: TimeOfDay;
-  season: Season;
-  weather: string;
-  ambientAudioKey: string;
-  ambientLife: AmbientLifeCue[];
-  lastActiveAt: string;
-  elapsedMs: number;
-  continuity: ContinuityResult;
-  cassidy: CassidySnapshot;
-  returnMoment: ReturnMoment;
+  generatedAt: string; resolved: ResolvedWorldState; worldId: string | null; worldName: string | null; locationId: string | null; locationName: string | null;
+  timeOfDay: TimeOfDay; season: Season; weather: string; ambientAudioKey: string; ambientLife: AmbientLifeCue[]; lastActiveAt: string; elapsedMs: number;
+  continuity: ContinuityResult; cassidy: CassidySnapshot; returnMoment: ReturnMoment;
 }
-
 export interface LivingWorldLoadOptions { now?: Date; includeCassidy?: boolean; }
 
 export class LivingWorldRuntime {
@@ -63,14 +47,10 @@ export class LivingWorldRuntime {
 
   private compose(world: ResolvedWorldState, environment: EnvironmentContext, continuity: ContinuityResult, cassidy: CassidySnapshot, now: Date): WorldSnapshot {
     return {
-      generatedAt: now.toISOString(), resolved: world,
-      worldId: world.world?.id ?? null, worldName: world.world?.display_name ?? null,
-      locationId: world.location?.id ?? null, locationName: world.location?.name ?? null,
-      timeOfDay: environment.timeOfDay, season: environment.season, weather: environment.weather,
-      ambientAudioKey: this.environmentEngine.ambientAudioKey(environment),
-      ambientLife: resolveAmbientLife(environment.timeOfDay, environment.season, environment.weather),
-      lastActiveAt: world.lastActiveAt, elapsedMs: continuity.elapsedMs, continuity, cassidy,
-      returnMoment: selectReturnMoment(continuity, cassidy),
+      generatedAt: now.toISOString(), resolved: world, worldId: world.world?.id ?? null, worldName: world.world?.display_name ?? null,
+      locationId: world.location?.id ?? null, locationName: world.location?.name ?? null, timeOfDay: environment.timeOfDay, season: environment.season,
+      weather: environment.weather, ambientAudioKey: this.environmentEngine.ambientAudioKey(environment), ambientLife: resolveAmbientLife(environment.timeOfDay, environment.season, environment.weather),
+      lastActiveAt: world.lastActiveAt, elapsedMs: continuity.elapsedMs, continuity, cassidy, returnMoment: selectReturnMoment(continuity, cassidy),
     };
   }
 }
@@ -80,21 +60,16 @@ function resolveAmbientLife(timeOfDay: TimeOfDay, season: Season, weather: strin
   const normalizedWeather = weather.toLowerCase();
   const rainy = /rain|storm|drizzle/.test(normalizedWeather);
   const snowy = /snow/.test(normalizedWeather) || season === 'winter';
-  if (rainy) cues.push('rain');
-  if (snowy) cues.push('snow');
-  if (season === 'autumn') cues.push('falling-leaves');
+  if (rainy) cues.push('rain'); if (snowy) cues.push('snow'); if (season === 'autumn') cues.push('falling-leaves');
   if (timeOfDay === 'morning' && !rainy && !snowy) cues.push('birds', 'morning-breeze');
-  if (timeOfDay === 'evening') cues.push('evening-lanterns');
-  if (timeOfDay === 'night') cues.push('fireflies', 'night-wind');
+  if (timeOfDay === 'evening') cues.push('evening-lanterns'); if (timeOfDay === 'night') cues.push('fireflies', 'night-wind');
   return cues;
 }
 
 function selectReturnMoment(continuity: ContinuityResult, cassidy: CassidySnapshot): ReturnMoment {
-  if (continuity.newDay || continuity.isNewSeason) return { kind: 'continuity', title: 'Welcome back', message: continuity.recap[0] ?? 'Your world continued while you were away.' };
-  if (cassidy.souvenirs > 0 || cassidy.threads > 0) return { kind: 'discovery', title: 'Something is waiting for you', message: 'There is a thread of your journey worth revisiting.' };
-  return { kind: 'welcome', title: 'You are back', message: 'Your world is here, exactly where you left it.' };
+  if (continuity.newDay || continuity.isNewSeason) return { kind: 'continuity', title: 'Welcome back', message: continuity.recap[0] ?? 'Your world continued while you were away.', action: 'wander' };
+  if (cassidy.souvenirs > 0 || cassidy.threads > 0) return { kind: 'discovery', title: 'Something is waiting for you', message: 'There is a thread of your journey worth revisiting.', action: 'journey' };
+  return { kind: 'welcome', title: 'You are back', message: 'Your world is here, exactly where you left it.', action: 'wander' };
 }
 
-function emptyCassidySnapshot(): CassidySnapshot {
-  return { returns: 0, lastMode: null, echoes: 0, worldEchoes: 0, souvenirs: 0, threads: 0, decisions: 0, bonsaiGrowth: 0, radioGrowth: 0 };
-}
+function emptyCassidySnapshot(): CassidySnapshot { return { returns: 0, lastMode: null, echoes: 0, worldEchoes: 0, souvenirs: 0, threads: 0, decisions: 0, bonsaiGrowth: 0, radioGrowth: 0 }; }
