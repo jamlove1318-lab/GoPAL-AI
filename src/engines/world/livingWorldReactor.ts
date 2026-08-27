@@ -34,6 +34,10 @@ export function startLivingWorldReactor(): () => void {
   const offAchievement = eventBus.on('achievement:earned', () =>
     void react('living-bonsai', 'Grew after an achievement was earned.'),
   );
+  const offTravel = eventBus.on('world:locationChanged', ({ locationId, previousLocationId }) => {
+    if (locationId === previousLocationId) return;
+    void react('living-radio', `Recorded a journey to ${locationId}.`);
+  });
 
   return () => {
     offLearning();
@@ -41,6 +45,7 @@ export function startLivingWorldReactor(): () => void {
     offReturn();
     offConversation();
     offAchievement();
+    offTravel();
     started = false;
   };
 }
