@@ -7,14 +7,13 @@ import { TutorEngine } from '../../../engines/tutor/tutorEngine';
 import { LocalStore } from '../../../lib/localStore';
 import { WaveStore } from '../../../lib/waveStore';
 import { eventBus } from '../../../engines/events/eventBus';
-import { Cassidy } from '../../../characters/cassidy';
 import { CassidyCharacter } from '../../../components/CassidyCharacter';
-import { X, Sparkles, Send, CheckCircle, HelpCircle, Award, ChevronRight, MessageCircle } from 'lucide-react-native';
+import { X, Send, CheckCircle, HelpCircle, Award, ChevronRight } from 'lucide-react-native';
 
 interface LearningScenarioModalProps { visible: boolean; scenarioKey: string; onClose: () => void; }
 
 export function LearningScenarioModal({ visible, scenarioKey, onClose }: LearningScenarioModalProps) {
-  const { isSessionActive, activeScenario, currentStep, currentStepIndex, totalSteps, evaluation, sessionCompleted, startScenario, submitResponse, nextStep, endSession } = useLearningSession();
+  const { activeScenario, currentStep, currentStepIndex, totalSteps, evaluation, sessionCompleted, startScenario, submitResponse, nextStep, endSession } = useLearningSession();
   const [inputVal, setInputVal] = useState('');
   const [showHint, setShowHint] = useState(false);
   const [showTranslation, setShowTranslation] = useState(true);
@@ -45,7 +44,7 @@ export function LearningScenarioModal({ visible, scenarioKey, onClose }: Learnin
         await new JourneyEngine().earnSouvenir(`Conversation: ${activeScenario.title}`, 'memory', `Held a full dialogue with ${activeScenario.characterName} at ${activeScenario.locationName}.`);
         await WaveStore.recordDecision(`Completed "${activeScenario.title}" and chose to follow it through.`);
         await WaveStore.tickLivingObject('living-bonsai', `Grew after "${activeScenario.title}".`);
-        eventBus.emit('learning:sessionCompleted', { scenarioId: activeScenario.id, accuracy: evaluation?.accuracy ?? 0, xpEarned: evaluation?.xpEarned ?? 0 }, 'learning');
+        eventBus.emit('learning:sessionCompleted', { sessionId: activeScenario.id, accuracy: evaluation?.accuracy ?? 0, activityType: 'real-world-dialogue' }, 'learning');
       })();
     }
   }, [sessionCompleted, activeScenario, evaluation]);
