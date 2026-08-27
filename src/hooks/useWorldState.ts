@@ -22,8 +22,7 @@ export function useWorldState() {
         setSnapshot(worldSnapshot);
         setState(worldSnapshot.resolved);
         setContinuity(worldSnapshot.continuity);
-        // Persist the return timestamp only after the snapshot has been composed,
-        // so the next visit can see the real gap between sessions.
+        // Persist only after the snapshot is composed so the next visit sees the real gap.
         await livingWorldRuntime.markActive(uid);
       } else {
         setSnapshot(null);
@@ -51,10 +50,15 @@ export function useWorldState() {
   const changeLocation = useCallback(
     async (locationId: string) => {
       if (!userId || !state) return;
-      await livingWorldRuntime['worldEngine'].setLocation(userId, locationId);
-      await load(userId);
+      const nextSnapshot = await livingWorldRuntime.changeLocation(userId, locationId);
+      if (nextSnapshot) {
+        setSnapshot(nextSnapshot);
+        setState(nextSnapshot.resolved);
+        setContinuity(nextSnapshot.continuity);
+        await livingWorldRuntime.markActive(userId);
+      }
     },
-    [userId, state, load]
+    [userId, state]
   );
 
   return {
@@ -62,7 +66,7 @@ export function useWorldState() {
     snapshot,
     loading,
     continuity,
-    worldEngine: livingWorldRuntime['worldEngine'],
+    worldEngine: livingWorldRuntime.world,
     changeLocation,
     refresh: () => load(userId),
   };
