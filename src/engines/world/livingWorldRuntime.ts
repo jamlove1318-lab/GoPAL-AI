@@ -11,11 +11,7 @@ export interface ReturnMoment {
   message: string;
 }
 
-/**
- * The read-model of GoPAL-AI's living world.
- * Engines continue to own domain state. This runtime composes their current
- * state into one coherent snapshot for the experience layer.
- */
+/** The read-model composing domain engines into one coherent living-world state. */
 export interface WorldSnapshot {
   generatedAt: string;
   worldId: string | null;
@@ -33,10 +29,7 @@ export interface WorldSnapshot {
   returnMoment: ReturnMoment;
 }
 
-export interface LivingWorldLoadOptions {
-  now?: Date;
-  includeCassidy?: boolean;
-}
+export interface LivingWorldLoadOptions { now?: Date; includeCassidy?: boolean; }
 
 export class LivingWorldRuntime {
   private readonly worldEngine = new WorldEngine();
@@ -46,47 +39,24 @@ export class LivingWorldRuntime {
     const now = options.now ?? new Date();
     const world = await this.worldEngine.loadState(userId);
     if (!world) return null;
-
     const continuity = computeContinuity(world.lastActiveAt, now);
     const environment = this.environmentEngine.resolve(now, world.weather);
-    const cassidy = options.includeCassidy === false
-      ? emptyCassidySnapshot()
-      : await loadCassidySnapshot();
+    const cassidy = options.includeCassidy === false ? emptyCassidySnapshot() : await loadCassidySnapshot();
     const snapshot = this.compose(world, environment, continuity, cassidy, now);
-
-    // Arrival is a real world event. Other engines may observe it without the
-    // runtime needing to know how they choose to react.
-    eventBus.emit('world:returned', {
-      userId,
-      lastActiveAt: world.lastActiveAt,
-    }, 'world');
-
+    eventBus.emit('world:returned', { userId, lastActiveAt: world.lastActiveAt }, 'world');
     return snapshot;
   }
 
-  /** Persist the fact that the learner has returned after the snapshot exists. */
   async markActive(userId: string, now: Date = new Date()): Promise<void> {
     const environment = this.environmentEngine.resolve(now);
-    await this.worldEngine.saveState(userId, {
-      timeOfDay: environment.timeOfDay,
-      season: environment.season,
-      lastActiveAt: now.toISOString(),
-    });
+    await this.worldEngine.saveState(userId, { timeOfDay: environment.timeOfDay, season: environment.season, lastActiveAt: now.toISOString() });
   }
 
-  private compose(
-    world: ResolvedWorldState,
-    environment: EnvironmentContext,
-    continuity: ContinuityResult,
-    cassidy: CassidySnapshot,
-    now: Date,
-  ): WorldSnapshot {
-    const returnMoment = selectReturnMoment(continuity, cassidy);
-
+  private compose(world: ResolvedWorldState, environment: EnvironmentContext, continuity: ContinuityResult, cassidy: CassidySnapshot, now: Date): WorldSnapshot {
     return {
       generatedAt: now.toISOString(),
       worldId: world.world?.id ?? null,
-      worldName: world.world?.name ?? null,
+      worldName: world.world?.display_name ?? null,
       locationId: world.location?.id ?? null,
       locationName: world.location?.name ?? null,
       timeOfDay: environment.timeOfDay,
@@ -97,46 +67,17 @@ export class LivingWorldRuntime {
       elapsedMs: continuity.elapsedMs,
       continuity,
       cassidy,
-      returnMoment,
+      returnMoment: selectReturnMoment(continuity, cassidy),
     };
   }
 }
 
 function selectReturnMoment(continuity: ContinuityResult, cassidy: CassidySnapshot): ReturnMoment {
-  if (continuity.newDay || continuity.isNewSeason) {
-    const detail = continuity.recap[0] ?? 'Your world continued while you were away.';
-    return {
-      kind: 'continuity',
-      title: 'Welcome back',
-      message: detail,
-    };
-  }
-
-  if (cassidy.souvenirs > 0 || cassidy.threads > 0) {
-    return {
-      kind: 'discovery',
-      title: 'Something is waiting for you',
-      message: 'There is a thread of your journey worth revisiting.',
-    };
-  }
-
-  return {
-    kind: 'welcome',
-    title: 'You are back',
-    message: 'Your world is here, exactly where you left it.',
-  };
+  if (continuity.newDay || continuity.isNewSeason) return { kind: 'continuity', title: 'Welcome back', message: continuity.recap[0] ?? 'Your world continued while you were away.' };
+  if (cassidy.souvenirs > 0 || cassidy.threads > 0) return { kind: 'discovery', title: 'Something is waiting for you', message: 'There is a thread of your journey worth revisiting.' };
+  return { kind: 'welcome', title: 'You are back', message: 'Your world is here, exactly where you left it.' };
 }
 
 function emptyCassidySnapshot(): CassidySnapshot {
-  return {
-    returns: 0,
-    lastMode: null,
-    echoes: 0,
-    worldEchoes: 0,
-    souvenirs: 0,
-    threads: 0,
-    decisions: 0,
-    bonsaiGrowth: 0,
-    radioGrowth: 0,
-  };
+  return { returns: 0, lastMode: null, echoes: 0, worldEchoes: 0, souvenirs: 0, threads: 0, decisions: 0, bonsaiGrowth: 0, radioGrowth: 0 };
 }
