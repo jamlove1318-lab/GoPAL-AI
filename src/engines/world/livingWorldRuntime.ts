@@ -24,6 +24,7 @@ export type AmbientLifeCue =
 /** The read-model composing domain engines into one coherent living-world state. */
 export interface WorldSnapshot {
   generatedAt: string;
+  resolved: ResolvedWorldState;
   worldId: string | null;
   worldName: string | null;
   locationId: string | null;
@@ -73,6 +74,7 @@ export class LivingWorldRuntime {
   private compose(world: ResolvedWorldState, environment: EnvironmentContext, continuity: ContinuityResult, cassidy: CassidySnapshot, now: Date): WorldSnapshot {
     return {
       generatedAt: now.toISOString(),
+      resolved: world,
       worldId: world.world?.id ?? null,
       worldName: world.world?.display_name ?? null,
       locationId: world.location?.id ?? null,
