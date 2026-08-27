@@ -1,6 +1,6 @@
 import './global.css';
-import React, { useState } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, Pressable, Animated, Easing } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -21,6 +21,28 @@ import { worldIntensity } from './src/characters/cassidyContext';
 import { ArrowLeft, BookOpen, Compass, Heart, Image as ImageIcon, Settings as SettingsIcon, Sparkles, Users } from 'lucide-react-native';
 
 type TabKey = 'sanctuary' | 'cassidy' | 'study' | 'world' | 'journey' | 'museum' | 'characters' | 'settings';
+
+function AliveNavButton({ label, onPress, children, active = false, pulse = false }: { label: string; onPress: () => void; children: React.ReactNode; active?: boolean; pulse?: boolean }) {
+  const breathe = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!pulse) return;
+    const animation = Animated.loop(Animated.sequence([
+      Animated.timing(breathe, { toValue: 1, duration: 1700, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      Animated.timing(breathe, { toValue: 0, duration: 1700, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+    ]));
+    animation.start();
+    return () => animation.stop();
+  }, [breathe, pulse]);
+  const scale = breathe.interpolate({ inputRange: [0, 1], outputRange: [1, 1.045] });
+  return (
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Pressable onPress={onPress} className={`items-center rounded-2xl px-3 py-1.5 ${active ? 'bg-white/10' : ''}`}>
+        {children}
+        <Text className={`mt-1 text-[9px] ${active ? 'font-semibold text-white' : 'text-slate-400'}`}>{label}</Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabKey>('sanctuary');
@@ -52,7 +74,12 @@ export default function App() {
     <SafeAreaProvider>
       <View className="flex-1 bg-slate-950">
         <StatusBar style="light" />
-        <AmbientBackground intensity={worldIntensity(snapshot?.cassidy ?? null)} />
+        <AmbientBackground
+          intensity={worldIntensity(snapshot?.cassidy ?? null)}
+          timeOfDay={snapshot?.timeOfDay}
+          weather={snapshot?.weather}
+          season={snapshot?.season}
+        />
 
         {worldLoading ? (
           <View className="flex-1 items-center justify-center px-8">
@@ -78,12 +105,16 @@ export default function App() {
         )}
 
         {!worldLoading && !worldError && activeTab === 'sanctuary' && snapshot && (
-          <View className="absolute bottom-4 left-5 right-5 flex-row items-center justify-between rounded-full border border-white/10 bg-slate-950/65 px-3 py-2">
-            <Pressable onPress={() => setActiveTab('study')} className="items-center px-3 py-1.5"><BookOpen size={17} color="#94a3b8" /><Text className="mt-1 text-[9px] text-slate-400">Learn</Text></Pressable>
-            <Pressable onPress={() => setActiveTab('world')} className="items-center px-3 py-1.5"><Compass size={18} color="#94a3b8" /><Text className="mt-1 text-[9px] text-slate-400">Wander</Text></Pressable>
-            <Pressable onPress={() => setActiveTab('cassidy')} className="-mt-6 h-14 w-14 items-center justify-center rounded-full border border-emerald-300/30 bg-emerald-400/15"><Heart size={21} color="#a7f3d0" /><Text className="mt-0.5 text-[8px] font-semibold text-emerald-200">Cassidy</Text></Pressable>
-            <Pressable onPress={() => setActiveTab('journey')} className="items-center px-3 py-1.5"><Sparkles size={17} color="#94a3b8" /><Text className="mt-1 text-[9px] text-slate-400">Journey</Text></Pressable>
-            <Pressable onPress={() => setActiveTab('characters')} className="items-center px-3 py-1.5"><Users size={17} color="#94a3b8" /><Text className="mt-1 text-[9px] text-slate-400">People</Text></Pressable>
+          <View className="absolute bottom-4 left-5 right-5 flex-row items-center justify-between rounded-[28px] border border-white/10 bg-slate-950/65 px-2 py-2 shadow-2xl">
+            <AliveNavButton label="Learn" onPress={() => setActiveTab('study')}><BookOpen size={17} color="#94a3b8" /></AliveNavButton>
+            <AliveNavButton label="Wander" onPress={() => setActiveTab('world')}><Compass size={18} color="#94a3b8" /></AliveNavButton>
+            <AliveNavButton label="Cassidy" pulse onPress={() => setActiveTab('cassidy')}>
+              <View className="-mt-6 h-14 w-14 items-center justify-center rounded-full border border-emerald-300/30 bg-emerald-400/15 shadow-lg">
+                <Heart size={21} color="#a7f3d0" />
+              </View>
+            </AliveNavButton>
+            <AliveNavButton label="Journey" onPress={() => setActiveTab('journey')}><Sparkles size={17} color="#94a3b8" /></AliveNavButton>
+            <AliveNavButton label="People" onPress={() => setActiveTab('characters')}><Users size={17} color="#94a3b8" /></AliveNavButton>
           </View>
         )}
 
