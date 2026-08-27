@@ -30,13 +30,23 @@ export function LivingWorldPulse() {
       void load();
     };
 
+    const locationNames: Record<string, string> = {
+      study_room: 'Study Room',
+      cozy_cafe: 'Cozy Café',
+      whispering_library: 'Whispering Library',
+      lantern_market: 'Lantern Market',
+      zen_garden: 'Zen Garden',
+    };
     const offs = [
       eventBus.on('learning:sessionCompleted', () => showChange('Something in the study changed with you.')),
       eventBus.on('discovery:made', () => showChange('A new memory has taken root.')),
       eventBus.on('achievement:earned', () => showChange('The world noticed what you accomplished.')),
       eventBus.on('world:returned', () => showChange('The valley remembers your return.')),
       eventBus.on('world:locationChanged', ({ locationId, previousLocationId }) => {
-        if (locationId !== previousLocationId) showChange('Your journey has become part of the valley.');
+        if (locationId !== previousLocationId) {
+          const destination = locationNames[locationId] ?? 'a new place';
+          showChange(`The valley noticed your journey to ${destination}.`);
+        }
       }),
       eventBus.on('conversation:completed', () => showChange('A conversation became part of the journey.')),
     ];
