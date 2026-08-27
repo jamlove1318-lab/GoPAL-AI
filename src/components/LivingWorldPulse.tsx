@@ -14,13 +14,14 @@ export function LivingWorldPulse() {
   useEffect(() => {
     let alive = true;
     const load = async () => {
-      const next = await WaveStore.getLivingObjects();
-      if (alive) setObjects(next);
+      try { const next = await WaveStore.getLivingObjects(); if (alive) setObjects(next); } catch { /* ambient UI must never block the world */ }
     };
     void load();
 
     const showChange = (message: string) => {
       setNotice(message);
+      bloom.stopAnimation();
+      bloom.setValue(0);
       Animated.sequence([
         Animated.timing(bloom, { toValue: 1, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
         Animated.delay(2800),
@@ -34,6 +35,9 @@ export function LivingWorldPulse() {
       eventBus.on('discovery:made', () => showChange('A new memory has taken root.')),
       eventBus.on('achievement:earned', () => showChange('The world noticed what you accomplished.')),
       eventBus.on('world:returned', () => showChange('The valley remembers your return.')),
+      eventBus.on('world:locationChanged', ({ locationId, previousLocationId }) => {
+        if (locationId !== previousLocationId) showChange('Your journey has become part of the valley.');
+      }),
       eventBus.on('conversation:completed', () => showChange('A conversation became part of the journey.')),
     ];
 
