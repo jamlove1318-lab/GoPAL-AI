@@ -3,16 +3,28 @@ import { View, Text, Pressable, Animated, Easing } from 'react-native';
 import { Cassidy, CassidyMood, CassidyAction } from '../characters/cassidy';
 import { CassidyCharacter } from './CassidyCharacter';
 import type { CassidySnapshot, Place } from '../characters/cassidyContext';
+import { eventBus } from '../engines/events/eventBus';
 
 export function LivingCompanion({ activeTab = 'home', snapshot, onTap }: { activeTab?: Place; snapshot?: CassidySnapshot | null; onTap?: () => void }) {
   const [line, setLine] = useState(Cassidy.pickGreeting());
   const [showBubble, setShowBubble] = useState(true);
   const [speaking, setSpeaking] = useState(false);
   const [mood, setMood] = useState<CassidyMood>('warm');
+  const [eventAction, setEventAction] = useState<CassidyAction | null>(null);
   const float = useRef(new Animated.Value(0)).current;
   const entrance = useRef(new Animated.Value(0)).current;
   const tapPulse = useRef(new Animated.Value(0)).current;
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const speak = useCallback((nextLine: string, nextMood: CassidyMood, action: CassidyAction = 'talking') => {
+    setMood(nextMood);
+    setLine(nextLine);
+    setShowBubble(true);
+    setSpeaking(true);
+    setEventAction(action);
+    const timer = setTimeout(() => { setSpeaking(false); setEventAction(null); }, 2800);
+    timers.current.push(timer);
+  }, []);
 
   const sayHere = useCallback(() => {
     const m = Cassidy.moodFor(activeTab);
@@ -20,10 +32,33 @@ export function LivingCompanion({ activeTab = 'home', snapshot, onTap }: { activ
     setLine(snapshot ? Cassidy.placeLine(activeTab, snapshot) : Cassidy.lineFor(m));
     setShowBubble(true);
     setSpeaking(true);
-    timers.current.push(setTimeout(() => setSpeaking(false), 2600));
+    setEventAction(null);
+    const timer = setTimeout(() => setSpeaking(false), 2600);
+    timers.current.push(timer);
   }, [activeTab, snapshot]);
 
   useEffect(() => { sayHere(); }, [sayHere]);
+
+  // Cassidy listens to the same domain events as the world. This keeps her
+  // reactions caused by real activity instead of adding another parallel state system.
+  useEffect(() => {
+    const offLearning = eventBus.on('learning:sessionCompleted', ({ accuracy }) => {
+      speak(accuracy >= 0.85 ? Cassidy.lineFor('excited') : Cassidy.lineFor('happy'), accuracy >= 0.85 ? 'excited' : 'happy');
+    });
+    const offDiscovery = eventBus.on('discovery:made', () => {
+      speak('Wait — did you see that? That belongs in your story.', 'excited', 'walking');
+    });
+    const offLocation = eventBus.on('location:unlocked', () => {
+      speak('A new place just opened. Shall we see what is there?', 'excited', 'walking');
+    });
+    const offMemory = eventBus.on('memory:recorded', () => {
+      speak('I’ll remember this one with you.', 'warm');
+    });
+    const offReturn = eventBus.on('world:returned', () => {
+      speak('There you are. The valley is glad to have you back.', 'warm', 'waving');
+    });
+    return () => { offLearning(); offDiscovery(); offLocation(); offMemory(); offReturn(); };
+  }, [speak]);
 
   useEffect(() => {
     const loop = Animated.loop(Animated.sequence([
@@ -49,7 +84,8 @@ export function LivingCompanion({ activeTab = 'home', snapshot, onTap }: { activ
   const translateY = float.interpolate({ inputRange: [0, 1], outputRange: [0, -10] });
   const entranceY = entrance.interpolate({ inputRange: [0, 1], outputRange: [26, 0] });
   const entranceScale = entrance.interpolate({ inputRange: [0, 1], outputRange: [.82, 1] });
-  const action: CassidyAction = activeTab === 'world' || activeTab === 'journey' ? 'walking' : activeTab === 'home' ? 'waving' : speaking ? 'talking' : 'idle';
+  const defaultAction: CassidyAction = activeTab === 'world' || activeTab === 'journey' ? 'walking' : activeTab === 'home' ? 'waving' : speaking ? 'talking' : 'idle';
+  const action = eventAction ?? defaultAction;
 
   const handleTap = () => {
     Animated.sequence([
