@@ -6,6 +6,8 @@ import { auth } from '../services/auth';
 import type { Mood } from '../lib/types';
 
 const characterEngine = new CharacterEngine();
+const RELATIONSHIP_INTERACTION_GAIN = 1;
+const MAX_RELATIONSHIP_SCORE = 100;
 
 export interface CassidyChatMessage {
   id: string;
@@ -70,10 +72,17 @@ export function useCassidy() {
         };
         setMessages((prev) => [...prev, replyMsg]);
 
-        // Boost friendship & trust slightly with each positive interaction
+        // Keep the interaction reward explicit and bounded instead of scattering
+        // relationship constants through the chat flow.
         if (view?.relationship) {
-          const newTrust = Math.min(100, (view.relationship.trust ?? 80) + 1);
-          const newFriendship = Math.min(100, (view.relationship.friendship ?? 75) + 1);
+          const newTrust = Math.min(
+            MAX_RELATIONSHIP_SCORE,
+            (view.relationship.trust ?? 80) + RELATIONSHIP_INTERACTION_GAIN
+          );
+          const newFriendship = Math.min(
+            MAX_RELATIONSHIP_SCORE,
+            (view.relationship.friendship ?? 75) + RELATIONSHIP_INTERACTION_GAIN
+          );
           await characterEngine.recordRelationship(userId, view.character?.id ?? 'char-cassidy', {
             trust: newTrust,
             friendship: newFriendship,
@@ -108,4 +117,3 @@ export function useCassidy() {
     refresh: () => reload(userId),
   };
 }
-
