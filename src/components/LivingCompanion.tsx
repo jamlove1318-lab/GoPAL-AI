@@ -5,6 +5,36 @@ import { CassidyCharacter } from './CassidyCharacter';
 import type { CassidySnapshot, Place } from '../characters/cassidyContext';
 import { eventBus } from '../engines/events/eventBus';
 
+const PARTICLES = [
+  { x: -28, y: -18, size: 4, delay: 0 },
+  { x: 22, y: -32, size: 3, delay: 700 },
+  { x: 42, y: 4, size: 3, delay: 1400 },
+  { x: -42, y: 8, size: 3, delay: 2100 },
+];
+
+function CompanionSparkles({ active }: { active: boolean }) {
+  const values = useRef(PARTICLES.map(() => new Animated.Value(0))).current;
+  useEffect(() => {
+    const animations = values.map((value, index) => Animated.loop(Animated.sequence([
+      Animated.delay(PARTICLES[index].delay),
+      Animated.timing(value, { toValue: 1, duration: 1500, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      Animated.timing(value, { toValue: 0, duration: 1500, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+    ])));
+    animations.forEach(a => a.start());
+    return () => animations.forEach(a => a.stop());
+  }, [values]);
+  return <View pointerEvents="none" className="absolute inset-0">
+    {PARTICLES.map((particle, index) => {
+      const opacity = values[index].interpolate({ inputRange: [0, 1], outputRange: [active ? 0.12 : 0.04, active ? 0.8 : 0.28] });
+      const rise = values[index].interpolate({ inputRange: [0, 1], outputRange: [4, -10] });
+      const scale = values[index].interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.65, 1.15, 0.7] });
+      return <Animated.View key={index} style={{ opacity, transform: [{ translateX: particle.x }, { translateY: Animated.add(new Animated.Value(particle.y), rise) }, { scale }] }} className="absolute left-1/2 top-1/2">
+        <Text style={{ fontSize: particle.size + 5 }}>✦</Text>
+      </Animated.View>;
+    })}
+  </View>;
+}
+
 export function LivingCompanion({ activeTab = 'home', snapshot, onTap }: { activeTab?: Place; snapshot?: CassidySnapshot | null; onTap?: () => void }) {
   const [line, setLine] = useState(Cassidy.pickGreeting());
   const [showBubble, setShowBubble] = useState(true);
@@ -84,6 +114,7 @@ export function LivingCompanion({ activeTab = 'home', snapshot, onTap }: { activ
     </Animated.View>
     <Pressable onPress={handleTap} className="active:opacity-90">
       <Animated.View style={{ transform: [{ translateY: Animated.add(translateY, entranceY) }, { scale: Animated.multiply(entranceScale, tapPulse.interpolate({ inputRange: [0, 1], outputRange: [1, .94] })) }] }}>
+        <CompanionSparkles active={speaking || reactionPulse} />
         <Animated.View style={{ opacity: reactionPulse ? 1 : .94 }}><CassidyCharacter height={128} action={action} speaking={speaking} expression={mood} /></Animated.View>
       </Animated.View>
     </Pressable>
