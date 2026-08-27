@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { tutorEngine, SCENARIOS, ScenarioDefinition, ScenarioStep, DialogueEvaluation } from '../engines/tutor/tutorEngine';
 import { LocalStore } from '../lib/localStore';
 
@@ -8,6 +8,7 @@ export function useLearningSession() {
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [evaluation, setEvaluation] = useState<DialogueEvaluation | null>(null);
   const [sessionCompleted, setSessionCompleted] = useState(false);
+  const completionRecordedRef = useRef(false);
 
   const startScenario = useCallback((scenarioIdOrLocationKey: string) => {
     const matched =
@@ -15,6 +16,7 @@ export function useLearningSession() {
       SCENARIOS.find((s) => s.locationKey === scenarioIdOrLocationKey) ||
       SCENARIOS[0];
 
+    completionRecordedRef.current = false;
     setActiveScenario(matched);
     setCurrentStepIndex(0);
     setEvaluation(null);
@@ -23,37 +25,39 @@ export function useLearningSession() {
   }, []);
 
   const endSession = useCallback(() => {
+    completionRecordedRef.current = false;
     setIsSessionActive(false);
     setActiveScenario(null);
     setEvaluation(null);
+    setSessionCompleted(false);
   }, []);
 
   const submitResponse = useCallback(
     async (userInput: string) => {
-      if (!activeScenario) return null;
+      if (!activeScenario || completionRecordedRef.current) return null;
       const step = activeScenario.steps[currentStepIndex];
       const evalResult = tutorEngine.evaluateInput(userInput, step);
       setEvaluation(evalResult);
 
-      if (evalResult.isCorrect) {
-        // Check if last step
-        if (currentStepIndex + 1 >= activeScenario.steps.length) {
-          setSessionCompleted(true);
-          // Record milestone and memories
-          await LocalStore.addMemory(
-            'conversation',
-            `Successfully completed real-world dialogue scenario "${activeScenario.title}" with ${activeScenario.characterName}.`
-          );
-          await LocalStore.addJourneyEvent(
-            'conversation:completed',
-            {
-              topic: activeScenario.title,
-              location: activeScenario.locationName,
-              character: activeScenario.characterName,
-            },
-            'tutor_engine'
-          );
-        }
+      if (evalResult.isCorrect && currentStepIndex + 1 >= activeScenario.steps.length) {
+        // Mark synchronously before any awaited persistence work so rapid retries
+        // cannot record the same completed dialogue twice.
+        completionRecordedRef.current = true;
+        setSessionCompleted(true);
+
+        await LocalStore.addMemory(
+          'conversation',
+          `Successfully completed real-world dialogue scenario "${activeScenario.title}" with ${activeScenario.characterName}.`
+        );
+        await LocalStore.addJourneyEvent(
+          'conversation:completed',
+          {
+            topic: activeScenario.title,
+            location: activeScenario.locationName,
+            character: activeScenario.characterName,
+          },
+          'tutor_engine'
+        );
       }
       return evalResult;
     },
@@ -61,7 +65,7 @@ export function useLearningSession() {
   );
 
   const nextStep = useCallback(() => {
-    if (!activeScenario) return;
+    if (!activeScenario || completionRecordedRef.current) return;
     if (currentStepIndex + 1 < activeScenario.steps.length) {
       setCurrentStepIndex((prev) => prev + 1);
       setEvaluation(null);
