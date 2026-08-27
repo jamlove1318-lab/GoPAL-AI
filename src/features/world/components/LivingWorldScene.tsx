@@ -56,10 +56,45 @@ function LivingTree({ side = 'left' }: { side?: 'left' | 'right' }) {
   );
 }
 
+function BirdFlock({ night }: { night: boolean }) {
+  const flight = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const animation = Animated.loop(Animated.sequence([
+      Animated.timing(flight, { toValue: 1, duration: 10500, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      Animated.timing(flight, { toValue: 0, duration: 10500, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+    ]));
+    animation.start();
+    return () => animation.stop();
+  }, [flight]);
+  if (night) return null;
+  const translateX = flight.interpolate({ inputRange: [0, 1], outputRange: [-45, 120] });
+  const translateY = flight.interpolate({ inputRange: [0, .45, 1], outputRange: [4, -10, 2] });
+  return (
+    <Animated.View pointerEvents="none" style={{ position: 'absolute', left: '26%', top: '22%', transform: [{ translateX }, { translateY }] }}>
+      <View className="flex-row items-center gap-2 opacity-40"><Text className="text-[13px] text-slate-300">⌁</Text><Text className="text-[11px] text-slate-300">⌁</Text><Text className="text-[9px] text-slate-300">⌁</Text></View>
+    </Animated.View>
+  );
+}
+
+function LivingLantern({ evening }: { evening: boolean }) {
+  const glow = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const animation = Animated.loop(Animated.sequence([
+      Animated.timing(glow, { toValue: 1, duration: 1900, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      Animated.timing(glow, { toValue: 0, duration: 1900, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+    ]));
+    animation.start();
+    return () => animation.stop();
+  }, [glow]);
+  if (!evening) return null;
+  return <Animated.View pointerEvents="none" style={{ position: 'absolute', left: '73%', top: '47%', opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [.35, .8] }), transform: [{ scale: glow.interpolate({ inputRange: [0, 1], outputRange: [.92, 1.06] }) }] }}><View className="h-3 w-3 rounded-full bg-amber-200" /><View className="absolute -inset-3 rounded-full bg-amber-200/15" /></Animated.View>;
+}
+
 export function LivingWorldScene({ snapshot, onNavigate, onStartScenario }: LivingWorldSceneProps) {
   const moment = snapshot.returnMoment;
   const hasContinuity = snapshot.continuity.newDay || snapshot.continuity.isNewSeason;
   const isNight = snapshot.timeOfDay === 'night';
+  const isEvening = snapshot.timeOfDay === 'evening';
   const isRain = /rain|storm|drizzle/i.test(snapshot.weather);
   const isWinter = /winter/i.test(snapshot.season) || /snow/i.test(snapshot.weather);
   const isAutumn = /autumn|fall/i.test(snapshot.season);
@@ -87,6 +122,8 @@ export function LivingWorldScene({ snapshot, onNavigate, onStartScenario }: Livi
       <Animated.View style={{ transform: [{ translateY: celestial.interpolate({ inputRange: [0, 1], outputRange: [0, 9] }) }] }} className={`absolute right-10 top-20 h-24 w-24 rounded-full ${isNight ? 'bg-indigo-200/10' : 'bg-amber-200/10'}`} />
       <View className="absolute bottom-0 left-[-10%] h-[34%] w-[120%] rounded-[50%] bg-emerald-950/35" />
       <LivingTree side="left" /><LivingTree side="right" />
+      <BirdFlock night={isNight} />
+      <LivingLantern evening={isEvening} />
       {Array.from({ length: isNight ? 16 : 9 }, (_, i) => <LivingDot key={`dot-${i}`} delay={i * 230} left={`${6 + ((i * 29) % 88)}%`} top={`${16 + ((i * 31) % 55)}%`} size={isNight ? 4 : 3} />)}
       {isWinter && Array.from({ length: 10 }, (_, i) => <LivingDot key={`snow-${i}`} delay={i * 160} left={`${i * 10}%`} top={`${14 + (i % 5) * 11}%`} size={4} />)}
       {isRain && Array.from({ length: 9 }, (_, i) => <Animated.View key={`rain-${i}`} style={{ position: 'absolute', left: `${5 + i * 12}%`, top: `${16 + (i % 4) * 12}%`, height: 70, width: 1, backgroundColor: '#bfdbfe', opacity: .16, transform: [{ rotate: '18deg' }, { translateY: breeze.interpolate({ inputRange: [0, 1], outputRange: [-30, 100] }) }] }} />)}
