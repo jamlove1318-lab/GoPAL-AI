@@ -21,23 +21,39 @@ export class MemoryEngine {
     canonicalFact: string,
     sourceEventId?: string,
   ): Promise<MemoriesRow> {
+    const normalizedFact = canonicalFact.trim();
+    if (!normalizedFact) throw new Error('Memory fact cannot be empty');
+
     if (!isSupabaseConfigured) {
-      return LocalStore.addMemory(layer, canonicalFact);
+      return LocalStore.addMemory(layer, normalizedFact);
     }
 
     try {
+      // Prefer an existing canonical memory so repeated events remain idempotent.
+      const { data: existing, error: lookupError } = await supabase
+        .from('memories')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('layer', layer)
+        .eq('canonical_fact', normalizedFact)
+        .order('occurred_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (!lookupError && existing) return existing as MemoriesRow;
+
       const row = {
         user_id: userId,
         layer,
-        canonical_fact: canonicalFact,
+        canonical_fact: normalizedFact,
         source_event_id: sourceEventId ?? null,
         occurred_at: new Date().toISOString(),
       };
       const { data, error } = await supabase.from('memories').insert(row).select('*').single();
-      if (error || !data) return LocalStore.addMemory(layer, canonicalFact);
+      if (error || !data) return LocalStore.addMemory(layer, normalizedFact);
       return data as MemoriesRow;
     } catch {
-      return LocalStore.addMemory(layer, canonicalFact);
+      return LocalStore.addMemory(layer, normalizedFact);
     }
   }
 
