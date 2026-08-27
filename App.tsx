@@ -106,7 +106,7 @@ export default function App() {
           </Pressable>
         </View>
 
-        {activeTab !== 'cassidy' && !moreOpen && <LivingCompanion activeTab={activeTab} snapshot={snapshot} onTap={() => setActiveTab('home')} />}
+        {activeTab !== 'cassidy' && !moreOpen && <LivingCompanion activeTab={activeTab} snapshot={snapshot} onTap={() => setActiveTab('cassidy')} />}
 
         <LearningScenarioModal visible={scenarioState.visible} scenarioKey={scenarioState.scenarioKey} onClose={handleCloseScenario} />
       </View>
