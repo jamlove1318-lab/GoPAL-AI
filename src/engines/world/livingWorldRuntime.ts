@@ -5,21 +5,8 @@ import { eventBus } from '../events/eventBus';
 import { loadCassidySnapshot, type CassidySnapshot } from '../../characters/cassidyContext';
 import type { TimeOfDay, Season } from '../../lib/types';
 
-export interface ReturnMoment {
-  kind: 'none' | 'welcome' | 'continuity' | 'discovery';
-  title: string;
-  message: string;
-}
-
-export type AmbientLifeCue =
-  | 'birds'
-  | 'fireflies'
-  | 'rain'
-  | 'snow'
-  | 'falling-leaves'
-  | 'evening-lanterns'
-  | 'night-wind'
-  | 'morning-breeze';
+export interface ReturnMoment { kind: 'none' | 'welcome' | 'continuity' | 'discovery'; title: string; message: string; }
+export type AmbientLifeCue = 'birds' | 'fireflies' | 'rain' | 'snow' | 'falling-leaves' | 'evening-lanterns' | 'night-wind' | 'morning-breeze';
 
 /** The read-model composing domain engines into one coherent living-world state. */
 export interface WorldSnapshot {
@@ -55,15 +42,16 @@ export class LivingWorldRuntime {
     const environment = this.environmentEngine.resolve(now, world.weather);
     let cassidy = emptyCassidySnapshot();
     if (options.includeCassidy !== false) {
-      try {
-        cassidy = await loadCassidySnapshot();
-      } catch {
-        // A secondary companion subsystem must not prevent the learner from entering the world.
-      }
+      try { cassidy = await loadCassidySnapshot(); } catch { /* World entry remains available if Cassidy storage is unavailable. */ }
     }
     const snapshot = this.compose(world, environment, continuity, cassidy, now);
     eventBus.emit('world:returned', { userId, lastActiveAt: world.lastActiveAt }, 'world');
     return snapshot;
+  }
+
+  async changeLocation(userId: string, locationId: string, now: Date = new Date()): Promise<WorldSnapshot | null> {
+    await this.worldEngine.setLocation(userId, locationId);
+    return this.load(userId, { now });
   }
 
   async markActive(userId: string, now: Date = new Date()): Promise<void> {
@@ -71,23 +59,17 @@ export class LivingWorldRuntime {
     await this.worldEngine.saveState(userId, { timeOfDay: environment.timeOfDay, season: environment.season, lastActiveAt: now.toISOString() });
   }
 
+  get world() { return this.worldEngine; }
+
   private compose(world: ResolvedWorldState, environment: EnvironmentContext, continuity: ContinuityResult, cassidy: CassidySnapshot, now: Date): WorldSnapshot {
     return {
-      generatedAt: now.toISOString(),
-      resolved: world,
-      worldId: world.world?.id ?? null,
-      worldName: world.world?.display_name ?? null,
-      locationId: world.location?.id ?? null,
-      locationName: world.location?.name ?? null,
-      timeOfDay: environment.timeOfDay,
-      season: environment.season,
-      weather: environment.weather,
+      generatedAt: now.toISOString(), resolved: world,
+      worldId: world.world?.id ?? null, worldName: world.world?.display_name ?? null,
+      locationId: world.location?.id ?? null, locationName: world.location?.name ?? null,
+      timeOfDay: environment.timeOfDay, season: environment.season, weather: environment.weather,
       ambientAudioKey: this.environmentEngine.ambientAudioKey(environment),
       ambientLife: resolveAmbientLife(environment.timeOfDay, environment.season, environment.weather),
-      lastActiveAt: world.lastActiveAt,
-      elapsedMs: continuity.elapsedMs,
-      continuity,
-      cassidy,
+      lastActiveAt: world.lastActiveAt, elapsedMs: continuity.elapsedMs, continuity, cassidy,
       returnMoment: selectReturnMoment(continuity, cassidy),
     };
   }
