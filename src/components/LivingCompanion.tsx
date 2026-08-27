@@ -16,8 +16,12 @@ export function LivingCompanion({ activeTab = 'home', snapshot, onTap }: { activ
   const entrance = useRef(new Animated.Value(0)).current;
   const tapPulse = useRef(new Animated.Value(0)).current;
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const lastReactionAt = useRef(0);
 
   const speak = useCallback((nextLine: string, nextMood: CassidyMood, action: CassidyAction = 'talking') => {
+    const now = Date.now();
+    if (now - lastReactionAt.current < 1200) return;
+    lastReactionAt.current = now;
     setMood(nextMood); setLine(nextLine); setShowBubble(true); setSpeaking(true); setEventAction(action); setReactionPulse(true);
     const timer = setTimeout(() => { setSpeaking(false); setEventAction(null); setReactionPulse(false); }, 2800);
     timers.current.push(timer);
@@ -52,6 +56,7 @@ export function LivingCompanion({ activeTab = 'home', snapshot, onTap }: { activ
     const enter = Animated.spring(entrance, { toValue: 1, useNativeDriver: true, speed: 12, bounciness: 7 });
     loop.start(); enter.start();
     const id = setInterval(() => {
+      if (Date.now() - lastReactionAt.current < 3500) return;
       setShowBubble(false); setSpeaking(false);
       const t = setTimeout(() => {
         if (snapshot && Math.random() < 0.4) sayHere();
