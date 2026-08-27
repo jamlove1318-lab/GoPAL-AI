@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { tutorEngine, SCENARIOS, ScenarioDefinition, ScenarioStep, DialogueEvaluation } from '../engines/tutor/tutorEngine';
+import { SCENARIOS, ScenarioDefinition, ScenarioStep } from '../engines/tutor/tutorEngine';
 import { learningEvaluationEngine, LearningEvidence } from '../engines/learning/learningEvaluationEngine';
 import { KnowledgeEngine } from '../engines/knowledge/knowledgeEngine';
 import { JourneyEngine } from '../engines/journey/journeyEngine';
@@ -16,6 +16,10 @@ export function useLearningSession(userId = 'local-explorer-user') {
   const completionRecordedRef = useRef(false);
   const stepEvidenceRef = useRef<LearningEvidence[]>([]);
   const hintUsedRef = useRef(false);
+
+  const markHintUsed = useCallback(() => {
+    hintUsedRef.current = true;
+  }, []);
 
   const completeScenario = useCallback(
     async (scenario: ScenarioDefinition, finalEvaluation: LearningEvidence) => {
@@ -154,6 +158,7 @@ export function useLearningSession(userId = 'local-explorer-user') {
     startScenario,
     submitResponse,
     nextStep,
+    markHintUsed,
     endSession,
   };
 }
