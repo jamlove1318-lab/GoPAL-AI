@@ -1,6 +1,6 @@
 import './global.css';
-import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, View, Text, Pressable } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -34,10 +34,16 @@ export default function App() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [snapshot, setSnapshot] = useState<CassidySnapshot | null>(null);
   const [scenarioState, setScenarioState] = useState({ visible: false, scenarioKey: 'scen-cafe-order' });
+  const screenMotion = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     loadCassidySnapshot().then(setSnapshot);
   }, [activeTab]);
+
+  useEffect(() => {
+    screenMotion.setValue(0);
+    Animated.timing(screenMotion, { toValue: 1, duration: 320, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+  }, [activeTab, screenMotion]);
 
   const handleStartScenario = (scenarioKey: string) => setScenarioState({ visible: true, scenarioKey });
 
@@ -73,7 +79,9 @@ export default function App() {
       <View className="flex-1 bg-slate-950">
         <StatusBar style="light" />
         <AmbientBackground intensity={worldIntensity(snapshot)} />
-        <View className="flex-1">{renderActiveScreen()}</View>
+        <Animated.View className="flex-1" style={{ opacity: screenMotion, transform: [{ translateY: screenMotion.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }] }}>
+          {renderActiveScreen()}
+        </Animated.View>
 
         {moreOpen && (
           <Pressable className="absolute inset-0 bg-slate-950/45" onPress={() => setMoreOpen(false)}>
