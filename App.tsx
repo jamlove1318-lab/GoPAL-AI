@@ -14,8 +14,8 @@ import { SettingsScreen } from './src/features/settings/screens/SettingsScreen';
 import { LearningScenarioModal } from './src/features/learning/screens/LearningScenarioModal';
 import { LivingCompanion } from './src/components/LivingCompanion';
 import { AmbientBackground } from './src/components/AmbientBackground';
-import { CassidyHomeScreen } from './src/features/cassidy/screens/CassidyHomeScreen';
 import { loadCassidySnapshot, worldIntensity, CassidySnapshot } from './src/characters/cassidyContext';
+import { startLivingWorldReactor } from './src/engines';
 
 import { Home, BookOpen, MapPin, Sparkles, Heart, MoreHorizontal, Image as ImageIcon, Users, Settings as SettingsIcon } from 'lucide-react-native';
 
@@ -35,6 +35,11 @@ export default function App() {
   const [snapshot, setSnapshot] = useState<CassidySnapshot | null>(null);
   const [scenarioState, setScenarioState] = useState({ visible: false, scenarioKey: 'scen-cafe-order' });
   const screenMotion = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const stopWorldReactor = startLivingWorldReactor();
+    return stopWorldReactor;
+  }, []);
 
   useEffect(() => {
     loadCassidySnapshot().then(setSnapshot);
