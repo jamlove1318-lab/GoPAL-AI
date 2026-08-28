@@ -12,6 +12,7 @@ import { MemoryMuseumScreen } from './src/features/journey/screens/MemoryMuseumS
 import { CharacterScreen } from './src/features/characters/screens/CharacterScreen';
 import { SettingsScreen } from './src/features/settings/screens/SettingsScreen';
 import { LearningScenarioModal } from './src/features/learning/screens/LearningScenarioModal';
+import { CassidyHomeScreen } from './src/features/cassidy/screens/CassidyHomeScreen';
 import { WorldAtmosphere, WorldAtmospherePhase } from './src/features/world/components/WorldAtmosphere';
 import { LivingCompanion } from './src/components/LivingCompanion';
 import { LivingWorldPulse } from './src/components/LivingWorldPulse';
