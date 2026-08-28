@@ -37,7 +37,26 @@ export function useLearningSession(userId = 'local-explorer-user') {
       sessionIdRef.current = sessionId;
       const hintsUsed = evidence.some((item) => item.hintDependency) || hintUsedRef.current;
 
-      const effects: Promise<unknown>[] = [
+      // Critical learning consequences must succeed before the session becomes a world event.
+      // Optional experiential effects are allowed to fail independently and must not block learning.
+      await Promise.all(
+        matchedConcepts.map(async (conceptKey) => {
+          const node = nodes.find((nodeItem) => nodeItem.key === conceptKey);
+          const label = node ? `${node.term} (${node.reading})` : conceptKey;
+          await KnowledgeEngine.recordLearningEcho(conceptKey, label, context);
+
+          const conceptEvidence = evidence.find((item) => item.matchedConcepts.includes(conceptKey)) ?? finalEvaluation;
+          await KnowledgeEngine.recordKnowledgeRecall(conceptKey, conceptEvidence.isCorrect, {
+            accuracy: conceptEvidence.accuracy,
+            confidence: conceptEvidence.confidence,
+            hintDependency: conceptEvidence.hintDependency,
+            partialUnderstanding: conceptEvidence.partialUnderstanding,
+            difficulty: conceptEvidence.difficulty,
+          });
+        })
+      );
+
+      const optionalEffects = await Promise.allSettled([
         LocalStore.addMemory(
           'conversation',
           `Successfully completed real-world dialogue scenario "${scenario.title}" with ${scenario.characterName}.`
@@ -61,30 +80,12 @@ export function useLearningSession(userId = 'local-explorer-user') {
           userId
         ),
         WaveStore.recordDecision(`Completed "${scenario.title}" and chose to follow it through.`),
-      ];
+      ]);
 
-      if (matchedConcepts.length > 0) {
-        effects.push(
-          (async () => {
-            for (const conceptKey of matchedConcepts) {
-              const node = nodes.find((nodeItem) => nodeItem.key === conceptKey);
-              const label = node ? `${node.term} (${node.reading})` : conceptKey;
-              await KnowledgeEngine.recordLearningEcho(conceptKey, label, context);
-
-              const conceptEvidence = evidence.find((item) => item.matchedConcepts.includes(conceptKey)) ?? finalEvaluation;
-              await KnowledgeEngine.recordKnowledgeRecall(conceptKey, conceptEvidence.isCorrect, {
-                accuracy: conceptEvidence.accuracy,
-                confidence: conceptEvidence.confidence,
-                hintDependency: conceptEvidence.hintDependency,
-                partialUnderstanding: conceptEvidence.partialUnderstanding,
-                difficulty: conceptEvidence.difficulty,
-              });
-            }
-          })()
-        );
+      const optionalFailureCount = optionalEffects.filter((result) => result.status === 'rejected').length;
+      if (optionalFailureCount > 0) {
+        console.warn(`[LearningSession] ${optionalFailureCount} optional completion effect(s) failed.`, optionalEffects);
       }
-
-      await Promise.allSettled(effects);
 
       eventBus.emit(
         'learning:sessionCompleted',
@@ -148,8 +149,15 @@ export function useLearningSession(userId = 'local-explorer-user') {
 
       if (evalResult.isCorrect && currentStepIndex + 1 >= activeScenario.steps.length) {
         completionRecordedRef.current = true;
-        setSessionCompleted(true);
-        await completeScenario(activeScenario, evalResult);
+        try {
+          await completeScenario(activeScenario, evalResult);
+          setSessionCompleted(true);
+        } catch (error) {
+          completionRecordedRef.current = false;
+          setSessionCompleted(false);
+          console.error('[LearningSession] Critical completion effects failed; session was not emitted.', error);
+          throw error;
+        }
       }
       return evalResult;
     },
