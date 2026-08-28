@@ -21,6 +21,59 @@ function labelFor(type: string, payload?: Record<string, unknown>): string {
   }
 }
 
+function asRecord(value: Json | null | undefined): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
+function buildThenVsNow(rows: JourneyEventsRow[]): ThenVsNowItem[] {
+  return rows
+    .filter((event) => event.type === 'learning:sessionCompleted')
+    .map((event) => {
+      const payload = asRecord(event.payload);
+      const concepts = Array.isArray(payload.conceptsDemonstrated)
+        ? payload.conceptsDemonstrated.filter((concept): concept is string => typeof concept === 'string')
+        : [];
+      const accuracy = typeof payload.accuracy === 'number' ? payload.accuracy : null;
+      return concepts.map((concept) => ({
+        concept,
+        thenDescription: 'First recorded in a completed learning session.',
+        nowDescription: accuracy === null
+          ? 'Demonstrated in a completed learning session.'
+          : `Demonstrated with ${Math.round(accuracy * 100)}% accuracy in the latest recorded session.`,
+        masteryDate: event.created_at,
+      }));
+    })
+    .flat()
+    .reduce<ThenVsNowItem[]>((items, item) => {
+      const existing = items.find((candidate) => candidate.concept === item.concept);
+      if (existing) {
+        existing.nowDescription = item.nowDescription;
+        existing.masteryDate = item.masteryDate;
+        return items;
+      }
+      items.push(item);
+      return items;
+    }, [])
+    .slice(0, 20);
+}
+
+function buildMilestones(rows: JourneyEventsRow[]): string[] {
+  const milestones: string[] = [];
+  const add = (label: string) => {
+    if (!milestones.includes(label)) milestones.push(label);
+  };
+
+  if (rows.some((event) => event.type === 'learning:sessionCompleted')) add('First Learning Session');
+  if (rows.some((event) => event.type === 'conversation:completed')) add('First Conversation');
+  if (rows.some((event) => event.type === 'discovery:made')) add('First Discovery');
+  if (rows.some((event) => event.type === 'location:unlocked')) add('First New Place');
+  if (rows.some((event) => event.type === 'quest:completed')) add('First Quest Completed');
+  if (rows.some((event) => event.type === 'achievement:earned')) add('First Achievement');
+  if (rows.some((event) => event.type === 'story:progressed')) add('Living Story Begun');
+
+  return milestones;
+}
+
 export class JourneyEngine {
   private async loadEvents(userId: string): Promise<JourneyEventsRow[]> {
     if (!isSupabaseConfigured) return LocalStore.getJourneyEvents();
@@ -35,12 +88,20 @@ export class JourneyEngine {
 
   async buildBook(userId: string): Promise<JourneyBook> {
     const rows = await this.loadEvents(userId);
-    const timeline = rows.map((e) => ({ id: e.id, type: e.type, label: labelFor(e.type, e.payload as Record<string, unknown>), at: e.created_at }));
-    const thenVsNow: ThenVsNowItem[] = [
-      { concept: 'Ordering at Café Komorebi', thenDescription: 'Initially hesitated to speak without English hints and confused "kudasai" with pointing.', nowDescription: 'Naturally order tea and hot matcha in complete Japanese sentences with Barista Ren.', masteryDate: new Date(Date.now() - 3 * 86400000).toISOString() },
-      { concept: 'Polite Evening Farewells', thenDescription: 'Felt uncertain when to use "Otsukaresama deshita" vs "Sayounara".', nowDescription: 'Confidently uses "Otsukaresama" with Cassidy and friends at the end of each study session.', masteryDate: new Date(Date.now() - 1 * 86400000).toISOString() },
-    ];
-    return { timeline, milestones: ['First Conversation Breakthrough', 'Sunlit Study Master', 'Café Regular', 'Lantern Pass'], firstDay: timeline.length ? timeline[timeline.length - 1].at : null, thenVsNow };
+    const timeline = rows.map((e) => ({
+      id: e.id,
+      type: e.type,
+      label: labelFor(e.type, asRecord(e.payload)),
+      at: e.created_at,
+      detail: JSON.stringify(e.payload),
+    }));
+
+    return {
+      timeline,
+      milestones: buildMilestones(rows),
+      firstDay: timeline.length ? timeline[timeline.length - 1].at : null,
+      thenVsNow: buildThenVsNow(rows),
+    };
   }
 
   async recordEvent(userId: string, producer: string, type: string, payload: Record<string, unknown>): Promise<void> {
@@ -57,13 +118,21 @@ export class JourneyEngine {
     const existing = await WaveStore.getDistilled();
     const existingRefs = new Set(existing.map((d) => d.sourceEventId));
     const RELEVANCE: Record<string, number> = { 'quest:completed': 5, 'achievement:earned': 5, 'conversation:completed': 4, 'story:progressed': 4, 'location:unlocked': 3, 'discovery:made': 3, 'learning:sessionCompleted': 2, 'souvenir:earned': 2 };
-    const candidates = rows.filter((e) => !existingRefs.has(e.id)).map((e) => ({ sourceEventId: e.id, summary: `${e.type} · ${JSON.stringify(e.payload).slice(0, 120)}`, rank: RELEVANCE[e.type] ?? 1 })).sort((a, b) => b.rank - a.rank);
+    const candidates = rows
+      .filter((e) => !existingRefs.has(e.id))
+      .map((e) => ({ sourceEventId: e.id, summary: `${e.type} · ${JSON.stringify(e.payload).slice(0, 120)}`, rank: RELEVANCE[e.type] ?? 1 }))
+      .sort((a, b) => b.rank - a.rank);
     for (const candidate of candidates) await WaveStore.addDistilled(candidate);
     return WaveStore.getDistilled();
   }
 
   async getSouvenirs(): Promise<LearningSouvenir[]> { return WaveStore.getSouvenirs(); }
+
   async earnSouvenir(title: string, kind: LearningSouvenir['kind'], detail: string, userId = 'local-explorer-user'): Promise<LearningSouvenir[]> {
+    const existing = await WaveStore.getSouvenirs();
+    const duplicate = existing.find((souvenir) => souvenir.title === title && souvenir.kind === kind);
+    if (duplicate) return existing;
+
     const result = await WaveStore.addSouvenir({ title, kind, detail });
     await this.recordEvent(userId, 'journey_engine', 'souvenir:earned', { title, kind });
     return result;
