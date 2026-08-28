@@ -7,7 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { HomeScreen } from './src/features/home/screens/HomeScreen';
 import { StudyScreen } from './src/features/study/screens/StudyScreen';
 import { WorldMapScreen } from './src/features/world/screens/WorldMapScreen';
-import { JourneyBookScreen } from './src/features/journey/screens/JourneyBookScreen';
+import { LivingJourneyScreen } from './src/features/journey/screens/LivingJourneyScreen';
 import { MemoryMuseumScreen } from './src/features/journey/screens/MemoryMuseumScreen';
 import { CharacterScreen } from './src/features/characters/screens/CharacterScreen';
 import { SettingsScreen } from './src/features/settings/screens/SettingsScreen';
@@ -21,7 +21,7 @@ import { loadCassidySnapshot, worldIntensity, CassidySnapshot } from './src/char
 import { resolveTimeOfDay } from './src/lib/time';
 import { startLivingWorldReactor } from './src/engines';
 
-import { Home, BookOpen, MapPin, Sparkles, Heart, MoreHorizontal, Image as ImageIcon, Users, Settings as SettingsIcon } from 'lucide-react-native';
+import { Home, BookOpen, MapPin, Sparkles, Heart, Image as ImageIcon, Users, Settings as SettingsIcon } from 'lucide-react-native';
 
 type TabKey = 'home' | 'cassidy' | 'study' | 'world' | 'journey' | 'museum' | 'characters' | 'settings';
 const PRIMARY_TABS: Array<{ key: TabKey; label: string; Icon: typeof Home }> = [
@@ -36,13 +36,12 @@ function currentAtmospherePhase(): WorldAtmospherePhase {
   switch (resolveTimeOfDay()) {
     case 'morning': return new Date().getHours() < 7 ? 'dawn' : 'morning';
     case 'afternoon': return 'afternoon';
-    case 'evening': return new Date().getHours() < 18 ? 'dusk' : 'dusk';
+    case 'evening': return 'dusk';
     default: return 'night';
   }
 }
 
 export default function App() {
-  // GoPAL starts inside the living world. Sanctuary remains the learner's personal hub.
   const [activeTab, setActiveTab] = useState<TabKey>('world');
   const [moreOpen, setMoreOpen] = useState(false);
   const [snapshot, setSnapshot] = useState<CassidySnapshot | null>(null);
@@ -64,7 +63,7 @@ export default function App() {
   }, []);
 
   const handleStartScenario = (scenarioKey: string) => setScenarioState({ visible: true, scenarioKey });
-  const handleCloseScenario = () => { setScenarioState((prev) => ({ ...prev, visible: false })); loadCassidySnapshot().then(setSnapshot); };
+  const handleCloseScenario = () => { setScenarioState(prev => ({ ...prev, visible: false })); loadCassidySnapshot().then(setSnapshot); };
   const handleNavigate = (tab: string) => {
     const target = tab === 'map' ? 'world' : tab;
     if (['home', 'cassidy', 'study', 'world', 'journey', 'museum', 'characters', 'settings'].includes(target)) { setActiveTab(target as TabKey); setMoreOpen(false); }
@@ -75,7 +74,7 @@ export default function App() {
       case 'cassidy': return <CassidyHomeScreen />;
       case 'study': return <StudyScreen />;
       case 'world': return <WorldMapScreen onStartScenario={handleStartScenario} />;
-      case 'journey': return <JourneyBookScreen />;
+      case 'journey': return <LivingJourneyScreen />;
       case 'museum': return <MemoryMuseumScreen />;
       case 'characters': return <CharacterScreen />;
       case 'settings': return <SettingsScreen />;
