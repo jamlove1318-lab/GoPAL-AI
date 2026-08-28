@@ -20,10 +20,10 @@ export interface AppEventMap {
   'discovery:made': { discoveryId: string; type: string; ref: string; userId: string };
   'world:eventStarted': { eventId: string; worldId: string };
   'world:returned': { userId: string; lastActiveAt: string };
+  'world:residentEncountered': { residentId: string; residentName: string; activity: string; locationId: string; userId: string };
+  'world:residentMoment': { residentId: string; residentName: string; choice: string; userId: string };
   'memory:recorded': { memoryId: string; layer: string; userId: string };
 }
-
 export type AppEventName = keyof AppEventMap;
 export type AppEventPayload<K extends AppEventName> = AppEventMap[K];
-
 export type EventProducer = 'world' | 'learning' | 'quest' | 'story' | 'character' | 'journey' | 'discovery' | 'system';
