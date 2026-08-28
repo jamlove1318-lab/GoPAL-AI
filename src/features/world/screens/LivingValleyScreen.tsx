@@ -3,9 +3,9 @@ import { Animated, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Compass, Sparkles, X } from 'lucide-react-native';
 import { LivingResident, LivingResidentLayer, ResidentEncounter } from '../components/LivingResidentLayer';
+import { livingEncounterEngine, LivingEncounterResult } from '../../../engines/world/livingEncounterEngine';
 
 interface Props { onStartScenario?: (scenarioKey: string) => void; }
-
 type Place = { name: string; icon: string; x: string; y: string; scene: string; scenario?: string };
 const PLACES: Place[] = [
   { name: 'Sanctuary', icon: '⌂', x: '12%', y: '70%', scene: 'Your quiet place beneath the valley trees.' },
@@ -18,45 +18,22 @@ const PLACES: Place[] = [
 export function LivingValleyScreen({ onStartScenario }: Props) {
   const [resident, setResident] = useState<LivingResident | null>(null);
   const [place, setPlace] = useState<Place | null>(null);
+  const [encounter, setEncounter] = useState<LivingEncounterResult | null>(null);
+  const [approaching, setApproaching] = useState(false);
   const [cloud] = useState(() => new Animated.Value(0));
+  React.useEffect(() => { const loop = Animated.loop(Animated.sequence([Animated.timing(cloud, { toValue: 1, duration: 12000, useNativeDriver: true }), Animated.timing(cloud, { toValue: 0, duration: 12000, useNativeDriver: true })])); loop.start(); return () => loop.stop(); }, [cloud]);
+  const approachResident = async (target: LivingResident) => { setApproaching(true); try { const result = await livingEncounterEngine.approach(target); setResident(null); setEncounter(result); } finally { setApproaching(false); } };
 
-  React.useEffect(() => {
-    const loop = Animated.loop(Animated.sequence([
-      Animated.timing(cloud, { toValue: 1, duration: 12000, useNativeDriver: true }),
-      Animated.timing(cloud, { toValue: 0, duration: 12000, useNativeDriver: true }),
-    ]));
-    loop.start(); return () => loop.stop();
-  }, [cloud]);
-
-  return <SafeAreaView className="flex-1 bg-transparent">
-    <View className="flex-1 overflow-hidden">
-      <Animated.View pointerEvents="none" style={{ transform: [{ translateX: cloud.interpolate({ inputRange: [0, 1], outputRange: [-35, 55] }) }] }} className="absolute -top-8 h-24 w-72 rounded-full bg-white/5" />
-      <View pointerEvents="none" className="absolute inset-x-[-20%] bottom-[18%] h-80 rounded-[50%] bg-emerald-950/80" />
-      <View pointerEvents="none" className="absolute inset-x-[-25%] bottom-[-8%] h-72 rounded-[50%] bg-slate-950/80" />
-      <View pointerEvents="none" className="absolute left-[44%] top-[35%] h-[50%] w-16 rotate-[14deg] rounded-full bg-slate-800/60" />
-      <View pointerEvents="none" className="absolute left-[46%] top-[35%] h-[50%] w-8 rotate-[14deg] rounded-full border-x border-dashed border-emerald-300/20" />
-
-      <View className="absolute left-5 right-5 top-4 z-20">
-        <View className="flex-row items-center"><Compass size={14} color="#6ee7b7" /><Text className="ml-2 text-[10px] font-bold uppercase tracking-[2.5px] text-emerald-300">Emerald Valley</Text></View>
-        <Text className="mt-2 text-[31px] font-black text-white">Where will you wander?</Text>
-        <Text className="mt-1 max-w-[320px] text-sm leading-5 text-slate-400">Look around. Listen. Someone is always doing something.</Text>
-      </View>
-
-      {PLACES.map(item => <Pressable key={item.name} onPress={() => setPlace(item)} style={{ position: 'absolute', left: item.x, top: item.y, marginLeft: -32, marginTop: -32, zIndex: 20 }} className="h-20 w-20 items-center justify-center">
-        <View className="h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-slate-950/75 shadow-2xl"><Text className="text-2xl">{item.icon}</Text></View>
-        <Text className="mt-1 whitespace-nowrap text-center text-[10px] font-bold text-white">{item.name}</Text>
-      </Pressable>)}
-
-      <LivingResidentLayer onResidentPress={setResident} />
-
-      <View className="absolute bottom-5 left-5 right-5 z-40 flex-row items-center justify-between">
-        <View><Text className="text-[10px] uppercase tracking-[1.8px] text-slate-500">Tonight in the valley</Text><Text className="mt-1 text-sm text-slate-200">Things can change while you are away.</Text></View>
-        <View className="h-11 w-11 items-center justify-center rounded-full border border-emerald-300/25 bg-emerald-400/10"><Sparkles size={18} color="#6ee7b7" /></View>
-      </View>
-
-      {(resident || place) && <View className="absolute inset-x-4 bottom-4 z-50">
-        {resident ? <ResidentEncounter resident={resident} onClose={() => setResident(null)} /> : place ? <View className="rounded-[30px] border border-white/10 bg-slate-950/95 p-5"><Pressable onPress={() => setPlace(null)} className="absolute right-4 top-4"><X size={18} color="#94a3b8" /></Pressable><Text className="text-3xl">{place.icon}</Text><Text className="mt-2 text-xl font-black text-white">{place.name}</Text><Text className="mt-2 pr-6 text-sm leading-5 text-slate-300">{place.scene}</Text><View className="mt-5 flex-row"><Pressable onPress={() => setPlace(null)} className="rounded-full bg-white/10 px-4 py-2"><Text className="text-xs font-semibold text-white">Keep wandering</Text></Pressable>{place.scenario && <Pressable onPress={() => { setPlace(null); onStartScenario?.(place.scenario!); }} className="ml-2 rounded-full bg-emerald-400/15 px-4 py-2"><Text className="text-xs font-semibold text-emerald-200">Step inside</Text></Pressable>}</View></View> : null}
-      </View>}
-    </View>
-  </SafeAreaView>;
+  return <SafeAreaView className="flex-1 bg-transparent"><View className="flex-1 overflow-hidden">
+    <Animated.View pointerEvents="none" style={{ transform: [{ translateX: cloud.interpolate({ inputRange: [0, 1], outputRange: [-35, 55] }) }] }} className="absolute -top-8 h-24 w-72 rounded-full bg-white/5" />
+    <View pointerEvents="none" className="absolute inset-x-[-20%] bottom-[18%] h-80 rounded-[50%] bg-emerald-950/80" /><View pointerEvents="none" className="absolute inset-x-[-25%] bottom-[-8%] h-72 rounded-[50%] bg-slate-950/80" />
+    <View pointerEvents="none" className="absolute left-[44%] top-[35%] h-[50%] w-16 rotate-[14deg] rounded-full bg-slate-800/60" /><View pointerEvents="none" className="absolute left-[46%] top-[35%] h-[50%] w-8 rotate-[14deg] rounded-full border-x border-dashed border-emerald-300/20" />
+    <View className="absolute left-5 right-5 top-4 z-20"><View className="flex-row items-center"><Compass size={14} color="#6ee7b7" /><Text className="ml-2 text-[10px] font-bold uppercase tracking-[2.5px] text-emerald-300">Emerald Valley</Text></View><Text className="mt-2 text-[31px] font-black text-white">Where will you wander?</Text><Text className="mt-1 max-w-[320px] text-sm leading-5 text-slate-400">Look around. Listen. Someone is always doing something.</Text></View>
+    {PLACES.map(item => <Pressable key={item.name} onPress={() => { setEncounter(null); setResident(null); setPlace(item); }} style={{ position: 'absolute', left: item.x, top: item.y, marginLeft: -32, marginTop: -32, zIndex: 20 }} className="h-20 w-20 items-center justify-center"><View className="h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-slate-950/75 shadow-2xl"><Text className="text-2xl">{item.icon}</Text></View><Text className="mt-1 whitespace-nowrap text-center text-[10px] font-bold text-white">{item.name}</Text></Pressable>)}
+    <LivingResidentLayer onResidentPress={(next) => { setEncounter(null); setPlace(null); setResident(next); }} />
+    <View className="absolute bottom-5 left-5 right-5 z-40 flex-row items-center justify-between"><View><Text className="text-[10px] uppercase tracking-[1.8px] text-slate-500">Tonight in the valley</Text><Text className="mt-1 text-sm text-slate-200">Things can change while you are away.</Text></View><View className="h-11 w-11 items-center justify-center rounded-full border border-emerald-300/25 bg-emerald-400/10"><Sparkles size={18} color="#6ee7b7" /></View></View>
+    {(resident || place || encounter) && <View className="absolute inset-x-4 bottom-4 z-50">
+      {resident ? <ResidentEncounter resident={resident} approaching={approaching} onApproach={approachResident} onClose={() => setResident(null)} /> : encounter ? <View className="rounded-[30px] border border-indigo-300/20 bg-slate-950/95 p-5"><Pressable onPress={() => setEncounter(null)} className="absolute right-4 top-4"><X size={18} color="#94a3b8" /></Pressable><Text className="text-3xl">✦</Text><Text className="mt-2 text-xl font-black text-white">{encounter.title}</Text><Text className="mt-2 pr-6 text-sm leading-5 text-slate-300">{encounter.detail}</Text><Text className="mt-4 text-xs text-indigo-200">This moment has entered your Journey.</Text><Pressable onPress={() => setEncounter(null)} className="mt-5 self-start rounded-full bg-white/10 px-4 py-2"><Text className="text-xs font-semibold text-white">Return to the valley</Text></Pressable></View> : place ? <View className="rounded-[30px] border border-white/10 bg-slate-950/95 p-5"><Pressable onPress={() => setPlace(null)} className="absolute right-4 top-4"><X size={18} color="#94a3b8" /></Pressable><Text className="text-3xl">{place.icon}</Text><Text className="mt-2 text-xl font-black text-white">{place.name}</Text><Text className="mt-2 pr-6 text-sm leading-5 text-slate-300">{place.scene}</Text><View className="mt-5 flex-row"><Pressable onPress={() => setPlace(null)} className="rounded-full bg-white/10 px-4 py-2"><Text className="text-xs font-semibold text-white">Keep wandering</Text></Pressable>{place.scenario && <Pressable onPress={() => { setPlace(null); onStartScenario?.(place.scenario!); }} className="ml-2 rounded-full bg-emerald-400/15 px-4 py-2"><Text className="text-xs font-semibold text-emerald-200">Step inside</Text></Pressable>}</View></View> : null}
+    </View>}
+  </View></SafeAreaView>;
 }
