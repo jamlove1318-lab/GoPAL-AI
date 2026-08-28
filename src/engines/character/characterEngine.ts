@@ -13,10 +13,29 @@ export class CharacterEngine {
   async loadCassidy(userId: string, characterKey = 'cassidy'): Promise<CassidyView> {
     if (!isSupabaseConfigured) return LocalStore.getCassidyView();
     try {
-      const { data: character } = await supabase.from('characters').select('*').eq('key', characterKey).maybeSingle();
+      const { data: character, error: characterError } = await supabase
+        .from('characters')
+        .select('*')
+        .eq('key', characterKey)
+        .maybeSingle();
+      if (characterError) throw characterError;
       if (!character) return LocalStore.getCassidyView();
-      const { data: state } = await supabase.from('character_state').select('*').eq('character_id', character.id).maybeSingle();
-      const { data: relationship } = await supabase.from('character_relationships').select('*').eq('user_id', userId).eq('character_id', character.id).maybeSingle();
+
+      const { data: state, error: stateError } = await supabase
+        .from('character_state')
+        .select('*')
+        .eq('character_id', character.id)
+        .maybeSingle();
+      if (stateError) throw stateError;
+
+      const { data: relationship, error: relationshipError } = await supabase
+        .from('character_relationships')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('character_id', character.id)
+        .maybeSingle();
+      if (relationshipError) throw relationshipError;
+
       return { character, state, relationship };
     } catch {
       return LocalStore.getCassidyView();
@@ -29,19 +48,40 @@ export class CharacterEngine {
       return;
     }
     try {
-      await supabase.from('character_state').upsert({ character_id: characterId, mood, energy, current_activity: activity, updated_at: new Date().toISOString() });
+      const { error } = await supabase
+        .from('character_state')
+        .upsert({
+          character_id: characterId,
+          mood,
+          energy,
+          current_activity: activity,
+          updated_at: new Date().toISOString(),
+        });
+      if (error) throw error;
     } catch {
       await LocalStore.updateCassidyState({ mood, energy, current_activity: activity });
     }
   }
 
-  async recordRelationship(userId: string, characterId: string, patch: Partial<Pick<CharacterRelationshipsRow, 'familiarity' | 'trust' | 'friendship'>>): Promise<void> {
+  async recordRelationship(
+    userId: string,
+    characterId: string,
+    patch: Partial<Pick<CharacterRelationshipsRow, 'familiarity' | 'trust' | 'friendship'>>,
+  ): Promise<void> {
     if (!isSupabaseConfigured) {
       await LocalStore.updateCassidyRelationship(patch);
       return;
     }
     try {
-      await supabase.from('character_relationships').upsert({ user_id: userId, character_id: characterId, ...patch, updated_at: new Date().toISOString() });
+      const { error } = await supabase
+        .from('character_relationships')
+        .upsert({
+          user_id: userId,
+          character_id: characterId,
+          ...patch,
+          updated_at: new Date().toISOString(),
+        });
+      if (error) throw error;
     } catch {
       await LocalStore.updateCassidyRelationship(patch);
     }
