@@ -75,14 +75,24 @@ export function useCassidy() {
         setSnapshot(worldSnapshot);
       }
     });
+
     const refreshOnWorldChange = () => {
       void reload(userId);
     };
     const eventSubscriptions = [
       eventBus.on('learning:sessionCompleted', refreshOnWorldChange),
-      eventBus.on('world:discovery', refreshOnWorldChange),
-      eventBus.on('journey:event', refreshOnWorldChange),
+      eventBus.on('discovery:made', refreshOnWorldChange),
+      eventBus.on('quest:completed', refreshOnWorldChange),
+      eventBus.on('story:progressed', refreshOnWorldChange),
+      eventBus.on('achievement:earned', refreshOnWorldChange),
+      eventBus.on('location:unlocked', refreshOnWorldChange),
+      eventBus.on('world:locationChanged', refreshOnWorldChange),
+      eventBus.on('conversation:completed', refreshOnWorldChange),
+      eventBus.on('world:eventStarted', refreshOnWorldChange),
+      eventBus.on('world:returned', refreshOnWorldChange),
+      eventBus.on('memory:recorded', refreshOnWorldChange),
     ];
+
     return () => {
       active = false;
       unsub.data.subscription.unsubscribe();
@@ -101,7 +111,6 @@ export function useCassidy() {
         text: trimmed,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
-
       setMessages((prev) => [...prev, userMsg]);
 
       const mood = view?.state?.mood ?? 'curious';
