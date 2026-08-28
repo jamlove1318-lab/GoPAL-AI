@@ -4,10 +4,33 @@ import type { CassidyView } from '../engines/character/characterEngine';
 import { tutorEngine } from '../engines/tutor/tutorEngine';
 import { auth } from '../services/auth';
 import type { Mood } from '../lib/types';
+import { loadCassidySnapshot, type CassidySnapshot } from '../characters/cassidyContext';
+import { eventBus } from '../engines/events/eventBus';
 
 const characterEngine = new CharacterEngine();
 const RELATIONSHIP_INTERACTION_GAIN = 1;
 const MAX_RELATIONSHIP_SCORE = 100;
+
+function createMessageId(kind: 'user' | 'cassidy'): string {
+  return `msg-${kind}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function contextForCassidy(snapshot: CassidySnapshot | null): string {
+  if (!snapshot) return '';
+  const recentSignals = [
+    snapshot.echoes > 0 ? `${snapshot.echoes} learning echoes` : null,
+    snapshot.worldEchoes > 0 ? `${snapshot.worldEchoes} world echoes` : null,
+    snapshot.souvenirs > 0 ? `${snapshot.souvenirs} souvenirs` : null,
+    snapshot.threads > 0 ? `${snapshot.threads} memory threads` : null,
+    snapshot.decisions > 0 ? `${snapshot.decisions} remembered decisions` : null,
+  ].filter(Boolean).join(', ');
+  return [
+    'Cassidy context (use only as background; never claim details not present here):',
+    recentSignals ? `The learner has ${recentSignals}.` : 'The learner has not built a recorded history yet.',
+    snapshot.lastMode ? `Their last recorded mode was ${snapshot.lastMode}.` : null,
+    `The living world currently has bonsai growth ${snapshot.bonsaiGrowth} and radio growth ${snapshot.radioGrowth}.`,
+  ].filter(Boolean).join(' ');
+}
 
 export interface CassidyChatMessage {
   id: string;
@@ -18,6 +41,7 @@ export interface CassidyChatMessage {
 
 export function useCassidy() {
   const [view, setView] = useState<CassidyView | null>(null);
+  const [snapshot, setSnapshot] = useState<CassidySnapshot | null>(null);
   const [userId, setUserId] = useState<string>('local-explorer-user');
   const [messages, setMessages] = useState<CassidyChatMessage[]>([
     {
@@ -29,8 +53,12 @@ export function useCassidy() {
   ]);
 
   const reload = useCallback(async (uid: string) => {
-    const loaded = await characterEngine.loadCassidy(uid);
+    const [loaded, worldSnapshot] = await Promise.all([
+      characterEngine.loadCassidy(uid),
+      loadCassidySnapshot(),
+    ]);
     setView(loaded);
+    setSnapshot(worldSnapshot);
   }, []);
 
   useEffect(() => {
@@ -38,60 +66,74 @@ export function useCassidy() {
     const unsub = auth.onAuthStateChange(async (user) => {
       const uid = user ? user.id : 'local-explorer-user';
       setUserId(uid);
-      const loaded = await characterEngine.loadCassidy(uid);
-      if (active) setView(loaded);
+      const [loaded, worldSnapshot] = await Promise.all([
+        characterEngine.loadCassidy(uid),
+        loadCassidySnapshot(),
+      ]);
+      if (active) {
+        setView(loaded);
+        setSnapshot(worldSnapshot);
+      }
     });
+    const refreshOnWorldChange = () => {
+      void reload(userId);
+    };
+    const eventSubscriptions = [
+      eventBus.on('learning:sessionCompleted', refreshOnWorldChange),
+      eventBus.on('world:discovery', refreshOnWorldChange),
+      eventBus.on('journey:event', refreshOnWorldChange),
+    ];
     return () => {
       active = false;
       unsub.data.subscription.unsubscribe();
+      eventSubscriptions.forEach((unsubscribe) => unsubscribe());
     };
-  }, []);
+  }, [reload, userId]);
 
   const sendMessage = useCallback(
     async (text: string) => {
-      if (!text.trim()) return;
+      const trimmed = text.trim();
+      if (!trimmed) return;
 
       const userMsg: CassidyChatMessage = {
-        id: 'msg-' + Date.now(),
+        id: createMessageId('user'),
         sender: 'user',
-        text: text.trim(),
+        text: trimmed,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 
       setMessages((prev) => [...prev, userMsg]);
 
       const mood = view?.state?.mood ?? 'curious';
-      const cassidyReply = tutorEngine.generateCassidyResponse(text, mood);
+      const context = contextForCassidy(snapshot);
+      const prompt = context ? `${context}\n\nLearner says: ${trimmed}` : trimmed;
+      const cassidyReply = tutorEngine.generateCassidyResponse(prompt, mood);
 
-      setTimeout(async () => {
-        const replyMsg: CassidyChatMessage = {
-          id: 'msg-' + (Date.now() + 1),
-          sender: 'cassidy',
-          text: cassidyReply,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        };
-        setMessages((prev) => [...prev, replyMsg]);
+      const replyMsg: CassidyChatMessage = {
+        id: createMessageId('cassidy'),
+        sender: 'cassidy',
+        text: cassidyReply,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages((prev) => [...prev, replyMsg]);
 
-        // Keep the interaction reward explicit and bounded instead of scattering
-        // relationship constants through the chat flow.
-        if (view?.relationship) {
-          const newTrust = Math.min(
-            MAX_RELATIONSHIP_SCORE,
-            (view.relationship.trust ?? 80) + RELATIONSHIP_INTERACTION_GAIN
-          );
-          const newFriendship = Math.min(
-            MAX_RELATIONSHIP_SCORE,
-            (view.relationship.friendship ?? 75) + RELATIONSHIP_INTERACTION_GAIN
-          );
-          await characterEngine.recordRelationship(userId, view.character?.id ?? 'char-cassidy', {
-            trust: newTrust,
-            friendship: newFriendship,
-          });
-          await reload(userId);
-        }
-      }, 500);
+      if (view?.relationship) {
+        const newTrust = Math.min(
+          MAX_RELATIONSHIP_SCORE,
+          (view.relationship.trust ?? 80) + RELATIONSHIP_INTERACTION_GAIN
+        );
+        const newFriendship = Math.min(
+          MAX_RELATIONSHIP_SCORE,
+          (view.relationship.friendship ?? 75) + RELATIONSHIP_INTERACTION_GAIN
+        );
+        await characterEngine.recordRelationship(userId, view.character?.id ?? 'char-cassidy', {
+          trust: newTrust,
+          friendship: newFriendship,
+        });
+        await reload(userId);
+      }
     },
-    [view, userId, reload]
+    [view, snapshot, userId, reload]
   );
 
   const updateMood = useCallback(
@@ -110,6 +152,7 @@ export function useCassidy() {
 
   return {
     view,
+    snapshot,
     characterEngine,
     messages,
     sendMessage,
