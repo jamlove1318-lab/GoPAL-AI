@@ -7,6 +7,11 @@ import { LocalStore } from '../lib/localStore';
 import { WaveStore } from '../lib/waveStore';
 import { eventBus } from '../engines/events/eventBus';
 
+function createSessionId(scenarioId: string): string {
+  const randomPart = Math.random().toString(36).slice(2, 10);
+  return `learning-${scenarioId}-${Date.now()}-${randomPart}`;
+}
+
 export function useLearningSession(userId = 'local-explorer-user') {
   const [activeScenario, setActiveScenario] = useState<ScenarioDefinition | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -14,6 +19,7 @@ export function useLearningSession(userId = 'local-explorer-user') {
   const [evaluation, setEvaluation] = useState<LearningEvidence | null>(null);
   const [sessionCompleted, setSessionCompleted] = useState(false);
   const completionRecordedRef = useRef(false);
+  const sessionIdRef = useRef<string | null>(null);
   const stepEvidenceRef = useRef<LearningEvidence[]>([]);
   const hintUsedRef = useRef(false);
 
@@ -27,6 +33,9 @@ export function useLearningSession(userId = 'local-explorer-user') {
       const context = `scenario:${scenario.id}`;
       const evidence = stepEvidenceRef.current;
       const matchedConcepts = Array.from(new Set(evidence.flatMap((item) => item.matchedConcepts)));
+      const sessionId = sessionIdRef.current ?? createSessionId(scenario.id);
+      sessionIdRef.current = sessionId;
+      const hintsUsed = evidence.some((item) => item.hintDependency) || hintUsedRef.current;
 
       const effects: Promise<unknown>[] = [
         LocalStore.addMemory(
@@ -41,6 +50,7 @@ export function useLearningSession(userId = 'local-explorer-user') {
             character: scenario.characterName,
             accuracy: finalEvaluation.accuracy,
             conceptsDemonstrated: matchedConcepts,
+            sessionId,
           },
           'tutor_engine'
         ),
@@ -79,10 +89,12 @@ export function useLearningSession(userId = 'local-explorer-user') {
       eventBus.emit(
         'learning:sessionCompleted',
         {
-          sessionId: scenario.id,
+          sessionId,
+          userId,
           accuracy: finalEvaluation.accuracy,
           activityType: 'real-world-dialogue',
           conceptsDemonstrated: matchedConcepts,
+          hintsUsed,
         },
         'learning'
       );
@@ -97,6 +109,7 @@ export function useLearningSession(userId = 'local-explorer-user') {
       SCENARIOS[0];
 
     completionRecordedRef.current = false;
+    sessionIdRef.current = createSessionId(matched.id);
     stepEvidenceRef.current = [];
     hintUsedRef.current = false;
     setActiveScenario(matched);
@@ -108,6 +121,7 @@ export function useLearningSession(userId = 'local-explorer-user') {
 
   const endSession = useCallback(() => {
     completionRecordedRef.current = false;
+    sessionIdRef.current = null;
     stepEvidenceRef.current = [];
     hintUsedRef.current = false;
     setIsSessionActive(false);
