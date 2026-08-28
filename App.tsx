@@ -25,7 +25,11 @@ import { Home, BookOpen, MapPin, Sparkles, Heart, MoreHorizontal, Image as Image
 
 type TabKey = 'home' | 'cassidy' | 'study' | 'world' | 'journey' | 'museum' | 'characters' | 'settings';
 const PRIMARY_TABS: Array<{ key: TabKey; label: string; Icon: typeof Home }> = [
-  { key: 'home', label: 'Home', Icon: Home }, { key: 'world', label: 'World', Icon: MapPin }, { key: 'study', label: 'Learn', Icon: BookOpen }, { key: 'journey', label: 'Journey', Icon: Sparkles }, { key: 'cassidy', label: 'Cassidy', Icon: Heart },
+  { key: 'world', label: 'Explore', Icon: MapPin },
+  { key: 'journey', label: 'Journey', Icon: Sparkles },
+  { key: 'cassidy', label: 'Cassidy', Icon: Heart },
+  { key: 'study', label: 'Learn', Icon: BookOpen },
+  { key: 'home', label: 'Sanctuary', Icon: Home },
 ];
 
 function currentAtmospherePhase(): WorldAtmospherePhase {
@@ -38,7 +42,8 @@ function currentAtmospherePhase(): WorldAtmospherePhase {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<TabKey>('home');
+  // GoPAL starts inside the living world. Sanctuary remains the learner's personal hub.
+  const [activeTab, setActiveTab] = useState<TabKey>('world');
   const [moreOpen, setMoreOpen] = useState(false);
   const [snapshot, setSnapshot] = useState<CassidySnapshot | null>(null);
   const [scenarioState, setScenarioState] = useState({ visible: false, scenarioKey: 'scen-cafe-order' });
@@ -74,13 +79,13 @@ export default function App() {
       case 'museum': return <MemoryMuseumScreen />;
       case 'characters': return <CharacterScreen />;
       case 'settings': return <SettingsScreen />;
-      default: return <HomeScreen onNavigate={handleNavigate} onStartScenario={handleStartScenario} />;
+      default: return <WorldMapScreen onStartScenario={handleStartScenario} />;
     }
   };
 
   return <SafeAreaProvider><View className="flex-1 bg-slate-950"><StatusBar style="light" /><AmbientBackground intensity={worldIntensity(snapshot)} /><WorldAtmosphere phase={atmospherePhase} intensity={Math.max(.55, worldIntensity(snapshot))} /><LivingWorldPulse /><Animated.View className="flex-1" style={{ opacity: screenMotion, transform: [{ translateY: screenMotion.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }] }}>{renderActiveScreen()}</Animated.View>
-    {moreOpen && <Pressable className="absolute inset-0 bg-slate-950/45" onPress={() => setMoreOpen(false)}><View className="absolute bottom-20 right-3 w-52 rounded-3xl border border-slate-700/70 bg-slate-900/95 p-2"><Text className="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[2px] text-slate-500">Explore more</Text><MoreItem icon={<ImageIcon size={18} color="#a7f3d0" />} label="Memory Museum" onPress={() => handleNavigate('museum')} /><MoreItem icon={<Users size={18} color="#a7f3d0" />} label="Friends" onPress={() => handleNavigate('characters')} /><MoreItem icon={<SettingsIcon size={18} color="#a7f3d0" />} label="Settings" onPress={() => handleNavigate('settings')} /></View></Pressable>}
-    <View className="mx-3 mb-2 flex-row items-center justify-around rounded-3xl border border-slate-800/60 bg-slate-900/80 px-1.5 py-2">{PRIMARY_TABS.map(({ key, label, Icon }) => { const selected = activeTab === key && !moreOpen; return <Pressable key={key} onPress={() => { setActiveTab(key); setMoreOpen(false); }} className="items-center justify-center px-1 py-1"><View className={`items-center justify-center rounded-full px-3 py-1.5 ${selected ? 'bg-emerald-500/15' : ''}`}><Icon size={19} color={selected ? '#34d399' : '#64748b'} strokeWidth={selected ? 2.4 : 1.8} /><Text className={`mt-1 text-[10px] font-medium ${selected ? 'font-bold text-emerald-400' : 'text-slate-500'}`}>{label}</Text></View></Pressable>; })}<Pressable onPress={() => setMoreOpen((value) => !value)} className="items-center justify-center px-1 py-1"><View className={`items-center justify-center rounded-full px-3 py-1.5 ${moreOpen ? 'bg-emerald-500/15' : ''}`}><MoreHorizontal size={19} color={moreOpen ? '#34d399' : '#64748b'} strokeWidth={2} /><Text className={`mt-1 text-[10px] font-medium ${moreOpen ? 'font-bold text-emerald-400' : 'text-slate-500'}`}>More</Text></View></Pressable></View>
+    {moreOpen && <Pressable className="absolute inset-0 bg-slate-950/45" onPress={() => setMoreOpen(false)}><View className="absolute bottom-20 right-3 w-52 rounded-3xl border border-slate-700/70 bg-slate-900/95 p-2"><Text className="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[2px] text-slate-500">More of your world</Text><MoreItem icon={<ImageIcon size={18} color="#a7f3d0" />} label="Memory Museum" onPress={() => handleNavigate('museum')} /><MoreItem icon={<Users size={18} color="#a7f3d0" />} label="People" onPress={() => handleNavigate('characters')} /><MoreItem icon={<SettingsIcon size={18} color="#a7f3d0" />} label="Settings" onPress={() => handleNavigate('settings')} /></View></Pressable>}
+    <View className="mx-3 mb-2 flex-row items-center justify-around rounded-3xl border border-slate-800/60 bg-slate-900/80 px-1.5 py-2">{PRIMARY_TABS.map(({ key, label, Icon }) => { const selected = activeTab === key && !moreOpen; return <Pressable key={key} onPress={() => { setActiveTab(key); setMoreOpen(false); }} className="items-center justify-center px-1 py-1"><View className={`items-center justify-center rounded-full px-3 py-1.5 ${selected ? 'bg-emerald-500/15' : ''}`}><Icon size={19} color={selected ? '#34d399' : '#64748b'} strokeWidth={selected ? 2.4 : 1.8} /><Text className={`mt-1 text-[10px] font-medium ${selected ? 'font-bold text-emerald-400' : 'text-slate-500'}`}>{label}</Text></View></Pressable>; })}</View>
     {activeTab !== 'cassidy' && !moreOpen && <LivingCompanion activeTab={activeTab} snapshot={snapshot} onTap={() => setActiveTab('cassidy')} />}<LearningScenarioModal visible={scenarioState.visible} scenarioKey={scenarioState.scenarioKey} onClose={handleCloseScenario} /></View></SafeAreaProvider>;
 }
 function MoreItem({ icon, label, onPress }: { icon: React.ReactNode; label: string; onPress: () => void }) { return <Pressable onPress={onPress} className="flex-row items-center rounded-2xl px-3 py-3 active:bg-white/10"><View>{icon}</View><Text className="ml-3 text-sm text-slate-200">{label}</Text></Pressable>; }
