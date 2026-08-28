@@ -3,56 +3,10 @@ import { Animated, Easing, Pressable, Text, View } from 'react-native';
 import { MapPin } from 'lucide-react-native';
 import { resolveTimeOfDay } from '../../../lib/time';
 
-export type LivingResident = {
-  id: string; name: string; avatar: string; role: string; locationKey: string;
-  x: number; y: number; mood: string; activity: string;
-};
-
-const ROUTINES: Record<string, Array<Omit<LivingResident, 'id' | 'name' | 'avatar' | 'role'>>> = {
-  morning: [
-    { locationKey: 'cozy_cafe', x: 45, y: 36, mood: 'welcoming', activity: 'opening the café' },
-    { locationKey: 'whispering_library', x: 72, y: 19, mood: 'quiet', activity: 'sorting old books' },
-    { locationKey: 'lantern_market', x: 76, y: 61, mood: 'sleepy', activity: 'setting up a stall' },
-  ],
-  afternoon: [
-    { locationKey: 'cozy_cafe', x: 51, y: 39, mood: 'busy', activity: 'making tea' },
-    { locationKey: 'whispering_library', x: 68, y: 22, mood: 'curious', activity: 'following a story' },
-    { locationKey: 'zen_garden', x: 37, y: 74, mood: 'thoughtful', activity: 'looking after the garden' },
-  ],
-  evening: [
-    { locationKey: 'cozy_cafe', x: 47, y: 33, mood: 'warm', activity: 'talking with regulars' },
-    { locationKey: 'lantern_market', x: 73, y: 66, mood: 'cheerful', activity: 'calling to travelers' },
-    { locationKey: 'zen_garden', x: 32, y: 76, mood: 'peaceful', activity: 'lighting the path' },
-  ],
-  night: [
-    { locationKey: 'study_room', x: 13, y: 59, mood: 'sleepy', activity: 'heading home' },
-    { locationKey: 'lantern_market', x: 78, y: 63, mood: 'playful', activity: 'closing the last stall' },
-    { locationKey: 'whispering_library', x: 70, y: 18, mood: 'absorbed', activity: 'reading by lantern light' },
-  ],
-};
-const IDENTITIES = [
-  { id: 'ren', name: 'Ren', avatar: '☕', role: 'Barista' },
-  { id: 'emi', name: 'Emi', avatar: '📚', role: 'Historian' },
-  { id: 'kenji', name: 'Kenji', avatar: '🏮', role: 'Stall Master' },
-];
-export function useLivingResidents() {
-  const time = resolveTimeOfDay();
-  return useMemo<LivingResident[]>(() => {
-    const routine = ROUTINES[time] ?? ROUTINES.afternoon;
-    return IDENTITIES.map((identity, index) => ({ ...identity, ...routine[index] }));
-  }, [time]);
-}
-function ResidentPresence({ resident, onPress }: { resident: LivingResident; onPress?: (resident: LivingResident) => void }) {
-  const float = useRef(new Animated.Value(0)).current; const drift = useRef(new Animated.Value(0)).current;
-  useEffect(() => { const motion = Animated.loop(Animated.parallel([
-    Animated.sequence([Animated.timing(float, { toValue: 1, duration: 1800 + resident.id.length * 120, easing: Easing.inOut(Easing.sin), useNativeDriver: true }), Animated.timing(float, { toValue: 0, duration: 1800 + resident.id.length * 120, easing: Easing.inOut(Easing.sin), useNativeDriver: true })]),
-    Animated.sequence([Animated.timing(drift, { toValue: 1, duration: 5200 + resident.id.length * 180, easing: Easing.inOut(Easing.sin), useNativeDriver: true }), Animated.timing(drift, { toValue: 0, duration: 5200 + resident.id.length * 180, easing: Easing.inOut(Easing.sin), useNativeDriver: true })]),
-  ])); motion.start(); return () => motion.stop(); }, [drift, float, resident.id]);
-  return <Animated.View style={{ position: 'absolute', left: `${resident.x}%`, top: `${resident.y}%`, transform: [{ translateX: drift.interpolate({ inputRange: [0, 1], outputRange: [-3, 4] }) }, { translateY: float.interpolate({ inputRange: [0, 1], outputRange: [3, -5] }) }] }}>
-    <Pressable onPress={() => onPress?.(resident)} className="-ml-7 -mt-7 items-center"><Animated.View style={{ transform: [{ scale: float.interpolate({ inputRange: [0, 1], outputRange: [1, 1.04] }) }] }} className="h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-slate-950/80 shadow-2xl"><Text className="text-2xl">{resident.avatar}</Text></Animated.View><View className="mt-1.5 max-w-[100px] items-center rounded-2xl bg-slate-950/85 px-2 py-1"><Text numberOfLines={1} className="text-[10px] font-bold text-white">{resident.name}</Text><Text numberOfLines={1} className="mt-0.5 text-[8px] text-emerald-300">{resident.activity}</Text></View></Pressable>
-  </Animated.View>;
-}
-export function LivingResidentLayer({ onResidentPress }: { onResidentPress?: (resident: LivingResident) => void }) { const residents = useLivingResidents(); return <View pointerEvents="box-none" className="absolute inset-0 z-30">{residents.map(resident => <ResidentPresence key={resident.id} resident={resident} onPress={onResidentPress} />)}</View>; }
-export function ResidentEncounter({ resident, onClose, onApproach, approaching = false }: { resident: LivingResident; onClose: () => void; onApproach?: (resident: LivingResident) => void; approaching?: boolean }) {
-  return <View className="rounded-[30px] border border-emerald-300/20 bg-slate-950/95 p-5"><View className="flex-row items-center"><View className="h-14 w-14 items-center justify-center rounded-full bg-emerald-400/10"><Text className="text-3xl">{resident.avatar}</Text></View><View className="ml-3 flex-1"><Text className="text-lg font-bold text-white">{resident.name}</Text><Text className="text-xs text-emerald-300">{resident.role} · {resident.mood}</Text></View></View><Text className="mt-4 text-sm leading-5 text-slate-300">Right now, {resident.name} is {resident.activity}. Approach and let this become part of your story.</Text><View className="mt-5 flex-row"><Pressable onPress={onClose} className="rounded-full bg-white/10 px-4 py-2"><Text className="text-xs font-semibold text-white">Leave them be</Text></Pressable><Pressable disabled={approaching} onPress={() => onApproach?.(resident)} className="ml-2 flex-row items-center rounded-full bg-emerald-400/15 px-4 py-2"><MapPin size={13} color="#6ee7b7" /><Text className="ml-1.5 text-xs font-semibold text-emerald-200">{approaching ? 'A moment...' : 'Approach'}</Text></Pressable></View></View>;
-}
+export type LivingResident = { id:string; name:string; avatar:string; role:string; locationKey:string; x:number; y:number; mood:string; activity:string; };
+const ROUTINES: Record<string, Array<Omit<LivingResident,'id'|'name'|'avatar'|'role'>>> = { morning:[{locationKey:'cozy_cafe',x:45,y:36,mood:'welcoming',activity:'opening the café'},{locationKey:'whispering_library',x:72,y:19,mood:'quiet',activity:'sorting old books'},{locationKey:'lantern_market',x:76,y:61,mood:'sleepy',activity:'setting up a stall'}], afternoon:[{locationKey:'cozy_cafe',x:51,y:39,mood:'busy',activity:'making tea'},{locationKey:'whispering_library',x:68,y:22,mood:'curious',activity:'following a story'},{locationKey:'zen_garden',x:37,y:74,mood:'thoughtful',activity:'looking after the garden'}], evening:[{locationKey:'cozy_cafe',x:47,y:33,mood:'warm',activity:'talking with regulars'},{locationKey:'lantern_market',x:73,y:66,mood:'cheerful',activity:'calling to travelers'},{locationKey:'zen_garden',x:32,y:76,mood:'peaceful',activity:'lighting the path'}], night:[{locationKey:'study_room',x:13,y:59,mood:'sleepy',activity:'heading home'},{locationKey:'lantern_market',x:78,y:63,mood:'playful',activity:'closing the last stall'},{locationKey:'whispering_library',x:70,y:18,mood:'absorbed',activity:'reading by lantern light'}] };
+const IDENTITIES=[{id:'ren',name:'Ren',avatar:'☕',role:'Barista'},{id:'emi',name:'Emi',avatar:'📚',role:'Historian'},{id:'kenji',name:'Kenji',avatar:'🏮',role:'Stall Master'}];
+export function useLivingResidents(timeOffsetMinutes=0) { const time=resolveTimeOfDay(new Date(Date.now()+timeOffsetMinutes*60000)); return useMemo<LivingResident[]>(()=>{const routine=ROUTINES[time]??ROUTINES.afternoon;return IDENTITIES.map((identity,index)=>({...identity,...routine[index]}));},[time]); }
+function ResidentPresence({resident,onPress}:{resident:LivingResident;onPress?:(resident:LivingResident)=>void}) { const float=useRef(new Animated.Value(0)).current;const drift=useRef(new Animated.Value(0)).current;useEffect(()=>{const motion=Animated.loop(Animated.parallel([Animated.sequence([Animated.timing(float,{toValue:1,duration:1800+resident.id.length*120,easing:Easing.inOut(Easing.sin),useNativeDriver:true}),Animated.timing(float,{toValue:0,duration:1800+resident.id.length*120,easing:Easing.inOut(Easing.sin),useNativeDriver:true})]),Animated.sequence([Animated.timing(drift,{toValue:1,duration:5200+resident.id.length*180,easing:Easing.inOut(Easing.sin),useNativeDriver:true}),Animated.timing(drift,{toValue:0,duration:5200+resident.id.length*180,easing:Easing.inOut(Easing.sin),useNativeDriver:true})]) ]));motion.start();return()=>motion.stop();},[drift,float,resident.id]);return <Animated.View style={{position:'absolute',left:`${resident.x}%`,top:`${resident.y}%`,transform:[{translateX:drift.interpolate({inputRange:[0,1],outputRange:[-3,4]})},{translateY:float.interpolate({inputRange:[0,1],outputRange:[3,-5]})}]}}><Pressable onPress={()=>onPress?.(resident)} className="-ml-7 -mt-7 items-center"><Animated.View style={{transform:[{scale:float.interpolate({inputRange:[0,1],outputRange:[1,1.04]})}]}} className="h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-slate-950/80 shadow-2xl"><Text className="text-2xl">{resident.avatar}</Text></Animated.View><View className="mt-1.5 max-w-[100px] items-center rounded-2xl bg-slate-950/85 px-2 py-1"><Text numberOfLines={1} className="text-[10px] font-bold text-white">{resident.name}</Text><Text numberOfLines={1} className="mt-0.5 text-[8px] text-emerald-300">{resident.activity}</Text></View></Pressable></Animated.View>; }
+export function LivingResidentLayer({onResidentPress,timeOffsetMinutes=0}:{onResidentPress?:(resident:LivingResident)=>void;timeOffsetMinutes?:number}){const residents=useLivingResidents(timeOffsetMinutes);return <View pointerEvents="box-none" className="absolute inset-0 z-30">{residents.map(resident=><ResidentPresence key={`${resident.id}:${resident.locationKey}`} resident={resident} onPress={onResidentPress}/>)}</View>;}
+export function ResidentEncounter({resident,onClose,onApproach,approaching=false}:{resident:LivingResident;onClose:()=>void;onApproach?:(resident:LivingResident)=>void;approaching?:boolean}){return <View className="rounded-[30px] border border-emerald-300/20 bg-slate-950/95 p-5"><View className="flex-row items-center"><View className="h-14 w-14 items-center justify-center rounded-full bg-emerald-400/10"><Text className="text-3xl">{resident.avatar}</Text></View><View className="ml-3 flex-1"><Text className="text-lg font-bold text-white">{resident.name}</Text><Text className="text-xs text-emerald-300">{resident.role} · {resident.mood}</Text></View></View><Text className="mt-4 text-sm leading-5 text-slate-300">Right now, {resident.name} is {resident.activity}. Approach and let this become part of your story.</Text><View className="mt-5 flex-row"><Pressable onPress={onClose} className="rounded-full bg-white/10 px-4 py-2"><Text className="text-xs font-semibold text-white">Leave them be</Text></Pressable><Pressable disabled={approaching} onPress={()=>onApproach?.(resident)} className="ml-2 flex-row items-center rounded-full bg-emerald-400/15 px-4 py-2"><MapPin size={13} color="#6ee7b7"/><Text className="ml-1.5 text-xs font-semibold text-emerald-200">{approaching?'A moment...':'Approach'}</Text></Pressable></View></View>;}
