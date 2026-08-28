@@ -1,29 +1,7 @@
-export interface LearningSessionCompletedEvent {
-  sessionId: string;
-  userId?: string;
-  accuracy: number;
-  activityType: string;
-  conceptsDemonstrated?: string[];
-  masteryChanges?: Record<string, number>;
-  xpGained?: number;
-  hintsUsed?: boolean;
-}
-
+export interface LearningSessionCompletedEvent { sessionId:string; userId?:string; accuracy:number; activityType:string; conceptsDemonstrated?:string[]; masteryChanges?:Record<string,number>; xpGained?:number; hintsUsed?:boolean; }
 export interface AppEventMap {
-  'learning:sessionCompleted': LearningSessionCompletedEvent;
-  'quest:completed': { questId: string; userId: string };
-  'story:progressed': { storyId: string; node: string; userId: string };
-  'achievement:earned': { achievementId: string; userId: string; context?: Record<string, unknown> };
-  'location:unlocked': { locationId: string; userId: string };
-  'world:locationChanged': { locationId: string; userId: string; previousLocationId?: string };
-  'conversation:completed': { conversationId: string; userId: string };
-  'discovery:made': { discoveryId: string; type: string; ref: string; userId: string };
-  'world:eventStarted': { eventId: string; worldId: string };
-  'world:returned': { userId: string; lastActiveAt: string };
-  'world:residentEncountered': { residentId: string; residentName: string; activity: string; locationId: string; userId: string };
-  'world:residentMoment': { residentId: string; residentName: string; choice: string; userId: string };
-  'memory:recorded': { memoryId: string; layer: string; userId: string };
-}
-export type AppEventName = keyof AppEventMap;
-export type AppEventPayload<K extends AppEventName> = AppEventMap[K];
-export type EventProducer = 'world' | 'learning' | 'quest' | 'story' | 'character' | 'journey' | 'discovery' | 'system';
+ 'learning:sessionCompleted':LearningSessionCompletedEvent;
+ 'quest:completed':{questId:string;userId:string}; 'story:progressed':{storyId:string;node:string;userId:string}; 'achievement:earned':{achievementId:string;userId:string;context?:Record<string,unknown>}; 'location:unlocked':{locationId:string;userId:string}; 'world:locationChanged':{locationId:string;userId:string;previousLocationId?:string}; 'conversation:completed':{conversationId:string;userId:string}; 'discovery:made':{discoveryId:string;type:string;ref:string;userId:string};
+ 'world:eventStarted':{eventId:string;worldId:string}; 'world:eventResolved':{eventId:string;choiceId:string;userId:string}; 'world:returned':{userId:string;lastActiveAt:string}; 'world:residentEncountered':{residentId:string;residentName:string;activity:string;locationId:string;userId:string}; 'world:residentMoment':{residentId:string;residentName:string;choice:string;userId:string};
+ 'memory:recorded':{memoryId:string;layer:string;userId:string}; }
+export type AppEventName=keyof AppEventMap; export type AppEventPayload<K extends AppEventName>=AppEventMap[K]; export type EventProducer='world'|'learning'|'quest'|'story'|'character'|'journey'|'discovery'|'system';
