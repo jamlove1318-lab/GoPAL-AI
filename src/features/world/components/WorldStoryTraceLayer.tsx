@@ -1,0 +1,27 @@
+import React, { useEffect, useState } from 'react';
+import { Animated, Pressable, Text, View } from 'react-native';
+import { residentStoryEngine, ResidentStoryThread } from '../../../engines/world/residentStoryEngine';
+
+const POSITIONS: Record<string, { x: string; y: string; glyph: string; color: string }> = {
+  'emi-lost-page': { x: '70%', y: '27%', glyph: '✦', color: '#c4b5fd' },
+  'ren-unusual-guest': { x: '53%', y: '43%', glyph: '•', color: '#fcd34d' },
+  'kenji-last-lantern': { x: '80%', y: '57%', glyph: '✦', color: '#fbbf24' },
+};
+
+export function WorldStoryTraceLayer({ onTracePress }: { onTracePress?: (thread: ResidentStoryThread) => void }) {
+  const [threads, setThreads] = useState<ResidentStoryThread[]>([]);
+  const [pulse] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    let mounted = true;
+    const refresh = async () => { const ready = await residentStoryEngine.refresh(); if (mounted) setThreads(ready); };
+    refresh(); const timer = setInterval(refresh, 30000); return () => { mounted = false; clearInterval(timer); };
+  }, []);
+  useEffect(() => { const loop = Animated.loop(Animated.sequence([Animated.timing(pulse,{toValue:1,duration:1400,useNativeDriver:true}),Animated.timing(pulse,{toValue:0,duration:1400,useNativeDriver:true})])); loop.start(); return () => loop.stop(); }, [pulse]);
+  return <View pointerEvents="box-none" className="absolute inset-0 z-25">{threads.map(thread => {
+    const position = POSITIONS[thread.id]; if (!position) return null;
+    return <Pressable key={thread.id} onPress={() => onTracePress?.(thread)} style={{ position:'absolute', left:position.x, top:position.y }} className="-ml-7 -mt-7 h-16 w-16 items-center justify-center">
+      <Animated.View style={{ opacity:pulse.interpolate({inputRange:[0,1],outputRange:[.22,.72]}), transform:[{scale:pulse.interpolate({inputRange:[0,1],outputRange:[.75,1.35]})}] }} className="absolute h-14 w-14 rounded-full border border-white/20" />
+      <View style={{ shadowColor:position.color, shadowOpacity:.8, shadowRadius:18, shadowOffset:{width:0,height:0} }} className="h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-slate-950/75"><Text style={{color:position.color}} className="text-lg">{position.glyph}</Text></View>
+    </Pressable>;
+  })}</View>;
+}
