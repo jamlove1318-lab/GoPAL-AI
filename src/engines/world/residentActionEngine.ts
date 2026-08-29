@@ -2,9 +2,15 @@ export type ResidentActionPhase='approach'|'prepare'|'interact'|'recover'|'idle'
 export interface ResidentActionSequence{residentId:string;activity:string;phase:ResidentActionPhase;cycleMs:number;progress:number;}
 const CYCLES:Record<string,number>={ren:7600,emi:8200,kenji:7000};
 export function residentActionSequence(residentId:string,activity:string,now=Date.now()):ResidentActionSequence{
- const cycleMs=CYCLES[residentId]??7600; const t=now%cycleMs; const progress=t/cycleMs;
- let phase:ResidentActionPhase='idle';
- if(progress<0.12)phase='approach'; else if(progress<0.28)phase='prepare'; else if(progress<0.68)phase='interact'; else if(progress<0.84)phase='recover';
+ const cycleMs=CYCLES[residentId]??7600;const t=now%cycleMs;const progress=t/cycleMs;
+ const phase:ResidentActionPhase=progress<0.12?'approach':progress<0.28?'prepare':progress<0.68?'interact':progress<0.84?'recover':'idle';
  return{residentId,activity,phase,cycleMs,progress};
 }
-export function propStateForAction(phase:ResidentActionPhase):'hidden'|'arriving'|'active'|'settling'{if(phase==='approach')return'hidden';if(phase==='prepare')return'arriving';if(phase==='interact')return'active';if(phase==='recover')return'settling';return'hidden';}
+export function propStateForAction(phase:ResidentActionPhase):'hidden'|'arriving'|'active'|'settling'{return phase==='approach'||phase==='idle'?'hidden':phase==='prepare'?'arriving':phase==='interact'?'active':'settling';}
+export function phaseMotionForAction(phase:ResidentActionPhase,activity:string):'walking'|'looking'|'serving'|'reading'|'arranging'|'talking'|'idle'{
+ if(phase==='approach')return'walking';if(phase==='prepare')return'looking';if(phase==='recover')return'looking';if(phase==='idle')return'idle';
+ if(activity.includes('tea')||activity.includes('café'))return'serving';
+ if(activity.includes('book')||activity.includes('reading')||activity.includes('story'))return'reading';
+ if(activity.includes('talking')||activity.includes('calling'))return'talking';
+ return'arranging';
+}
