@@ -37,8 +37,8 @@ export function LivingCassidyPresence({
 
   if (!presence.visible) return null;
 
-  const speaking = open && presence.line !== null;
-  const action = context === 'success' ? 'waving' : context === 'exploring' ? 'walking' : 'idle';
+  const action = context === 'success' ? 'waving' : 'idle';
+  const speaking = open && (context === 'learning' || context === 'confused' || context === 'success');
 
   return (
     <View className="absolute left-[16%] top-[48%] z-[35] items-center" pointerEvents="box-none">
