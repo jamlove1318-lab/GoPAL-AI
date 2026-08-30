@@ -1,25 +1,27 @@
 import type { LanguageWorldId } from './languageWorldEngine';
 import { chooseDestinationResident, getDestinationResident } from './destinationResidentEngine';
 import { getWorldLearningScenarios } from './worldLearningScenarioEngine';
+import { residentRelationshipEngine } from './residentRelationshipEngine';
 import { eventBus } from '../events/eventBus';
 
 export type DestinationEncounter={
  residentId:string; residentName:string; role:string; area:string; activity:string; mood:string;
  title:string; detail:string; languageNeed:string; scenarioId?:string; culturalNote?:string;
+ relationship:{familiarity:number;trust:number;sharedMoments:number;tone:string};
  choices:{id:'talk'|'listen'|'learn'|'leave';label:string;detail:string;scenarioId?:string}[];
 };
 
-export function createDestinationEncounter(worldId:LanguageWorldId,placeId:string,residentId?:string):DestinationEncounter|null{
+export async function createDestinationEncounter(worldId:LanguageWorldId,placeId:string,residentId?:string):Promise<DestinationEncounter|null>{
  const resident=residentId?getDestinationResident(worldId,placeId,residentId):chooseDestinationResident(worldId,placeId);
  if(!resident)return null;
  const scenario=getWorldLearningScenarios(worldId,placeId)[0];
+ const relationship=await residentRelationshipEngine.get(resident.id);
  return{
   residentId:resident.id,residentName:resident.name,role:resident.role,area:resident.area,activity:resident.activity,mood:resident.mood,
   title:`${resident.name} is ${resident.activity}`,
-  detail:resident.conversationHook,
-  languageNeed:resident.languageNeed,
-  scenarioId:scenario?.id,
-  culturalNote:scenario?.culturalNote,
+  detail:relationship.sharedMoments>0?await residentRelationshipEngine.greeting(resident.id,resident.name):resident.conversationHook,
+  languageNeed:resident.languageNeed,scenarioId:scenario?.id,culturalNote:scenario?.culturalNote,
+  relationship:{familiarity:relationship.familiarity,trust:relationship.trust,sharedMoments:relationship.sharedMoments,tone:relationship.tone},
   choices:[
    {id:'talk',label:'Talk',detail:`Start naturally. ${resident.name} gives you space to respond.`,scenarioId:scenario?.id},
    {id:'listen',label:'Listen first',detail:`Listen for what ${resident.name} says before deciding what you want to say.`},
@@ -32,8 +34,18 @@ export function createDestinationEncounter(worldId:LanguageWorldId,placeId:strin
 export async function recordDestinationEncounter(worldId:LanguageWorldId,placeId:string,residentId:string,userId='local-explorer-user'){
  const resident=getDestinationResident(worldId,placeId,residentId);
  if(!resident)return null;
+ const relationship=await residentRelationshipEngine.recordEncounter(resident.id);
  eventBus.emit('world:residentEncountered',{residentId:resident.id,residentName:resident.name,activity:resident.activity,locationId:placeId,userId},'world');
- return createDestinationEncounter(worldId,placeId,residentId);
+ return {encounter:await createDestinationEncounter(worldId,placeId,residentId),relationship};
 }
 
-export const destinationEncounterEngine={create:createDestinationEncounter,record:recordDestinationEncounter};
+export async function recordDestinationChoice(worldId:LanguageWorldId,placeId:string,residentId:string,choice:'talk'|'listen'|'learn'|'leave',userId='local-explorer-user'){
+ const resident=getDestinationResident(worldId,placeId,residentId);
+ if(!resident)return null;
+ const mapped=choice==='leave'?'wander':choice==='learn'?'help':choice==='talk'?'stay':'ask';
+ const relationship=await residentRelationshipEngine.recordChoice(resident.id,mapped);
+ eventBus.emit('world:residentMoment',{residentId:resident.id,residentName:resident.name,choice,userId},'world');
+ return {encounter:await createDestinationEncounter(worldId,placeId,residentId),relationship};
+}
+
+export const destinationEncounterEngine={create:createDestinationEncounter,record:recordDestinationEncounter,recordChoice:recordDestinationChoice};
