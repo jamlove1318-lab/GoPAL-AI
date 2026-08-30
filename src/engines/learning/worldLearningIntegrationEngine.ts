@@ -1,5 +1,5 @@
 import { MemoryEngine, type MemoryLayer } from '../memory/memoryEngine';
-import { eventBus } from '../../lib/events';
+import { eventBus } from '../events/eventBus';
 import { resolveWorldLearningOutcome, type WorldLearningOutcome } from './worldLearningOutcomeEngine';
 
 export type WorldLearningIntegrationResult={
