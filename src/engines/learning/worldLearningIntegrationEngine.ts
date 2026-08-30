@@ -1,4 +1,3 @@
-import type { LanguageWorldId } from '../world/languageWorldEngine';
 import { MemoryEngine, type MemoryLayer } from '../memory/memoryEngine';
 import { eventBus } from '../../lib/events';
 import { resolveWorldLearningOutcome, type WorldLearningOutcome } from './worldLearningOutcomeEngine';
@@ -22,7 +21,7 @@ export async function integrateWorldLearningOutcome(
     ? `Successfully used ${outcome.language} for ${outcome.goal} in ${outcome.placeId}.`
     : `Practised ${outcome.language} for ${outcome.goal} in ${outcome.placeId}.`;
   const recorded=await memory.record(userId,memoryLayer,memoryFact,`world-learning:${scenarioId}:${outcome.success?'success':'practice'}`);
-  eventBus.emit('learning:completed',{lessonId:scenarioId,score:outcome.success?1:0,xpEarned:outcome.success?10:3},'learning');
+  eventBus.emit('memory:recorded',{memoryId:recorded.id,layer:memoryLayer,userId},'learning');
   eventBus.emit('world:learningOutcomeResolved',{worldId:outcome.worldId,placeId:outcome.placeId,scenarioId:outcome.scenarioId,success:outcome.success,worldChange:outcome.worldChange},'world');
   return {outcome,memoryRecorded:!!recorded};
 }
