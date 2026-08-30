@@ -1,0 +1,53 @@
+import { CassidyAction } from '../../characters/cassidy';
+import { CassidyPresenceContext } from './cassidyWorldPresenceEngine';
+import { LanguageWorldId, resolveLanguageWorld } from '../world/languageWorldEngine';
+
+export type CassidySceneAnchor = {
+  left: string;
+  top: string;
+  height: number;
+  action: CassidyAction;
+  facing: 'left' | 'right';
+};
+
+const WORLD_ANCHORS: Record<LanguageWorldId, Record<CassidyPresenceContext, CassidySceneAnchor>> = {
+  ja: {
+    exploring: { left: '16%', top: '48%', height: 92, action: 'walking', facing: 'right' },
+    learning: { left: '25%', top: '45%', height: 108, action: 'talking', facing: 'right' },
+    confused: { left: '30%', top: '44%', height: 102, action: 'idle', facing: 'right' },
+    success: { left: '22%', top: '43%', height: 108, action: 'waving', facing: 'right' },
+    quiet: { left: '12%', top: '52%', height: 84, action: 'idle', facing: 'right' },
+    returning: { left: '18%', top: '47%', height: 100, action: 'waving', facing: 'right' },
+  },
+  es: {
+    exploring: { left: '72%', top: '46%', height: 96, action: 'walking', facing: 'left' },
+    learning: { left: '62%', top: '43%', height: 110, action: 'talking', facing: 'left' },
+    confused: { left: '58%', top: '44%', height: 104, action: 'idle', facing: 'left' },
+    success: { left: '66%', top: '42%', height: 110, action: 'waving', facing: 'left' },
+    quiet: { left: '76%', top: '53%', height: 84, action: 'idle', facing: 'left' },
+    returning: { left: '70%', top: '47%', height: 100, action: 'waving', facing: 'left' },
+  },
+  fr: {
+    exploring: { left: '20%', top: '43%', height: 92, action: 'walking', facing: 'right' },
+    learning: { left: '28%', top: '40%', height: 108, action: 'talking', facing: 'right' },
+    confused: { left: '25%', top: '42%', height: 102, action: 'idle', facing: 'right' },
+    success: { left: '31%', top: '39%', height: 108, action: 'waving', facing: 'right' },
+    quiet: { left: '14%', top: '50%', height: 82, action: 'idle', facing: 'right' },
+    returning: { left: '22%', top: '44%', height: 98, action: 'waving', facing: 'right' },
+  },
+  ko: {
+    exploring: { left: '68%', top: '50%', height: 94, action: 'walking', facing: 'left' },
+    learning: { left: '58%', top: '46%', height: 110, action: 'talking', facing: 'left' },
+    confused: { left: '55%', top: '47%', height: 104, action: 'idle', facing: 'left' },
+    success: { left: '63%', top: '44%', height: 110, action: 'waving', facing: 'left' },
+    quiet: { left: '74%', top: '55%', height: 84, action: 'idle', facing: 'left' },
+    returning: { left: '67%', top: '49%', height: 100, action: 'waving', facing: 'left' },
+  },
+};
+
+export function resolveCassidySceneAnchor(languageCode: string, context: CassidyPresenceContext): CassidySceneAnchor {
+  const world = resolveLanguageWorld(languageCode);
+  return WORLD_ANCHORS[world.id][context];
+}
+
+export const cassidySceneAnchorEngine = { resolve: resolveCassidySceneAnchor };
