@@ -4,7 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { JourneyEngine, JourneyEntry } from '../../../engines/journey/journeyEngine';
 import { auth } from '../../../services/auth';
 import { LocalStore } from '../../../lib/localStore';
-import { Sparkles, Compass, BookOpen, Heart, MapPin, Feather } from 'lucide-react-native';
+import { getLanguageWorlds, type LanguageWorld, type WorldPlace } from '../../../engines/world/languageWorldEngine';
+import { Compass, Sparkles, BookOpen, Heart, MapPin, Feather, Plane } from 'lucide-react-native';
 
 const journeyEngine = new JourneyEngine();
 
@@ -21,12 +22,16 @@ function useFloat(duration = 4200) {
   return value;
 }
 
-export function LivingJourneyScreen() {
+export function LivingJourneyScreen({ onTravel }: { onTravel?: (worldId: string, placeId: string) => Promise<void> | void }) {
   const [timeline, setTimeline] = useState<JourneyEntry[]>([]);
   const [milestones, setMilestones] = useState<string[]>([]);
   const [mastered, setMastered] = useState(0);
   const [showAll, setShowAll] = useState(false);
+  const [selectedWorld, setSelectedWorld] = useState('ja');
+  const [travelling, setTravelling] = useState<string | null>(null);
   const float = useFloat();
+  const worlds = getLanguageWorlds();
+  const activeWorld = worlds.find(world => world.id === selectedWorld) ?? worlds[0];
 
   useEffect(() => {
     const unsub = auth.onAuthStateChange(async user => {
@@ -41,19 +46,37 @@ export function LivingJourneyScreen() {
   }, []);
 
   const visible = showAll ? timeline : timeline.slice(-7);
+  const beginJourney = async (world: LanguageWorld, place: WorldPlace) => {
+    if (!onTravel || travelling) return;
+    setTravelling(place.id);
+    try { await onTravel(world.id, place.id); } finally { setTravelling(null); }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-transparent">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 60 }}>
-        <View className="relative min-h-[820px] overflow-hidden px-5 pt-5">
+        <View className="relative overflow-hidden px-5 pt-5">
           <View pointerEvents="none" className="absolute inset-0 bg-slate-950" />
           <Animated.View pointerEvents="none" style={{ opacity: float.interpolate({ inputRange: [0, 1], outputRange: [0.18, 0.42] }), transform: [{ translateY: float.interpolate({ inputRange: [0, 1], outputRange: [14, -14] }) }] }} className="absolute -right-24 top-20 h-72 w-72 rounded-full bg-violet-500/15" />
           <Animated.View pointerEvents="none" style={{ opacity: float.interpolate({ inputRange: [0, 1], outputRange: [0.12, 0.28] }) }} className="absolute -left-20 top-80 h-80 w-80 rounded-full bg-emerald-400/10" />
-
           <View className="z-10">
             <View className="flex-row items-center gap-2"><Feather size={15} color="#a7f3d0" /><Text className="text-[10px] font-bold uppercase tracking-[2.5px] text-emerald-300">Your Living Journey</Text></View>
             <Text className="mt-2 text-[31px] font-black tracking-tight text-white">A story, not a checklist.</Text>
-            <Text className="mt-2 max-w-[92%] text-sm leading-5 text-slate-400">Every place you visited, person you met, challenge you overcame, and discovery you made leaves a little light behind.</Text>
+            <Text className="mt-2 max-w-[92%] text-sm leading-5 text-slate-400">Go somewhere real. Let the place create the reason to learn, then bring what you discover home.</Text>
+          </View>
+
+          <View className="z-10 mt-7 rounded-3xl border border-emerald-300/10 bg-slate-900/70 p-4">
+            <View className="flex-row items-center gap-2"><Plane size={15} color="#6ee7b7" /><Text className="text-[10px] font-bold uppercase tracking-[2px] text-emerald-300">Choose a living language world</Text></View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-3 -mx-1" contentContainerStyle={{ paddingHorizontal: 4, gap: 8 }}>
+              {worlds.map(world => <Pressable key={world.id} onPress={() => setSelectedWorld(world.id)} className={`rounded-2xl border px-4 py-2.5 ${selectedWorld === world.id ? 'border-emerald-300/40 bg-emerald-300/10' : 'border-white/10 bg-white/5'}`}>
+                <Text className={`text-xs font-bold ${selectedWorld === world.id ? 'text-emerald-200' : 'text-slate-300'}`}>{world.worldName}</Text>
+                <Text className="mt-0.5 text-[9px] text-slate-500">{world.languageName}</Text>
+              </Pressable>)}
+            </ScrollView>
+            <Text className="mt-3 text-xs leading-5 text-slate-400">{activeWorld.regionLabel}. These are destinations to experience, not lesson labels.</Text>
+            <View className="mt-3 gap-2">
+              {activeWorld.places.map(place => <DestinationCard key={place.id} place={place} busy={travelling === place.id} onPress={() => beginJourney(activeWorld, place)} />)}
+            </View>
           </View>
 
           <View className="relative z-10 mt-8 h-[520px]">
@@ -74,7 +97,6 @@ export function LivingJourneyScreen() {
             <View className="items-end"><Text className="text-[9px] font-bold uppercase tracking-[1.8px] text-slate-500">Memories</Text><View className="mt-2 flex-row items-center gap-2"><Heart size={15} color="#fda4af" /><Text className="text-xl font-black text-white">{timeline.length}</Text></View></View>
           </View>
         </View>
-
         <View className="mx-5 mt-1">
           {milestones.length > 0 && <View className="flex-row items-center gap-2"><View className="h-2 w-2 rounded-full bg-amber-300" /><Text className="text-xs font-semibold text-amber-200">{milestones[milestones.length - 1]}</Text></View>}
           {timeline.length > 7 && <Pressable onPress={() => setShowAll(v => !v)} className="mt-4 self-center flex-row items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 active:bg-white/10"><MapPin size={12} color="#94a3b8" /><Text className="text-[10px] font-bold text-slate-300">{showAll ? 'Let the newest moments breathe' : 'Reveal more of the story'}</Text></Pressable>}
@@ -83,4 +105,12 @@ export function LivingJourneyScreen() {
       </ScrollView>
     </SafeAreaView>
   );
+}
+
+function DestinationCard({ place, busy, onPress }: { place: WorldPlace; busy: boolean; onPress: () => void }) {
+  return <Pressable disabled={busy} onPress={onPress} className="rounded-2xl border border-white/10 bg-white/5 p-3 active:bg-white/10">
+    <View className="flex-row items-start justify-between"><View className="flex-1 pr-3"><Text className="text-base font-black text-white">{place.name}</Text><Text className="mt-0.5 text-[10px] text-slate-500">{place.city}, {place.country}</Text></View><View className="rounded-full bg-emerald-300/10 px-2 py-1"><Text className="text-[9px] font-bold text-emerald-300">{busy ? 'TRAVELLING…' : 'ENTER'}</Text></View></View>
+    <Text className="mt-2 text-xs leading-5 text-slate-400">{place.purpose}</Text>
+    <Text className="mt-2 text-[9px] uppercase tracking-[1.2px] text-slate-600">{place.landmarks.slice(0, 2).join(' · ')}</Text>
+  </Pressable>;
 }
