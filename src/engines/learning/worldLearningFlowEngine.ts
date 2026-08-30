@@ -3,6 +3,7 @@ import { worldLearningIntegrationEngine } from './worldLearningIntegrationEngine
 import { worldLearningRelationshipBridge } from '../world/worldLearningRelationshipBridge';
 import { getWorldLearningScenarioById } from './worldLearningScenarioEngine';
 import { cassidyLearningReactionEngine, type CassidyLearningReaction } from '../cassidy/cassidyLearningReactionEngine';
+import { worldLearningConsequenceEngine, type WorldLearningConsequence } from '../world/worldLearningConsequenceEngine';
 
 export type WorldLearningFlowResult = {
   scenarioId: string;
@@ -11,6 +12,7 @@ export type WorldLearningFlowResult = {
   integration: Awaited<ReturnType<typeof worldLearningIntegrationEngine.integrate>>;
   relationship: Awaited<ReturnType<typeof worldLearningRelationshipBridge.apply>>;
   cassidy: CassidyLearningReaction;
+  world: WorldLearningConsequence;
 };
 
 export async function completeWorldLearningFlow(input: {
@@ -37,7 +39,8 @@ export async function completeWorldLearningFlow(input: {
   if (!integration) return null;
   const relationship = await worldLearningRelationshipBridge.apply(integration.outcome, residentId);
   const cassidy = cassidyLearningReactionEngine.react(integration.outcome);
-  return { scenarioId, success, capability, integration, relationship, cassidy };
+  const world = await worldLearningConsequenceEngine.apply(integration.outcome);
+  return { scenarioId, success, capability, integration, relationship, cassidy, world };
 }
 
 export const worldLearningFlowEngine = { complete: completeWorldLearningFlow };
