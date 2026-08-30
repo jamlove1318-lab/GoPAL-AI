@@ -6,6 +6,7 @@ import {
   CassidyPresenceContext,
   resolveCassidyWorldPresence,
 } from '../../../engines/cassidy/cassidyWorldPresenceEngine';
+import { resolveCassidySceneAnchor } from '../../../engines/cassidy/cassidySceneAnchorEngine';
 
 interface Props {
   languageCode?: string;
@@ -13,10 +14,8 @@ interface Props {
   locationLabel?: string;
 }
 
-/**
- * Cassidy's in-world body. This deliberately lives inside the scene rather
- * than as a permanent floating assistant button. Future language worlds can
- * reuse the same presence with their own context and position.
+/** Cassidy belongs inside the current world scene. The same companion travels
+ * across language worlds, while her position and body language adapt to place.
  */
 export function LivingCassidyPresence({
   languageCode = 'ja',
@@ -27,7 +26,13 @@ export function LivingCassidyPresence({
     () => resolveCassidyWorldPresence(languageCode, context),
     [languageCode, context]
   );
-  const [open, setOpen] = useState(context === 'confused' || context === 'learning' || context === 'success');
+  const anchor = useMemo(
+    () => resolveCassidySceneAnchor(languageCode, context),
+    [languageCode, context]
+  );
+  const [open, setOpen] = useState(
+    context === 'confused' || context === 'learning' || context === 'success'
+  );
 
   useEffect(() => {
     if (context === 'confused' || context === 'learning' || context === 'success') {
@@ -37,11 +42,17 @@ export function LivingCassidyPresence({
 
   if (!presence.visible) return null;
 
-  const action = context === 'success' ? 'waving' : 'idle';
-  const speaking = open && (context === 'learning' || context === 'confused' || context === 'success');
+  const speaking = open && (
+    context === 'learning' || context === 'confused' || context === 'success'
+  );
+  const flip = anchor.facing === 'left' ? [{ scaleX: -1 }] : undefined;
 
   return (
-    <View className="absolute left-[16%] top-[48%] z-[35] items-center" pointerEvents="box-none">
+    <View
+      className="absolute z-[35] items-center"
+      style={{ left: anchor.left, top: anchor.top }}
+      pointerEvents="box-none"
+    >
       {open && presence.line && (
         <View className="mb-1 w-56 rounded-[22px] border border-emerald-200/15 bg-slate-950/92 px-3 py-2 shadow-xl">
           <Pressable
@@ -64,15 +75,17 @@ export function LivingCassidyPresence({
         onPress={() => setOpen((value) => !value)}
         className="items-center"
       >
-        <View className="rounded-full border border-emerald-200/10 bg-slate-950/15 px-1 pt-1">
-          <CassidyCharacter
-            height={92}
-            action={action}
-            speaking={speaking}
-            expression={presence.mood}
-          />
+        <View className="rounded-full border border-emerald-200/10 bg-slate-950/10 px-1 pt-1">
+          <View style={{ transform: flip }}>
+            <CassidyCharacter
+              height={anchor.height}
+              action={anchor.action}
+              speaking={speaking}
+              expression={presence.mood}
+            />
+          </View>
         </View>
-        {!open && (
+        {!open && context !== 'quiet' && (
           <View className="absolute -right-2 top-1 h-7 w-7 items-center justify-center rounded-full border border-emerald-200/20 bg-emerald-500/20">
             <MessageCircle size={13} color="#a7f3d0" />
           </View>
