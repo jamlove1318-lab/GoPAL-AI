@@ -3,6 +3,7 @@ import { createLearningMoment, type LocationType } from './destinationExperience
 import { chooseDestinationResident } from './destinationResidentEngine';
 import { destinationContinuityEngine } from './destinationContinuityEngine';
 import { getWorldLearningScenario } from './worldLearningScenarioEngine';
+import { residentRelationshipEngine } from './residentRelationshipEngine';
 
 export type DestinationOpportunity = {
   id: string;
@@ -24,10 +25,14 @@ const phaseKinds = {
   'long-away': ['discovery', 'resident', 'quiet'],
 } as const;
 
-export async function generateDestinationOpportunities(
-  worldId: LanguageWorldId,
-  placeId: string,
-): Promise<DestinationOpportunity[]> {
+function relationshipBonus(tone: string): number {
+  if (tone === 'trusted') return 35;
+  if (tone === 'warm') return 22;
+  if (tone === 'familiar') return 10;
+  return 0;
+}
+
+export async function generateDestinationOpportunities(worldId: LanguageWorldId, placeId: string): Promise<DestinationOpportunity[]> {
   const life = await destinationContinuityEngine.enter(worldId, placeId);
   const moment = createLearningMoment(worldId, placeId);
   const scenario = getWorldLearningScenario(worldId, placeId);
@@ -36,64 +41,36 @@ export async function generateDestinationOpportunities(
   const opportunities: DestinationOpportunity[] = [];
 
   if (resident && kinds.includes('resident')) {
+    const relationship = await residentRelationshipEngine.get(resident.id);
+    const bonus = relationshipBonus(relationship.tone);
     opportunities.push({
       id: `${placeId}:resident:${resident.id}:${life.visits}`,
       worldId,
       placeId,
       kind: 'resident',
-      title: `${resident.name} is nearby`,
-      detail: resident.conversationHook,
+      title: relationship.tone === 'trusted' ? `${resident.name} has something to share with you` : `${resident.name} is nearby`,
+      detail: relationship.tone === 'trusted' ? 'Your shared history opens a more personal possibility.' : resident.conversationHook,
       locationType: moment.locationType,
       residentId: resident.id,
       scenarioId: scenario?.id,
-      priority: 90,
+      priority: 90 + bonus,
     });
   }
 
   if (kinds.includes('learning')) {
-    opportunities.push({
-      id: `${placeId}:learning:${life.visits}`,
-      worldId,
-      placeId,
-      kind: 'learning',
-      title: moment.situation,
-      detail: `Practice naturally through ${moment.area.name}.`,
-      locationType: moment.locationType,
-      scenarioId: scenario?.id,
-      priority: 80,
-    });
+    opportunities.push({ id: `${placeId}:learning:${life.visits}`, worldId, placeId, kind: 'learning', title: moment.situation, detail: `Practice naturally through ${moment.area.name}.`, locationType: moment.locationType, scenarioId: scenario?.id, priority: 80 });
   }
 
   if (kinds.includes('discovery')) {
     const seed = moment.area.discoverySeeds[life.seed % moment.area.discoverySeeds.length] ?? 'something unexpected';
-    opportunities.push({
-      id: `${placeId}:discovery:${life.seed}`,
-      worldId,
-      placeId,
-      kind: 'discovery',
-      title: `Something worth noticing in ${moment.area.name}`,
-      detail: `Explore beyond the obvious. Look for ${seed}.`,
-      locationType: moment.locationType,
-      priority: 70,
-    });
+    opportunities.push({ id: `${placeId}:discovery:${life.seed}`, worldId, placeId, kind: 'discovery', title: `Something worth noticing in ${moment.area.name}`, detail: `Explore beyond the obvious. Look for ${seed}.`, locationType: moment.locationType, priority: 70 });
   }
 
   if (kinds.includes('quiet')) {
-    opportunities.push({
-      id: `${placeId}:quiet:${life.visits}`,
-      worldId,
-      placeId,
-      kind: 'quiet',
-      title: 'A quiet moment',
-      detail: 'You do not need to turn every moment into a lesson. Take in the place.',
-      locationType: 'neighborhood',
-      priority: 40,
-    });
+    opportunities.push({ id: `${placeId}:quiet:${life.visits}`, worldId, placeId, kind: 'quiet', title: 'A quiet moment', detail: 'You do not need to turn every moment into a lesson. Take in the place.', locationType: 'neighborhood', priority: 40 });
   }
 
   return opportunities.sort((a, b) => b.priority - a.priority);
 }
 
-export const destinationOpportunityEngine = {
-  generate: generateDestinationOpportunities,
-};
+export const destinationOpportunityEngine = { generate: generateDestinationOpportunities };
