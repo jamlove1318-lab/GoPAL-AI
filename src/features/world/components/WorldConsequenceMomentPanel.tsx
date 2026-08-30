@@ -1,0 +1,8 @@
+import React,{useState}from'react';
+import{Pressable,Text,View}from'react-native';
+import{X}from'lucide-react-native';
+import{WorldVisualConsequence}from'../../../engines/world/worldVisualConsequenceEngine';
+import{noticeWorldConsequence}from'../../../engines/world/worldConsequenceInteractionEngine';
+
+type Props={consequence:WorldVisualConsequence;onClose:()=>void;onContinue?:(consequence:WorldVisualConsequence)=>void};
+export function WorldConsequenceMomentPanel({consequence,onClose,onContinue}:Props){const[noticing,setNoticing]=useState(false);const notice=async()=>{setNoticing(true);try{await noticeWorldConsequence(consequence);onContinue?.(consequence);}finally{setNoticing(false);}};const action=consequence.kind==='library_clue'?'Examine it':consequence.kind==='cafe_guest'?'Stay nearby':'Look closer';return <View className="rounded-[30px] border border-amber-200/15 bg-slate-950/95 p-5"><Pressable onPress={onClose} className="absolute right-4 top-4"><X size={18} color="#94a3b8"/></Pressable><Text className="text-[10px] font-bold uppercase tracking-[2px] text-amber-200">You notice something</Text><Text className="mt-2 pr-7 text-xl font-black text-white">{consequence.title}</Text><Text className="mt-3 text-sm leading-5 text-slate-300">{consequence.detail}</Text><View className="mt-5 flex-row"><Pressable onPress={onClose} className="rounded-full bg-white/10 px-4 py-2"><Text className="text-xs font-semibold text-white">Keep wandering</Text></Pressable><Pressable disabled={noticing} onPress={notice} className="ml-2 rounded-full bg-amber-300/15 px-4 py-2"><Text className="text-xs font-semibold text-amber-100">{noticing?'Noticing…':action}</Text></Pressable></View></View>;}
