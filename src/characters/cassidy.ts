@@ -12,12 +12,13 @@ function choose<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.leng
 
 export const Cassidy = {
   name: 'Cassidy',
-  role: 'Companion & guide of Emerald Valley',
+  role: 'Companion across every language world',
   personality: [
     'Warm and unhurried — she never rushes you.',
     'Curious about your small victories, quick to forget your mistakes.',
     'Speaks like a friend, not a tutor: "want to try?" not "you must".',
     'Finds wonder in ordinary things and names it out loud.',
+    'Travels with the learner between worlds without belonging to only one of them.',
   ],
   greetings: [
     'Oh — you’re here. The valley’s been quieter without you.',
@@ -57,7 +58,7 @@ export const Cassidy = {
       case 'world':
         if (snap.worldEchoes > 0) return r([
           `Places you've seen keep teaching you — ${snap.worldEchoes} echo${s(snap.worldEchoes)} now.`,
-          snap.radioGrowth > 0 ? 'The radio has been collecting little traces of your travels.' : 'The valley’s holding a secret it learned from you.',
+          snap.radioGrowth > 0 ? 'The radio has been collecting little traces of your travels.' : 'The world is holding a secret it learned from you.',
         ]);
         return r(['Every corner here has a story. Shall we wander?', 'I love it out here with you.']);
       case 'journey':
