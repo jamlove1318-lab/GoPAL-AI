@@ -5,6 +5,7 @@ import { destinationContinuityEngine } from './destinationContinuityEngine';
 import { getWorldLearningScenario } from './worldLearningScenarioEngine';
 import { residentRelationshipEngine } from './residentRelationshipEngine';
 import { enrichResidentOpportunity } from './residentStoryOpportunityEngine';
+import { WaveStore } from '../../lib/waveStore';
 
 export type DestinationOpportunity = {
   id: string;
@@ -42,6 +43,10 @@ export async function generateDestinationOpportunities(worldId: LanguageWorldId,
   const resident = chooseDestinationResident(worldId, placeId);
   const kinds = phaseKinds[life.phase];
   const opportunities: DestinationOpportunity[] = [];
+  const worldEchoes = scenario ? await WaveStore.getWorldEchoes() : [];
+  const matchingEchoes = scenario ? worldEchoes.filter((echo) => echo.unlockedConceptKey === scenario.id) : [];
+  const hasEcho = matchingEchoes.length > 0;
+  const unrevealedEcho = matchingEchoes.find((echo) => !echo.revealed);
 
   if (resident && kinds.includes('resident')) {
     const relationship = await residentRelationshipEngine.get(resident.id);
@@ -56,19 +61,19 @@ export async function generateDestinationOpportunities(worldId: LanguageWorldId,
       locationType: moment.locationType,
       residentId: resident.id,
       scenarioId: scenario?.id,
-      priority: 90 + bonus,
+      priority: 90 + bonus + (hasEcho ? 5 : 0),
     };
     const story = await enrichResidentOpportunity(base);
     opportunities.push(story ?? base);
   }
 
   if (kinds.includes('learning')) {
-    opportunities.push({ id: `${placeId}:learning:${life.visits}`, worldId, placeId, kind: 'learning', title: moment.situation, detail: `Practice naturally through ${moment.area.name}.`, locationType: moment.locationType, scenarioId: scenario?.id, priority: 80 });
+    opportunities.push({ id: `${placeId}:learning:${life.visits}`, worldId, placeId, kind: 'learning', title: hasEcho ? 'Try the language again in a living moment' : moment.situation, detail: hasEcho ? `This place carries an echo of something you learned before. ${unrevealedEcho ? 'There is still something to notice.' : 'See what feels easier this time.'}` : `Practice naturally through ${moment.area.name}.`, locationType: moment.locationType, scenarioId: scenario?.id, priority: 80 + (hasEcho ? 12 : 0) });
   }
 
   if (kinds.includes('discovery')) {
     const seed = moment.area.discoverySeeds[life.seed % moment.area.discoverySeeds.length] ?? 'something unexpected';
-    opportunities.push({ id: `${placeId}:discovery:${life.seed}`, worldId, placeId, kind: 'discovery', title: `Something worth noticing in ${moment.area.name}`, detail: `Explore beyond the obvious. Look for ${seed}.`, locationType: moment.locationType, priority: 70 });
+    opportunities.push({ id: `${placeId}:discovery:${life.seed}`, worldId, placeId, kind: 'discovery', title: hasEcho ? 'A familiar place has another layer' : `Something worth noticing in ${moment.area.name}`, detail: hasEcho ? `Your earlier learning left an echo here. Look for a new connection to ${moment.area.name}.` : `Explore beyond the obvious. Look for ${seed}.`, locationType: moment.locationType, priority: 70 + (hasEcho ? 8 : 0), scenarioId: scenario?.id });
   }
 
   if (kinds.includes('quiet')) {
