@@ -38,8 +38,13 @@ export async function completeWorldLearningFlow(input: {
   const integration = await worldLearningIntegrationEngine.integrate(userId, scenarioId, success);
   if (!integration) return null;
   const relationship = await worldLearningRelationshipBridge.apply(integration.outcome, residentId);
-  const cassidy = cassidyLearningReactionEngine.react(integration.outcome);
   const world = await worldLearningConsequenceEngine.apply(integration.outcome);
+  const cassidy = cassidyLearningReactionEngine.react(integration.outcome, relationship?.relationship ? {
+    residentId: relationship.residentId,
+    familiarity: relationship.relationship.familiarity,
+    trust: relationship.relationship.trust,
+    worldEchoId: world.worldEchoId,
+  } : { worldEchoId: world.worldEchoId });
   return { scenarioId, success, capability, integration, relationship, cassidy, world };
 }
 
