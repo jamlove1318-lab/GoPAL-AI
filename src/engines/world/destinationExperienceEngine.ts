@@ -1,6 +1,6 @@
 import { LanguageWorldId, WorldPlace, resolveLanguageWorld } from './languageWorldEngine';
 
-export type LocationType='neighborhood'|'market'|'cafe'|'station'|'landmark'|'garden'|'temple'|'coast'|'workshop'|'festival';
+export type LocationType='neighborhood'|'market'|'cafe'|'tea-shop'|'station'|'landmark'|'garden'|'temple'|'coast'|'workshop'|'festival';
 
 export interface WorldArea{
  id:string;
@@ -22,7 +22,7 @@ export interface LearningMomentContext{
 }
 
 const AREAS:WorldArea[]=[
- {id:'kyoto-gion-higashiyama',name:'Gion & Higashiyama',destinationId:'kyoto-gion',description:'Historic Kyoto streets, shrines, small shops and everyday encounters.',locationTypes:['neighborhood','tea-shop' as LocationType,'temple','landmark'],learningReasons:['polite requests','etiquette','food vocabulary','asking directions'],discoverySeeds:['quiet side street','small tea shop','local craft shop']},
+ {id:'kyoto-gion-higashiyama',name:'Gion & Higashiyama',destinationId:'kyoto-gion',description:'Historic Kyoto streets, shrines, small shops and everyday encounters.',locationTypes:['neighborhood','tea-shop','temple','landmark'],learningReasons:['polite requests','etiquette','food vocabulary','asking directions'],discoverySeeds:['quiet side street','small tea shop','local craft shop']},
  {id:'tokyo-shibuya',name:'Shibuya',destinationId:'tokyo-shibuya',description:'A dense modern neighborhood where transport, shopping and fast conversation meet.',locationTypes:['neighborhood','station','cafe','market'],learningReasons:['fast listening','transport vocabulary','clarification','casual conversation'],discoverySeeds:['backstreet café','station platform','small record shop']},
  {id:'osaka-namba',name:'Dōtonbori & Namba',destinationId:'osaka-dotonbori',description:'Food streets, busy crossings and casual social interaction.',locationTypes:['neighborhood','market','cafe'],learningReasons:['casual speech','ordering food','humor','social phrases'],discoverySeeds:['tiny food counter','quiet alley','local market stall']},
  {id:'seville-triana',name:'Triana & central Seville',destinationId:'seville',description:'Neighborhood life, plazas, food and conversation in Andalusia.',locationTypes:['neighborhood','market','cafe','landmark'],learningReasons:['everyday conversation','directions','food vocabulary','social expressions'],discoverySeeds:['neighborhood plaza','small tapas counter','local market']},
@@ -36,6 +36,7 @@ const SITUATIONS:Record<LocationType,string[]>= {
  neighborhood:['A resident starts a natural conversation.','You need to ask for help finding a nearby place.'],
  market:['You want to buy something and need to understand the seller.','A vendor asks a follow-up question you did not expect.'],
  cafe:['You need to order and respond to a simple question.','Someone nearby makes a casual comment and you decide whether to reply.'],
+ 'tea-shop':['You need to order politely and respond to a question.','A host explains something about the tea and you ask a follow-up.'],
  station:['An announcement or direction question gives you a reason to listen carefully.','You need to confirm which platform or route to take.'],
  landmark:['A local person shares a detail about the place.','You discover something worth asking about rather than simply photographing it.'],
  garden:['The quiet setting creates space for observation and reflection.','A short conversation turns an observation into new vocabulary.'],
@@ -47,9 +48,7 @@ const SITUATIONS:Record<LocationType,string[]>= {
 
 function findArea(destinationId:string,areaId?:string):WorldArea{
  const matches=AREAS.filter(area=>area.destinationId===destinationId);
- return matches.find(area=>area.id===areaId)||matches[0]||{
-  id:`${destinationId}-center`,name:'Local area',destinationId,description:'Explore the destination through everyday life.',locationTypes:['neighborhood'],learningReasons:['everyday conversation'],discoverySeeds:['something unexpected']
- };
+ return matches.find(area=>area.id===areaId)||matches[0]||{id:`${destinationId}-center`,name:'Local area',destinationId,description:'Explore the destination through everyday life.',locationTypes:['neighborhood'],learningReasons:['everyday conversation'],discoverySeeds:['something unexpected']};
 }
 
 export function getDestinationAreas(destinationId:string):WorldArea[]{return AREAS.filter(area=>area.destinationId===destinationId);}
