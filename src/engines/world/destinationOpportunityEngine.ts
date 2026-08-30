@@ -4,6 +4,7 @@ import { chooseDestinationResident } from './destinationResidentEngine';
 import { destinationContinuityEngine } from './destinationContinuityEngine';
 import { getWorldLearningScenario } from './worldLearningScenarioEngine';
 import { residentRelationshipEngine } from './residentRelationshipEngine';
+import { enrichResidentOpportunity } from './residentStoryOpportunityEngine';
 
 export type DestinationOpportunity = {
   id: string;
@@ -16,6 +17,8 @@ export type DestinationOpportunity = {
   residentId?: string;
   scenarioId?: string;
   priority: number;
+  relationshipTone?: 'new' | 'familiar' | 'warm' | 'trusted';
+  storyBeat?: 'meeting' | 'recognition' | 'shared-moment' | 'personal-invitation';
 };
 
 const phaseKinds = {
@@ -43,7 +46,7 @@ export async function generateDestinationOpportunities(worldId: LanguageWorldId,
   if (resident && kinds.includes('resident')) {
     const relationship = await residentRelationshipEngine.get(resident.id);
     const bonus = relationshipBonus(relationship.tone);
-    opportunities.push({
+    const base: DestinationOpportunity = {
       id: `${placeId}:resident:${resident.id}:${life.visits}`,
       worldId,
       placeId,
@@ -54,7 +57,9 @@ export async function generateDestinationOpportunities(worldId: LanguageWorldId,
       residentId: resident.id,
       scenarioId: scenario?.id,
       priority: 90 + bonus,
-    });
+    };
+    const story = await enrichResidentOpportunity(base);
+    opportunities.push(story ?? base);
   }
 
   if (kinds.includes('learning')) {
