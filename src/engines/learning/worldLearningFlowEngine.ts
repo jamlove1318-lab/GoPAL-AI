@@ -1,7 +1,7 @@
 import { languageCapabilityEngine } from './languageCapabilityEngine';
 import { worldLearningIntegrationEngine } from './worldLearningIntegrationEngine';
 import { worldLearningRelationshipBridge } from '../world/worldLearningRelationshipBridge';
-import type { LearningSkill } from './contextualLanguageLearningEngine';
+import { getWorldLearningScenarioById } from './worldLearningScenarioEngine';
 
 export type WorldLearningFlowResult = {
   scenarioId: string;
@@ -16,15 +16,20 @@ export async function completeWorldLearningFlow(input: {
   scenarioId: string;
   success: boolean;
   residentId?: string;
-  skill?: LearningSkill;
 }): Promise<WorldLearningFlowResult | null> {
   const { userId, scenarioId, success, residentId } = input;
+  const scenario = getWorldLearningScenarioById(scenarioId);
+  if (!scenario) return null;
+
+  await languageCapabilityEngine.recordAttempt(scenarioId);
   if (success) {
-    await languageCapabilityEngine.recordAttempt(scenarioId);
-    await languageCapabilityEngine.recordSuccess({ scenarioId, phrase: '', words: [] });
-  } else {
-    await languageCapabilityEngine.recordAttempt(scenarioId);
+    await languageCapabilityEngine.recordSuccess({
+      scenarioId,
+      phrase: scenario.targetLanguage,
+      words: scenario.vocabulary.map((item) => item.word),
+    });
   }
+
   const capability = await languageCapabilityEngine.scenario(scenarioId);
   const integration = await worldLearningIntegrationEngine.integrate(userId, scenarioId, success);
   if (!integration) return null;
