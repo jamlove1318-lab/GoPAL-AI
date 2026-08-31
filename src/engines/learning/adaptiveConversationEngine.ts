@@ -14,12 +14,13 @@ function supportForMastery(mastery:number):ConversationSupport{
 
 export function buildAdaptiveConversation(world:LanguageWorld,placeId:string,skill:LearningSkill,mastery=0):AdaptiveConversation{
  const scenario=worldLearningScenarioEngine.forPlace(world.id,placeId);
- const support=supportForMastery(Math.max(0,Math.min(1,mastery)));
+ const clampedMastery=Math.max(0,Math.min(1,mastery));
+ const support=supportForMastery(clampedMastery);
  if(scenario&&scenario.skill===skill){
   const supportPrompt=support==='guided'?`Cassidy can guide you through this ${world.languageName} moment.`:support==='supported'?`Try the ${world.languageName} interaction with a little support.`:support==='natural'?`Handle this ${world.languageName} interaction naturally.`:`Respond as you would to a real person in ${world.languageName}.`;
-  return {support,skill,scenarioId:scenario.id,prompt:supportPrompt,targetPatterns:[scenario.targetLanguage],translation:scenario.translation,vocabulary:scenario.vocabulary,responseOptions:support==='authentic'?undefined:scenario.responseOptions,reason:`Conversation support adapts to current mastery (${Math.round(mastery*100)}%).`};
+  return {support,skill,scenarioId:scenario.id,prompt:supportPrompt,targetPatterns:[scenario.targetLanguage],translation:scenario.translation,vocabulary:scenario.vocabulary,responseOptions:support==='authentic'?undefined:scenario.responseOptions,reason:`Conversation support adapts to current mastery (${Math.round(clampedMastery*100)}%).`};
  }
- return {support,skill,prompt:`Use ${world.languageName} naturally in ${placeId}.`,targetPatterns:world.culture.greetings.slice(0,2),reason:`Conversation support adapts to current mastery (${Math.round(mastery*100)}%).`};
+ return {support,skill,prompt:`Use ${world.languageName} naturally in ${placeId}.`,targetPatterns:world.culture.greetings.slice(0,2),reason:`Conversation support adapts to current mastery (${Math.round(clampedMastery*100)}%).`};
 }
 
 export const adaptiveConversationEngine={build:buildAdaptiveConversation};
