@@ -1,0 +1,15 @@
+import React,{useEffect,useMemo,useState}from'react';
+import{Text,View}from'react-native';
+import{CloudRain,Sun,Wind}from'lucide-react-native';
+import{worldSceneVisualRuntime,type WorldSceneVisualRuntimeState}from'../../../engines/world/worldSceneVisualRuntime';
+import{resolveLanguageWorld}from'../../../engines/world/languageWorldEngine';
+import{getDestinationResidents}from'../../../engines/world/destinationResidentEngine';
+export function WorldSceneStage({worldId,placeId,residentId,showResident}:{worldId:any;placeId:string;residentId?:string;showResident:boolean}){
+ const initial=useMemo(()=>worldSceneVisualRuntime.create(worldId,placeId,residentId),[worldId,placeId,residentId]);
+ const[state,setState]=useState<WorldSceneVisualRuntimeState>(initial);
+ useEffect(()=>{setState(initial);},[initial]);
+ useEffect(()=>{if(showResident)setState(current=>worldSceneVisualRuntime.revealResident(current));},[showResident]);
+ const world=resolveLanguageWorld(worldId);const residents=getDestinationResidents(worldId,placeId);const resident=residentId?residents.find(item=>item.id===residentId):residents[0];
+ const weather=state.simulation.weather.condition;const WeatherIcon=weather==='rain'?CloudRain:weather==='wind'?Wind:Sun;
+ return <View className="mb-4 overflow-hidden rounded-[30px] border border-white/10 bg-slate-900"><View className="min-h-[270px] items-center justify-end px-5 pb-5 pt-8"><View className="absolute inset-0 bg-emerald-950/20"/><View className="absolute left-4 top-4 rounded-full border border-white/10 bg-black/30 px-3 py-2"><Text className="text-[10px] font-bold uppercase tracking-[1.5px] text-emerald-200">{world.worldName} · {placeId}</Text></View><View className="absolute right-4 top-4 flex-row items-center rounded-full border border-white/10 bg-black/30 px-3 py-2"><WeatherIcon size={14} color="#a7f3d0"/><Text className="ml-1 text-[10px] capitalize text-slate-200">{weather}</Text></View>{!showResident?<View className="items-center"><View className="mb-3 h-20 w-20 rounded-full border border-emerald-300/20 bg-emerald-300/5"/><Text className="text-sm font-semibold text-slate-200">Taking in the surroundings…</Text><Text className="mt-1 text-xs text-slate-500">The place comes first.</Text></View>:<View className="w-full items-center"><View className="mb-3 h-32 w-24 items-center justify-center rounded-[42px] border border-emerald-300/20 bg-emerald-400/10"><Text className="text-4xl">🧍</Text></View><Text className="text-xl font-black text-white">{resident?.name??'Someone nearby'}</Text><Text className="mt-1 text-xs text-emerald-200">{state.visual.resident?.expression??'welcoming'} · {state.visual.resident?.motion??'warm'}</Text></View>}</View><View className="border-t border-white/5 bg-black/20 px-4 py-3"><Text className="text-[10px] font-bold uppercase tracking-[1.5px] text-slate-600">{showResident?'Face-to-face':'Arrival'}</Text><Text className="mt-1 text-xs leading-5 text-slate-400">Weather and the environment remain active while the scene changes.</Text></View></View>;
+}
