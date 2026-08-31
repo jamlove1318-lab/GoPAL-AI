@@ -28,9 +28,9 @@ export function revealResident(state:WorldSceneVisualRuntimeState):WorldSceneVis
  return {...state,scene,visual,animation:createResidentAnimationSequence('enter'),interaction:{...state.interaction,enabled:true,residentTurn:'responding',lastInput:null}};
 }
 
-export function respondToLearner(state:WorldSceneVisualRuntimeState,input:'typed'|'spoken',outcome:'success'|'confusion'='success'):WorldSceneVisualRuntimeState {
+export function respondToLearner(state:WorldSceneVisualRuntimeState,input:LearnerInputMode,outcome:'success'|'confusion'='success'):WorldSceneVisualRuntimeState {
  if(state.scene.phase!=='encounter')return state;
- const trigger=outcome==='success'?'success':'confusion';
+ const trigger=outcome==='success'?'success':input==='spoken'?'confusion':'confusion';
  return {...state,animation:createResidentAnimationSequence(trigger),interaction:{...state.interaction,enabled:true,typingAlwaysAvailable:true,residentTurn:'responding',lastInput:input}};
 }
 
@@ -39,4 +39,9 @@ export function advanceWorldScene(state:WorldSceneVisualRuntimeState,date=new Da
  return {...state,simulation};
 }
 
-export const worldSceneVisualRuntime={create:createWorldSceneVisualRuntime,revealResident,respondToLearner,advance:advanceWorldScene};
+export function beginGoodbye(state:WorldSceneVisualRuntimeState):WorldSceneVisualRuntimeState {
+ if(state.scene.phase!=='encounter')return state;
+ return {...state,animation:createResidentAnimationSequence('goodbye'),interaction:{...state.interaction,enabled:false,residentTurn:'responding'}};
+}
+
+export const worldSceneVisualRuntime={create:createWorldSceneVisualRuntime,revealResident,respondToLearner,advance:advanceWorldScene,beginGoodbye};
