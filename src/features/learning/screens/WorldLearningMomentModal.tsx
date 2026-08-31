@@ -7,6 +7,8 @@ import{resolveLanguageWorld}from'../../../engines/world/languageWorldEngine';
 import{contextualLanguageLearningEngine}from'../../../engines/learning/contextualLanguageLearningEngine';
 import{worldLearningScenarioEngine}from'../../../engines/learning/worldLearningScenarioEngine';
 import{languageCapabilityEngine,ScenarioCapability}from'../../../engines/learning/languageCapabilityEngine';
+import{worldLearningFlowEngine}from'../../../engines/learning/worldLearningFlowEngine';
+import{auth}from'../../../services/auth';
 
 const LEGACY:Record<string,string>={'scen-cafe-order':'ja-market-first-purchase','scen-library-inquiry':'ja-market-first-purchase','scen-market-browse':'ja-market-first-purchase'};
 const resolveScenario=(key:string)=>worldLearningScenarioEngine.all().find(item=>item.id===(LEGACY[key]??key));
@@ -25,7 +27,23 @@ export function WorldLearningMomentModal({visible,scenarioKey,onClose}:{visible:
  if(!visible||!scenario||!moment||!world)return null;
  const independent=capability?.state==='independent';
  const advance=()=>setPhase(p=>p==='scene'?'learn':p==='learn'?'respond':'result');
- const choose=async(i:number)=>{const choice=scenario.responseOptions[i];setSelected(i);if(!choice.correct){await languageCapabilityEngine.recordAttempt(scenario.id);setCapability(await languageCapabilityEngine.scenario(scenario.id));setPhase('result');return;}if(!recorded){await languageCapabilityEngine.recordAttempt(scenario.id);const next=await languageCapabilityEngine.recordSuccess({scenarioId:scenario.id,phrase:scenario.targetLanguage,words:scenario.vocabulary.map(item=>item.word)});setCapability(next);setRecorded(true);}setPhase('result');};
+ const choose=async(i:number)=>{
+  const choice=scenario.responseOptions[i];
+  setSelected(i);
+  const user=await auth.getCurrentUser();
+  if(!user)return;
+  if(!choice.correct){
+   const result=await worldLearningFlowEngine.complete({userId:user.id,scenarioId:scenario.id,success:false});
+   if(result)setCapability(result.capability);
+   setPhase('result');
+   return;
+  }
+  if(!recorded){
+   const result=await worldLearningFlowEngine.complete({userId:user.id,scenarioId:scenario.id,success:true});
+   if(result){setCapability(result.capability);setRecorded(true);}
+  }
+  setPhase('result');
+ };
  const helpTitle=capability?.state==='independent'?'You have done this before':capability?.state==='practising'?'Use what you already know':capability?.state==='recognising'?'You have seen this before':'Learn what you need';
  const cassidyContext=phase==='learn'?'learning':phase==='respond'?'confused':phase==='result'&&selected!==null&&scenario.responseOptions[selected]?.correct?'success':'exploring';
  const cassidy=resolveCassidyWorldPresence(scenario.worldId,cassidyContext);
