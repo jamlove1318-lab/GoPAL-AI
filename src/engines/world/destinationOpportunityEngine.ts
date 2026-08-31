@@ -6,7 +6,7 @@ import { getWorldLearningScenario } from './worldLearningScenarioEngine';
 import { residentRelationshipEngine } from './residentRelationshipEngine';
 import { enrichResidentOpportunity } from './residentStoryOpportunityEngine';
 import { WaveStore } from '../../lib/waveStore';
-import { languageCapabilityEngine, type ScenarioCapability } from '../learning/languageCapabilityEngine';
+import { learningNeedEngine } from '../learning/learningNeedEngine';
 
 export type DestinationOpportunity = {
   id: string;
@@ -37,20 +37,12 @@ function relationshipBonus(tone: string): number {
   return 0;
 }
 
-function capabilityBonus(capability?: ScenarioCapability): number {
-  if (!capability) return 0;
-  if (capability.state === 'new') return 12;
-  if (capability.state === 'recognising') return 10;
-  if (capability.state === 'practising') return 6;
-  return -18;
-}
-
-function capabilityDetail(capability?: ScenarioCapability): string | undefined {
-  if (!capability) return undefined;
-  if (capability.state === 'new') return 'A gentle first opportunity to use this language in context.';
-  if (capability.state === 'recognising') return 'You have seen this before. Try using it with a little less help.';
-  if (capability.state === 'practising') return 'You are getting more comfortable. Try it again in a different moment.';
-  return 'You already handle this well. Look for a more natural challenge instead.';
+function needDetail(need: Awaited<ReturnType<typeof learningNeedEngine.get>>): string | undefined {
+  if (!need) return undefined;
+  if (need.recommendedSupport === 'full') return 'A gentle first opportunity with the support you need.';
+  if (need.recommendedSupport === 'guided') return 'You have seen this before. Try using it with a little less help.';
+  if (need.recommendedSupport === 'light') return 'You are building confidence. Try it again in a different moment.';
+  return 'You already handle this well. Look for a more natural challenge.';
 }
 
 export async function generateDestinationOpportunities(worldId: LanguageWorldId, placeId: string): Promise<DestinationOpportunity[]> {
@@ -60,12 +52,12 @@ export async function generateDestinationOpportunities(worldId: LanguageWorldId,
   const resident = chooseDestinationResident(worldId, placeId);
   const kinds = phaseKinds[life.phase];
   const opportunities: DestinationOpportunity[] = [];
-  const capability = scenario ? await languageCapabilityEngine.scenario(scenario.id) : undefined;
+  const need = scenario ? await learningNeedEngine.get(worldId, placeId) : null;
   const worldEchoes = scenario ? await WaveStore.getWorldEchoes() : [];
   const matchingEchoes = scenario ? worldEchoes.filter((echo) => echo.unlockedConceptKey === scenario.id) : [];
   const hasEcho = matchingEchoes.length > 0;
   const unrevealedEcho = matchingEchoes.find((echo) => !echo.revealed);
-  const learningBonus = capabilityBonus(capability);
+  const needPriority = need?.priority ?? 0;
 
   if (resident && kinds.includes('resident')) {
     const relationship = await residentRelationshipEngine.get(resident.id);
@@ -80,24 +72,20 @@ export async function generateDestinationOpportunities(worldId: LanguageWorldId,
       locationType: moment.locationType,
       residentId: resident.id,
       scenarioId: scenario?.id,
-      priority: 90 + bonus + (hasEcho ? 5 : 0) + learningBonus,
+      priority: 90 + bonus + (hasEcho ? 5 : 0) + Math.round(needPriority * 0.15),
     };
     const story = await enrichResidentOpportunity(base);
     opportunities.push(story ?? base);
   }
 
   if (kinds.includes('learning') && scenario) {
-    const independent = capability?.state === 'independent';
+    const stretch = need?.recommendedSupport === 'stretch';
     const title = hasEcho
-      ? independent
-        ? 'Try this language in a new kind of moment'
-        : 'Try the language again in a living moment'
-      : independent
-        ? 'Stretch your language in a new situation'
-        : moment.situation;
+      ? stretch ? 'Try this language in a new kind of moment' : 'Try the language again in a living moment'
+      : stretch ? 'Stretch your language in a new situation' : moment.situation;
     const detail = hasEcho
-      ? `This place carries an echo of something you learned before. ${unrevealedEcho ? 'There is still something to notice.' : capabilityDetail(capability) ?? 'See what feels easier this time.'}`
-      : capabilityDetail(capability) ?? `Practice naturally through ${moment.area.name}.`;
+      ? `This place carries an echo of something you learned before. ${unrevealedEcho ? 'There is still something to notice.' : needDetail(need) ?? 'See what feels easier this time.'}`
+      : needDetail(need) ?? `Practice naturally through ${moment.area.name}.`;
     opportunities.push({
       id: `${placeId}:learning:${life.visits}`,
       worldId,
@@ -107,7 +95,7 @@ export async function generateDestinationOpportunities(worldId: LanguageWorldId,
       detail,
       locationType: moment.locationType,
       scenarioId: scenario.id,
-      priority: 80 + (hasEcho ? 12 : 0) + learningBonus,
+      priority: 80 + (hasEcho ? 12 : 0) + Math.round(needPriority * 0.2),
     });
   }
 
