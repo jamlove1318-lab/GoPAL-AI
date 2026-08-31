@@ -8,6 +8,18 @@ export type { EnvironmentContext } from './world/environmentEngine';
 export { computeContinuity } from './world/continuityEngine';
 export type { ContinuityResult } from './world/continuityEngine';
 export { startLivingWorldReactor } from './world/livingWorldReactor';
+export { residentRoutineEngine } from './world/residentRoutineEngine';
+export type { ResidentRoutineState, ResidentRoutineActivity } from './world/residentRoutineEngine';
+export { contextualWorldEventEngine } from './world/contextualWorldEventEngine';
+export type { WorldEvent, WorldEventContext, WorldEventKind } from './world/contextualWorldEventEngine';
+export { residentRelationshipMemoryEngine } from './world/residentRelationshipMemoryEngine';
+export type { ResidentRelationshipState, ResidentRelationshipMemory, RelationshipOutcome } from './world/residentRelationshipMemoryEngine';
+export { residentContextReactionEngine } from './world/residentContextReactionEngine';
+export type { ResidentContextReaction } from './world/residentContextReactionEngine';
+export { persistentWorldStateEngine } from './world/persistentWorldStateEngine';
+export type { PersistentWorldState, WorldPlaceMemory } from './world/persistentWorldStateEngine';
+export { worldScenarioExperienceEngine } from './world/worldScenarioExperienceEngine';
+export type { ScenarioExperienceState, ScenarioExperiencePhase, ScenarioOutcome } from './world/worldScenarioExperienceEngine';
 
 export { MemoryEngine } from './memory/memoryEngine';
 export type { MemoryLayer } from './memory/memoryEngine';
