@@ -4,6 +4,7 @@ import { worldLearningRelationshipBridge } from '../world/worldLearningRelations
 import { getWorldLearningScenarioById } from './worldLearningScenarioEngine';
 import { cassidyLearningReactionEngine, type CassidyLearningReaction } from '../cassidy/cassidyLearningReactionEngine';
 import { worldLearningConsequenceEngine, type WorldLearningConsequence } from '../world/worldLearningConsequenceEngine';
+import { worldDiscoveryProgressionEngine } from '../world/worldDiscoveryProgressionEngine';
 
 export type WorldLearningFlowResult = {
   scenarioId: string;
@@ -61,6 +62,11 @@ export async function completeWorldLearningFlow(input: {
     trust: relationship.relationship.trust,
     worldEchoId: world.worldEchoId,
   } : { worldEchoId: world.worldEchoId });
+
+  const discovery = success
+    ? await worldDiscoveryProgressionEngine.complete(scenario.worldId, scenario.placeId, scenarioId)
+    : null;
+
   return { scenarioId, success, capability, integration, relationship, cassidy, world };
 }
 
