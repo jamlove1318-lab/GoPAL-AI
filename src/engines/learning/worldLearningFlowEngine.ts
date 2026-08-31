@@ -14,6 +14,7 @@ export type WorldLearningFlowResult = {
   relationship: Awaited<ReturnType<typeof worldLearningRelationshipBridge.apply>>;
   cassidy: CassidyLearningReaction;
   world: WorldLearningConsequence;
+  discovery: Awaited<ReturnType<typeof worldDiscoveryProgressionEngine.complete>> | null;
 };
 
 export async function completeWorldLearningTurn(input: {
@@ -62,12 +63,11 @@ export async function completeWorldLearningFlow(input: {
     trust: relationship.relationship.trust,
     worldEchoId: world.worldEchoId,
   } : { worldEchoId: world.worldEchoId });
-
   const discovery = success
     ? await worldDiscoveryProgressionEngine.complete(scenario.worldId, scenario.placeId, scenarioId)
     : null;
 
-  return { scenarioId, success, capability, integration, relationship, cassidy, world };
+  return { scenarioId, success, capability, integration, relationship, cassidy, world, discovery };
 }
 
 export const worldLearningFlowEngine = { complete: completeWorldLearningFlow, completeTurn: completeWorldLearningTurn };
