@@ -20,13 +20,15 @@ export async function completeWorldLearningTurn(input: {
   targetLanguage: string;
   vocabulary: string[];
   success: boolean;
+  skill?: string;
 }) {
-  await languageCapabilityEngine.recordAttempt(input.scenarioId);
+  await languageCapabilityEngine.recordAttempt(input.scenarioId, input.skill);
   if (input.success) {
     await languageCapabilityEngine.recordSuccess({
       scenarioId: input.scenarioId,
       phrase: input.targetLanguage,
       words: input.vocabulary,
+      skill: input.skill,
     });
   }
   return languageCapabilityEngine.scenario(input.scenarioId);
@@ -47,6 +49,7 @@ export async function completeWorldLearningFlow(input: {
     targetLanguage: scenario.targetLanguage,
     vocabulary: scenario.vocabulary.map((item) => item.word),
     success,
+    skill: scenario.skill,
   });
   const integration = await worldLearningIntegrationEngine.integrate(userId, scenarioId, success);
   if (!integration) return null;
