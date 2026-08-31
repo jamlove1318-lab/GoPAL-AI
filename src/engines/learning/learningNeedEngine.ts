@@ -3,7 +3,9 @@ import { getWorldLearningScenario } from './worldLearningScenarioEngine';
 
 export type LearningNeed = {
   scenarioId: string;
+  skill: string;
   state: CapabilityState;
+  skillState: CapabilityState;
   priority: number;
   reason: 'new' | 'recognising' | 'practising' | 'independent';
   recommendedSupport: 'full' | 'guided' | 'light' | 'stretch';
@@ -27,12 +29,19 @@ export async function getLearningNeed(worldId: Parameters<typeof getWorldLearnin
   const scenario = getWorldLearningScenario(worldId, placeId);
   if (!scenario) return null;
   const capability = await languageCapabilityEngine.scenario(scenario.id);
+  const skillCapability = await languageCapabilityEngine.skill(scenario.skill);
+  const scenarioPriority = priorityFor(capability.state);
+  const skillPriority = priorityFor(skillCapability.state);
+  const priority = Math.round(scenarioPriority * 0.65 + skillPriority * 0.35);
+  const recommendedSupport = supportFor(capability.state);
   return {
     scenarioId: scenario.id,
+    skill: scenario.skill,
     state: capability.state,
-    priority: priorityFor(capability.state),
+    skillState: skillCapability.state,
+    priority,
     reason: capability.state,
-    recommendedSupport: supportFor(capability.state),
+    recommendedSupport,
   };
 }
 
