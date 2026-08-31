@@ -9,6 +9,8 @@ export type WorldPlaceHotspot = {
   x: number;
   y: number;
   enabled?: boolean;
+  scenarioIds?: string[];
+  nextHotspotId?: string;
 };
 
 const ICONS = { landmark: MapPin, resident: Users, discovery: Sparkles, path: Compass, locked: LockKeyhole } as const;
