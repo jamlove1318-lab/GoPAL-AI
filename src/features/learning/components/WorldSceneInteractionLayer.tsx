@@ -6,9 +6,9 @@ import{WorldPlaceHotspots,type WorldPlaceHotspot}from'./WorldPlaceHotspots';
 import{getWorldPlaceHotspots}from'./worldPlaceHotspotCatalog';
 import{destinationExperienceEngine,type LocationType}from'../../../engines/world/destinationExperienceEngine';
 const ICONS:Record<LocationType,string>={neighborhood:'🏘️',market:'🏪',cafe:'☕','tea-shop':'🍵',station:'🚉',landmark:'⛩️',garden:'🌳',temple:'🛕',coast:'🌊',workshop:'🧵',festival:'🎐'};
-export function WorldSceneInteractionLayer({worldId,placeId,residentId,showResident,onExplore}:{worldId:any;placeId:string;residentId?:string;showResident:boolean;onExplore:()=>void}){
+export function WorldSceneInteractionLayer({worldId,placeId,residentId,showResident,onExplore,onHotspotSelect}:{worldId:any;placeId:string;residentId?:string;showResident:boolean;onExplore:()=>void;onHotspotSelect?:(hotspot:WorldPlaceHotspot)=>void}){
  const moment=destinationExperienceEngine.createMoment(worldId,placeId); const [selected,setSelected]=useState<WorldPlaceHotspot|null>(null); const hotspots=useMemo(()=>getWorldPlaceHotspots(placeId),[placeId]);
- const select=(hotspot:WorldPlaceHotspot)=>{setSelected(hotspot);if(hotspot.kind==='resident')onExplore();};
+ const select=(hotspot:WorldPlaceHotspot)=>{setSelected(hotspot);onHotspotSelect?.(hotspot);if(hotspot.kind==='resident')onExplore();};
  return <View className="absolute inset-0"><WorldSceneStage worldId={worldId} placeId={placeId} residentId={residentId} showResident={showResident}/>{!showResident&&<>
   <View className="absolute left-5 right-5 top-[24%] flex-row items-center justify-between"><View className="rounded-full border border-white/10 bg-black/35 px-3 py-2"><Text className="text-[9px] font-bold uppercase tracking-[1.5px] text-emerald-200">Explore the place</Text></View><View className="rounded-full border border-white/10 bg-black/35 px-3 py-2"><Compass size={13} color="#a7f3d0"/></View></View>
   <WorldPlaceHotspots hotspots={hotspots} onSelect={select}/>
