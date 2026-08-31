@@ -1,7 +1,7 @@
 import React,{useEffect,useMemo,useState}from'react';
 import{Pressable,Text,View}from'react-native';
 import{Compass,LockKeyhole,MapPin,Sparkles,Users}from'lucide-react-native';
-import{getWorldPlaceHotspots,type WorldPlaceHotspot}from'../../learning/components/worldPlaceHotspots';
+import{getWorldPlaceHotspots,type WorldPlaceHotspot}from'../../learning/components/worldPlaceHotspotCatalog';
 import{worldHotspotProgressionEngine}from'../../../engines/world/worldHotspotProgressionEngine';
 const ICONS={landmark:MapPin,resident:Users,discovery:Sparkles,path:Compass,locked:LockKeyhole} as const;
 export function LivingWorldHotspotLayer({placeId,onSelect}:{placeId?:string;onSelect?:(hotspot:WorldPlaceHotspot)=>void}){
