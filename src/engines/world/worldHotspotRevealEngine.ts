@@ -6,7 +6,10 @@ export type WorldHotspotRevealState = {
   newlyRevealed: string[];
 };
 
-/** Reveals world objects in sequence without making the whole destination available at once. */
+/**
+ * Destination progression is dependency-driven: the first object is available,
+ * and each object's explicit nextHotspotId is revealed only after completion.
+ */
 export async function getVisibleWorldHotspots(placeId: string): Promise<WorldHotspotRevealState> {
   const all = getWorldPlaceHotspots(placeId);
   const progress = await worldHotspotProgressionEngine.get();
@@ -14,37 +17,47 @@ export async function getVisibleWorldHotspots(placeId: string): Promise<WorldHot
   const revealed = new Set(progress.revealed);
   const visible: WorldPlaceHotspot[] = [];
 
-  for (const hotspot of all) {
-    if (hotspot.kind === 'locked') {
-      visible.push({ ...hotspot, enabled: false });
-      continue;
-    }
-    if (revealed.has(hotspot.id) || visible.length === 0) {
-      visible.push({ ...hotspot, enabled: true });
-    }
+  const addVisible = (hotspot: WorldPlaceHotspot) => {
+    if (!visible.some(item => item.id === hotspot.id)) visible.push({ ...hotspot, enabled: true });
+  };
+
+  // Preserve intentionally locked discoveries in the scene without making them interactive.
+  all.filter(hotspot => hotspot.kind === 'locked').forEach(hotspot => {
+    visible.push({ ...hotspot, enabled: false });
+  });
+
+  // Previously revealed objects remain visible as part of the destination's memory.
+  all.filter(hotspot => hotspot.kind !== 'locked' && revealed.has(hotspot.id)).forEach(addVisible);
+
+  // A brand-new destination starts with exactly one actionable object.
+  if (visible.filter(item => item.kind !== 'locked').length === 0 && all[0] && all[0].kind !== 'locked') {
+    addVisible(all[0]);
   }
 
   const newlyRevealed: string[] = [];
-  for (let index = 0; index < all.length - 1; index += 1) {
-    const current = all[index];
-    const next = all[index + 1];
-    if (completed.has(current.id) && !revealed.has(next.id) && next.kind !== 'locked') {
-      newlyRevealed.push(next.id);
-    }
+  for (const current of all) {
+    if (!completed.has(current.id) || !current.nextHotspotId) continue;
+    const next = all.find(item => item.id === current.nextHotspotId);
+    if (!next || next.kind === 'locked' || revealed.has(next.id)) continue;
+    newlyRevealed.push(next.id);
   }
 
   return { visible, newlyRevealed };
 }
 
 export async function completeAndRevealNext(placeId: string, hotspotId: string) {
-  const progress = await worldHotspotProgressionEngine.complete(hotspotId);
   const all = getWorldPlaceHotspots(placeId);
-  const index = all.findIndex(item => item.id === hotspotId);
-  const next = index >= 0 ? all[index + 1] : undefined;
+  const current = all.find(item => item.id === hotspotId);
+  const progress = await worldHotspotProgressionEngine.complete(hotspotId);
+  const next = current?.nextHotspotId
+    ? all.find(item => item.id === current.nextHotspotId)
+    : undefined;
+
   if (next && next.kind !== 'locked') {
     const latest = await worldHotspotProgressionEngine.resolve(next);
     return { progress: latest.progress, revealed: next };
   }
+
   return { progress, revealed: null };
 }
 
