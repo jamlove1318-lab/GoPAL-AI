@@ -1,0 +1,6 @@
+import React,{useEffect,useState}from'react';
+import{Modal,View}from'react-native';
+import{WorldLearningMomentModal}from'./WorldLearningMomentModal';
+import{WorldSceneStage}from'../components/WorldSceneStage';
+import{worldLearningScenarioEngine}from'../../../engines/learning/worldLearningScenarioEngine';
+export function WorldExperienceOverlay({visible,scenarioKey,onClose}:{visible:boolean;scenarioKey:string;onClose:()=>void}){const scenario=worldLearningScenarioEngine.all().find(item=>item.id===scenarioKey||item.id==='ja-market-first-purchase');const[showResident,setShowResident]=useState(false);useEffect(()=>{if(!visible){setShowResident(false);return;}const timer=setTimeout(()=>setShowResident(true),2400);return()=>clearTimeout(timer);},[visible,scenarioKey]);if(!visible||!scenario)return <WorldLearningMomentModal visible={false} scenarioKey={scenarioKey} onClose={onClose}/>;return <><Modal visible={visible} animationType="fade" transparent statusBarTranslucent><View pointerEvents="none" className="absolute inset-0 bg-black"><WorldSceneStage worldId={scenario.worldId} placeId={scenario.placeId} residentId={undefined} showResident={showResident}/></View></Modal><WorldLearningMomentModal visible={visible} scenarioKey={scenarioKey} onClose={onClose}/></>;}
