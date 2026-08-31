@@ -4,31 +4,34 @@ import { createWorldSimulationSnapshot, type WorldSimulationSnapshot } from './w
 import { buildArrivalVisualState, buildEncounterVisualState, type SceneVisualState } from './worldScenePresentationContract';
 import { createResidentAnimationSequence, type ResidentAnimationSequence } from './residentAnimationDirector';
 
+export type LearnerInputMode='typed'|'spoken'|'guided';
+export type ResidentTurnState='idle'|'listening'|'thinking'|'responding';
 export type WorldSceneVisualRuntimeState={
  scene:WorldSceneRuntimeState;
  simulation:WorldSimulationSnapshot;
  visual:SceneVisualState;
  animation:ResidentAnimationSequence|null;
+ interaction:{enabled:boolean;typingAlwaysAvailable:true;inputModes:LearnerInputMode[];residentTurn:ResidentTurnState;lastInput:LearnerInputMode|null};
 };
 
 export function createWorldSceneVisualRuntime(worldId:LanguageWorldId,placeId:string,residentId?:string,date=new Date()):WorldSceneVisualRuntimeState {
  const scene=createWorldSceneRuntime(worldId,placeId,residentId);
  const simulation=createWorldSimulationSnapshot(worldId,placeId,date);
  const visual=buildArrivalVisualState(worldId,placeId,scene.arrival.backgroundKey,scene.arrival.atmosphere,'establishing');
- return {scene,simulation,visual,animation:null};
+ return {scene,simulation,visual,animation:null,interaction:{enabled:false,typingAlwaysAvailable:true,inputModes:['type','speak','guided'],residentTurn:'idle',lastInput:null}};
 }
 
 export function revealResident(state:WorldSceneVisualRuntimeState):WorldSceneVisualRuntimeState {
  if(!state.scene.encounter)return state;
  const scene=enterResidentEncounter(state.scene);
  const visual=buildEncounterVisualState(state.visual,{motion:'warm',expression:'welcoming',attention:'learner'});
- return {...state,scene,visual,animation:createResidentAnimationSequence('enter')};
+ return {...state,scene,visual,animation:createResidentAnimationSequence('enter'),interaction:{...state.interaction,enabled:true,residentTurn:'responding',lastInput:null}};
 }
 
 export function respondToLearner(state:WorldSceneVisualRuntimeState,input:'typed'|'spoken',outcome:'success'|'confusion'='success'):WorldSceneVisualRuntimeState {
  if(state.scene.phase!=='encounter')return state;
- const trigger=outcome==='success'?'success':input==='typed'?'learner-typed':'learner-spoke';
- return {...state,animation:createResidentAnimationSequence(trigger)};
+ const trigger=outcome==='success'?'success':'confusion';
+ return {...state,animation:createResidentAnimationSequence(trigger),interaction:{...state.interaction,enabled:true,typingAlwaysAvailable:true,residentTurn:'responding',lastInput:input}};
 }
 
 export function advanceWorldScene(state:WorldSceneVisualRuntimeState,date=new Date()):WorldSceneVisualRuntimeState {
