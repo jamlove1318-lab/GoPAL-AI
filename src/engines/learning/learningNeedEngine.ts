@@ -1,48 +1,34 @@
 import { languageCapabilityEngine, type CapabilityState } from './languageCapabilityEngine';
-import { getWorldLearningScenario } from './worldLearningScenarioEngine';
+import { getWorldLearningScenarios } from './worldLearningScenarioEngine';
+import type { LanguageWorldId } from '../world/languageWorldEngine';
+import type { LearningSkill } from './contextualLanguageLearningEngine';
 
 export type LearningNeed = {
   scenarioId: string;
-  skill: string;
+  skill: LearningSkill;
   state: CapabilityState;
   skillState: CapabilityState;
   priority: number;
-  reason: 'new' | 'recognising' | 'practising' | 'independent';
-  recommendedSupport: 'full' | 'guided' | 'light' | 'stretch';
+  reason: CapabilityState;
+  recommendedSupport: 'full'|'guided'|'light'|'stretch';
 };
 
-const priorityFor = (state: CapabilityState) => {
-  if (state === 'new') return 100;
-  if (state === 'recognising') return 85;
-  if (state === 'practising') return 65;
-  return 20;
-};
+const priorityFor=(state:CapabilityState)=>state==='new'?100:state==='recognising'?85:state==='practising'?65:20;
+const supportFor=(state:CapabilityState):LearningNeed['recommendedSupport']=>state==='new'?'full':state==='recognising'?'guided':state==='practising'?'light':'stretch';
 
-const supportFor = (state: CapabilityState): LearningNeed['recommendedSupport'] => {
-  if (state === 'new') return 'full';
-  if (state === 'recognising') return 'guided';
-  if (state === 'practising') return 'light';
-  return 'stretch';
-};
-
-export async function getLearningNeed(worldId: Parameters<typeof getWorldLearningScenario>[0], placeId: string): Promise<LearningNeed | null> {
-  const scenario = getWorldLearningScenario(worldId, placeId);
-  if (!scenario) return null;
-  const capability = await languageCapabilityEngine.scenario(scenario.id);
-  const skillCapability = await languageCapabilityEngine.skill(scenario.skill);
-  const scenarioPriority = priorityFor(capability.state);
-  const skillPriority = priorityFor(skillCapability.state);
-  const priority = Math.round(scenarioPriority * 0.65 + skillPriority * 0.35);
-  const recommendedSupport = supportFor(capability.state);
-  return {
-    scenarioId: scenario.id,
-    skill: scenario.skill,
-    state: capability.state,
-    skillState: skillCapability.state,
-    priority,
-    reason: capability.state,
-    recommendedSupport,
-  };
+export async function getLearningNeeds(worldId:LanguageWorldId,placeId:string,skill?:LearningSkill,excludeScenarioIds:string[]=[]):Promise<LearningNeed[]>{
+ const scenarios=getWorldLearningScenarios(worldId,placeId).filter(s=>(!skill||s.skill===skill)&&!excludeScenarioIds.includes(s.id));
+ const needs=await Promise.all(scenarios.map(async scenario=>{
+  const capability=await languageCapabilityEngine.scenario(scenario.id);
+  const skillCapability=await languageCapabilityEngine.skill(scenario.skill);
+  const priority=Math.round(priorityFor(capability.state)*0.65+priorityFor(skillCapability.state)*0.35);
+  return {scenarioId:scenario.id,skill:scenario.skill,state:capability.state,skillState:skillCapability.state,priority,reason:capability.state,recommendedSupport:supportFor(capability.state)};
+ }));
+ return needs.sort((a,b)=>b.priority-a.priority);
 }
 
-export const learningNeedEngine = { get: getLearningNeed };
+export async function getLearningNeed(worldId:LanguageWorldId,placeId:string,skill?:LearningSkill,excludeScenarioIds:string[]):Promise<LearningNeed|null>{
+ return (await getLearningNeeds(worldId,placeId,skill,excludeScenarioIds)).at(0)??null;
+}
+
+export const learningNeedEngine={get:getLearningNeed,getAll:getLearningNeeds};
