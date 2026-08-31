@@ -19,14 +19,14 @@ const catalog: Record<string, WorldPlaceHotspot[]> = {
     { id: 'dotonbori-street', label: 'Dotonbori street', kind: 'landmark', x: 24, y: 41, nextHotspotId: 'food-stall' },
     { id: 'food-stall', label: 'Food stall', kind: 'discovery', x: 69, y: 46, nextHotspotId: 'street-vendor' },
     { id: 'street-vendor', label: 'Street vendor', kind: 'resident', x: 52, y: 62, nextHotspotId: 'canal-walk' },
-    { id: 'canal-walk', label: 'Canal walk', kind: 'path', x: 35, y: 75 },
+    { id: 'canal-walk', label: 'Canal walk', kind: 'path' },
     { id: 'neon-view', label: 'Neon view', kind: 'locked', x: 79, y: 70 },
   ],
   kanazawa: [
     { id: 'kanazawa-garden', label: 'Kenroku-en', kind: 'landmark', x: 24, y: 40, nextHotspotId: 'craft-shop' },
     { id: 'craft-shop', label: 'Craft shop', kind: 'discovery', x: 69, y: 46, scenarioIds: ['ja-kanazawa-market-reading'], nextHotspotId: 'artisan' },
     { id: 'artisan', label: 'Local artisan', kind: 'resident', x: 52, y: 62, nextHotspotId: 'garden-path' },
-    { id: 'garden-path', label: 'Garden path', kind: 'path', x: 35, y: 75 },
+    { id: 'garden-path', label: 'Garden path', kind: 'path' },
     { id: 'hidden-workshop', label: 'Hidden workshop', kind: 'locked', x: 79, y: 70 },
   ],
   'fukuoka-hakata': [
@@ -45,4 +45,4 @@ const catalog: Record<string, WorldPlaceHotspot[]> = {
   ],
 };
 
-export function getWorldPlaceHotspots(placeId: string): WorldPlaceHotspot[] { return (catalog[placeId] ?? catalog.default).map((item) => ({ ...item, scenarioIds: item.scenarioIds ? [...item.scenarioIds] : undefined })); }
+export function getWorldPlaceHotspots(placeId: string): WorldPlaceHotspot[] { return (catalog[placeId] ?? catalog.default).map((item) => ({ ...item, placeId, scenarioIds: item.scenarioIds ? [...item.scenarioIds] : undefined })); }
