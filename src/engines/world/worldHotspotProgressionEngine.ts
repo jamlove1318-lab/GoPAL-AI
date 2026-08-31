@@ -31,4 +31,16 @@ export async function completeHotspot(hotspotId: string) {
   return progress;
 }
 
-export const worldHotspotProgressionEngine = { get: getHotspotProgress, resolve: resolveHotspot, complete: completeHotspot };
+/** Atomically records completion and reveals the explicit next hotspot. */
+export async function completeAndRevealHotspot(hotspot: WorldPlaceHotspot, next?: WorldPlaceHotspot) {
+  const progress = await read();
+  if (!progress.completed.includes(hotspot.id)) progress.completed.push(hotspot.id);
+  if (!progress.revealed.includes(hotspot.id)) progress.revealed.push(hotspot.id);
+  if (next && next.kind !== 'locked' && !progress.revealed.includes(next.id)) {
+    progress.revealed.push(next.id);
+  }
+  await write(progress);
+  return { progress, revealed: next && next.kind !== 'locked' ? next : null };
+}
+
+export const worldHotspotProgressionEngine = { get: getHotspotProgress, resolve: resolveHotspot, complete: completeHotspot, completeAndReveal: completeAndRevealHotspot };
