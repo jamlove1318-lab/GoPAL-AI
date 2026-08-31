@@ -4,7 +4,7 @@ import{X,Volume2,Sparkles,Check,ArrowRight}from'lucide-react-native';
 import{CassidyCharacter}from'../../../components/CassidyCharacter';
 import{resolveCassidyWorldPresence}from'../../../engines/cassidy/cassidyWorldPresenceEngine';
 import{resolveLanguageWorld}from'../../../engines/world/languageWorldEngine';
-import{chooseDestinationResident}from'../../../engines/world/destinationResidentEngine';
+import{getDestinationResidents}from'../../../engines/world/destinationResidentEngine';
 import{contextualLanguageLearningEngine}from'../../../engines/learning/contextualLanguageLearningEngine';
 import{worldLearningScenarioEngine}from'../../../engines/learning/worldLearningScenarioEngine';
 import{languageCapabilityEngine,ScenarioCapability}from'../../../engines/learning/languageCapabilityEngine';
@@ -23,7 +23,12 @@ export function WorldLearningMomentModal({visible,scenarioKey,onClose}:{visible:
  const[capability,setCapability]=useState<ScenarioCapability|null>(null);
  const[recorded,setRecorded]=useState(false);
  const world=useMemo(()=>scenario?resolveLanguageWorld(scenario.worldId):null,[scenario?.worldId]);
- const resident=useMemo(()=>scenario?chooseDestinationResident(scenario.worldId,scenario.placeId):null,[scenario?.worldId,scenario?.placeId]);
+ const resident=useMemo(()=>{
+  if(!scenario)return null;
+  const residents=getDestinationResidents(scenario.worldId,scenario.placeId);
+  const goal=scenario.goal.toLowerCase();
+  return residents.find(item=>item.languageNeed.toLowerCase().split(' ').some(word=>word.length>3&&goal.includes(word)))??residents[0]??null;
+ },[scenario?.worldId,scenario?.placeId,scenario?.goal]);
  const moment=useMemo(()=>world&&scenario?contextualLanguageLearningEngine.buildMoment(world,scenario.placeId,scenario.skill):null,[world,scenario]);
  useEffect(()=>{if(visible&&scenario){setPhase('scene');setSelected(null);setRecorded(false);languageCapabilityEngine.scenario(scenario.id).then(setCapability);}},[visible,scenarioKey,scenario?.id]);
  if(!visible||!scenario||!moment||!world)return null;
