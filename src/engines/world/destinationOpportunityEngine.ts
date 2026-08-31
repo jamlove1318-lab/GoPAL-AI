@@ -2,7 +2,7 @@ import type { LanguageWorldId } from './languageWorldEngine';
 import { createLearningMoment, type LocationType } from './destinationExperienceEngine';
 import { chooseDestinationResident } from './destinationResidentEngine';
 import { destinationContinuityEngine } from './destinationContinuityEngine';
-import { getWorldLearningScenario } from './worldLearningScenarioEngine';
+import { getWorldLearningScenario, getWorldLearningScenarios } from './worldLearningScenarioEngine';
 import { residentRelationshipEngine } from './residentRelationshipEngine';
 import { enrichResidentOpportunity } from './residentStoryOpportunityEngine';
 import { WaveStore } from '../../lib/waveStore';
@@ -48,13 +48,18 @@ function needDetail(need: Awaited<ReturnType<typeof learningNeedEngine.get>>): s
 export async function generateDestinationOpportunities(worldId: LanguageWorldId, placeId: string): Promise<DestinationOpportunity[]> {
   const life = await destinationContinuityEngine.enter(worldId, placeId);
   const moment = createLearningMoment(worldId, placeId);
-  const scenario = getWorldLearningScenario(worldId, placeId);
+  const scenarios = getWorldLearningScenarios(worldId, placeId);
+  const scenario = scenarios[0] ?? getWorldLearningScenario(worldId, placeId);
   const resident = chooseDestinationResident(worldId, placeId);
   const kinds = phaseKinds[life.phase];
   const opportunities: DestinationOpportunity[] = [];
-  const need = scenario ? await learningNeedEngine.get(worldId, placeId) : null;
-  const worldEchoes = scenario ? await WaveStore.getWorldEchoes() : [];
-  const matchingEchoes = scenario ? worldEchoes.filter((echo) => echo.unlockedConceptKey === scenario.id) : [];
+  const needs = await Promise.all(scenarios.map((candidate) => learningNeedEngine.get(worldId, placeId, candidate.id)));
+  const ranked = scenarios.map((candidate, index) => ({ scenario: candidate, need: needs[index] })).sort((a, b) => (b.need?.priority ?? 0) - (a.need?.priority ?? 0));
+  const selected = ranked[0];
+  const selectedScenario = selected?.scenario ?? scenario;
+  const need = selected?.need ?? null;
+  const worldEchoes = selectedScenario ? await WaveStore.getWorldEchoes() : [];
+  const matchingEchoes = selectedScenario ? worldEchoes.filter((echo) => echo.unlockedConceptKey === selectedScenario.id) : [];
   const hasEcho = matchingEchoes.length > 0;
   const unrevealedEcho = matchingEchoes.find((echo) => !echo.revealed);
   const needPriority = need?.priority ?? 0;
@@ -71,14 +76,14 @@ export async function generateDestinationOpportunities(worldId: LanguageWorldId,
       detail: relationship.tone === 'trusted' ? 'Your shared history opens a more personal possibility.' : resident.conversationHook,
       locationType: moment.locationType,
       residentId: resident.id,
-      scenarioId: scenario?.id,
+      scenarioId: selectedScenario?.id,
       priority: 90 + bonus + (hasEcho ? 5 : 0) + Math.round(needPriority * 0.15),
     };
     const story = await enrichResidentOpportunity(base);
     opportunities.push(story ?? base);
   }
 
-  if (kinds.includes('learning') && scenario) {
+  if (kinds.includes('learning') && selectedScenario) {
     const stretch = need?.recommendedSupport === 'stretch';
     const title = hasEcho
       ? stretch ? 'Try this language in a new kind of moment' : 'Try the language again in a living moment'
@@ -87,14 +92,14 @@ export async function generateDestinationOpportunities(worldId: LanguageWorldId,
       ? `This place carries an echo of something you learned before. ${unrevealedEcho ? 'There is still something to notice.' : needDetail(need) ?? 'See what feels easier this time.'}`
       : needDetail(need) ?? `Practice naturally through ${moment.area.name}.`;
     opportunities.push({
-      id: `${placeId}:learning:${life.visits}`,
+      id: `${placeId}:learning:${selectedScenario.id}:${life.visits}`,
       worldId,
       placeId,
       kind: 'learning',
       title,
       detail,
       locationType: moment.locationType,
-      scenarioId: scenario.id,
+      scenarioId: selectedScenario.id,
       priority: 80 + (hasEcho ? 12 : 0) + Math.round(needPriority * 0.2),
     });
   }
@@ -110,7 +115,7 @@ export async function generateDestinationOpportunities(worldId: LanguageWorldId,
       detail: hasEcho ? `Your earlier learning left an echo here. Look for a new connection to ${moment.area.name}.` : `Explore beyond the obvious. Look for ${seed}.`,
       locationType: moment.locationType,
       priority: 70 + (hasEcho ? 8 : 0),
-      scenarioId: scenario?.id,
+      scenarioId: selectedScenario?.id,
     });
   }
 
