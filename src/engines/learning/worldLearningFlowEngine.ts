@@ -15,6 +15,23 @@ export type WorldLearningFlowResult = {
   world: WorldLearningConsequence;
 };
 
+export async function completeWorldLearningTurn(input: {
+  scenarioId: string;
+  targetLanguage: string;
+  vocabulary: string[];
+  success: boolean;
+}) {
+  await languageCapabilityEngine.recordAttempt(input.scenarioId);
+  if (input.success) {
+    await languageCapabilityEngine.recordSuccess({
+      scenarioId: input.scenarioId,
+      phrase: input.targetLanguage,
+      words: input.vocabulary,
+    });
+  }
+  return languageCapabilityEngine.scenario(input.scenarioId);
+}
+
 export async function completeWorldLearningFlow(input: {
   userId: string;
   scenarioId: string;
@@ -25,16 +42,12 @@ export async function completeWorldLearningFlow(input: {
   const scenario = getWorldLearningScenarioById(scenarioId);
   if (!scenario) return null;
 
-  await languageCapabilityEngine.recordAttempt(scenarioId);
-  if (success) {
-    await languageCapabilityEngine.recordSuccess({
-      scenarioId,
-      phrase: scenario.targetLanguage,
-      words: scenario.vocabulary.map((item) => item.word),
-    });
-  }
-
-  const capability = await languageCapabilityEngine.scenario(scenarioId);
+  const capability = await completeWorldLearningTurn({
+    scenarioId,
+    targetLanguage: scenario.targetLanguage,
+    vocabulary: scenario.vocabulary.map((item) => item.word),
+    success,
+  });
   const integration = await worldLearningIntegrationEngine.integrate(userId, scenarioId, success);
   if (!integration) return null;
   const relationship = await worldLearningRelationshipBridge.apply(integration.outcome, residentId);
@@ -48,4 +61,4 @@ export async function completeWorldLearningFlow(input: {
   return { scenarioId, success, capability, integration, relationship, cassidy, world };
 }
 
-export const worldLearningFlowEngine = { complete: completeWorldLearningFlow };
+export const worldLearningFlowEngine = { complete: completeWorldLearningFlow, completeTurn: completeWorldLearningTurn };
