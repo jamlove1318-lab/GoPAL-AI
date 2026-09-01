@@ -1,3 +1,4 @@
+import { LocalStore } from '../../lib/localStore';
 import { languageCapabilityEngine } from './languageCapabilityEngine';
 import { worldLearningIntegrationEngine } from './worldLearningIntegrationEngine';
 import { worldLearningRelationshipBridge } from '../world/worldLearningRelationshipBridge';
@@ -14,6 +15,21 @@ export type WorldLearningFlowResult = {
   cassidy: CassidyLearningReaction;
   world: WorldLearningConsequence;
 };
+
+const COMPLETED_KEY = 'world_learning_completed_consequences_v1';
+const inFlight = new Set<string>();
+
+async function hasCompleted(key: string): Promise<boolean> {
+  const completed = await LocalStore.get<string[]>(COMPLETED_KEY, []);
+  return Array.isArray(completed) && completed.includes(key);
+}
+
+async function rememberCompleted(key: string): Promise<void> {
+  const completed = await LocalStore.get<string[]>(COMPLETED_KEY, []);
+  const next = Array.isArray(completed) ? completed : [];
+  if (!next.includes(key)) next.push(key);
+  await LocalStore.set(COMPLETED_KEY, next.slice(-200));
+}
 
 export async function completeWorldLearningTurn(input: {
   scenarioId: string;
@@ -40,6 +56,11 @@ export async function completeWorldLearningTurn(input: {
  * experience inside a physical place, not proof that the whole place has
  * been exhausted. Physical hotspot progression owns hotspot completion;
  * destination discovery owns explicit place completion.
+ *
+ * Final consequences are idempotent across repeated completion calls and
+ * app reloads. The ledger is written only after the complete consequence
+ * chain succeeds, while the in-flight guard prevents duplicate concurrent
+ * calls in the same runtime.
  */
 export async function completeWorldLearningFlow(input: {
   userId: string;
@@ -51,25 +72,35 @@ export async function completeWorldLearningFlow(input: {
   const scenario = getWorldLearningScenarioById(scenarioId);
   if (!scenario) return null;
 
-  const capability = await completeWorldLearningTurn({
-    scenarioId,
-    targetLanguage: scenario.targetLanguage,
-    vocabulary: scenario.vocabulary.map((item) => item.word),
-    success,
-    skill: scenario.skill,
-  });
-  const integration = await worldLearningIntegrationEngine.integrate(userId, scenarioId, success);
-  if (!integration) return null;
-  const relationship = await worldLearningRelationshipBridge.apply(integration.outcome, residentId);
-  const world = await worldLearningConsequenceEngine.apply(integration.outcome);
-  const cassidy = cassidyLearningReactionEngine.react(integration.outcome, relationship?.relationship ? {
-    residentId: relationship.residentId,
-    familiarity: relationship.relationship.familiarity,
-    trust: relationship.relationship.trust,
-    worldEchoId: world.worldEchoId,
-  } : { worldEchoId: world.worldEchoId });
+  const key = `${userId}:${scenarioId}:${success ? 'success' : 'practice'}`;
+  if (await hasCompleted(key) || inFlight.has(key)) return null;
+  inFlight.add(key);
 
-  return { scenarioId, success, capability, integration, relationship, cassidy, world };
+  try {
+    const capability = await completeWorldLearningTurn({
+      scenarioId,
+      targetLanguage: scenario.targetLanguage,
+      vocabulary: scenario.vocabulary.map((item) => item.word),
+      success,
+      skill: scenario.skill,
+    });
+    const integration = await worldLearningIntegrationEngine.integrate(userId, scenarioId, success);
+    if (!integration) return null;
+    const relationship = await worldLearningRelationshipBridge.apply(integration.outcome, residentId);
+    const world = await worldLearningConsequenceEngine.apply(integration.outcome);
+    const cassidy = cassidyLearningReactionEngine.react(integration.outcome, relationship?.relationship ? {
+      residentId: relationship.residentId,
+      familiarity: relationship.relationship.familiarity,
+      trust: relationship.relationship.trust,
+      worldEchoId: world.worldEchoId,
+    } : { worldEchoId: world.worldEchoId });
+
+    const result = { scenarioId, success, capability, integration, relationship, cassidy, world };
+    await rememberCompleted(key);
+    return result;
+  } finally {
+    inFlight.delete(key);
+  }
 }
 
 export const worldLearningFlowEngine = { complete: completeWorldLearningFlow, completeTurn: completeWorldLearningTurn };
