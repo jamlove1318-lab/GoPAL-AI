@@ -1,5 +1,6 @@
 import { CassidyAction } from '../../characters/cassidy';
 import { CassidyPresenceContext } from './cassidyWorldPresenceEngine';
+import type { CassidyLifeActivity } from './cassidyLifeEngine';
 import { LanguageWorldId, resolveLanguageWorld } from '../world/languageWorldEngine';
 
 export type CassidySceneAnchor = {
@@ -45,9 +46,44 @@ const WORLD_ANCHORS: Record<LanguageWorldId, Record<CassidyPresenceContext, Cass
   },
 };
 
-export function resolveCassidySceneAnchor(languageCode: string, context: CassidyPresenceContext): CassidySceneAnchor {
+const LIFE_CONTEXT: Record<CassidyLifeActivity, CassidyPresenceContext> = {
+  wandering: 'exploring',
+  cafe: 'quiet',
+  reading: 'quiet',
+  'watching-rain': 'quiet',
+  stargazing: 'quiet',
+  dreaming: 'quiet',
+  storytelling: 'learning',
+  adventure: 'exploring',
+  helping: 'learning',
+  resting: 'quiet',
+};
+
+export function resolveCassidySceneAnchor(
+  languageCode: string,
+  context: CassidyPresenceContext,
+  lifeActivity?: CassidyLifeActivity
+): CassidySceneAnchor {
   const world = resolveLanguageWorld(languageCode);
-  return WORLD_ANCHORS[world.id][context];
+  const resolvedContext = lifeActivity ? LIFE_CONTEXT[lifeActivity] : context;
+  const base = WORLD_ANCHORS[world.id][resolvedContext];
+
+  if (!lifeActivity) return base;
+
+  const activityAdjustments: Partial<Record<CassidyLifeActivity, Pick<CassidySceneAnchor, 'height' | 'action'>>> = {
+    cafe: { height: Math.max(72, base.height - 10), action: 'idle' },
+    reading: { height: Math.max(72, base.height - 8), action: 'idle' },
+    'watching-rain': { height: Math.max(72, base.height - 8), action: 'idle' },
+    stargazing: { height: Math.max(72, base.height - 8), action: 'idle' },
+    dreaming: { height: Math.max(72, base.height - 8), action: 'idle' },
+    resting: { height: Math.max(72, base.height - 12), action: 'idle' },
+    storytelling: { action: 'talking' },
+    helping: { action: 'talking' },
+    wandering: { action: 'walking' },
+    adventure: { action: 'walking' },
+  };
+
+  return { ...base, ...activityAdjustments[lifeActivity] };
 }
 
 export const cassidySceneAnchorEngine = { resolve: resolveCassidySceneAnchor };
