@@ -20,6 +20,10 @@ export { persistentWorldStateEngine } from './world/persistentWorldStateEngine';
 export type { PersistentWorldState, WorldPlaceMemory } from './world/persistentWorldStateEngine';
 export { worldScenarioExperienceEngine } from './world/worldScenarioExperienceEngine';
 export type { ScenarioExperienceState, ScenarioExperiencePhase, ScenarioOutcome } from './world/worldScenarioExperienceEngine';
+export { livingWorldSimulation } from './world/livingWorldSimulation';
+export type { LivingWorldSnapshot, WorldSimulationPhase, WorldWeather } from './world/livingWorldSimulation';
+export { resolveWorldExperiencePolicy, assertWorldActivityAllowed, createRealLocationDescriptor, createFictionalLocationDescriptor } from './world/worldRulesEngine';
+export type { WorldLocationKind, WorldActivityMode, WorldLocationDescriptor, WorldExperiencePolicy } from './world/worldRulesEngine';
 
 export { MemoryEngine } from './memory/memoryEngine';
 export type { MemoryLayer } from './memory/memoryEngine';
