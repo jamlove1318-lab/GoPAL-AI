@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, PanResponder, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Circle, Ellipse, Path, Rect } from 'react-native-svg';
 import { GameWorldBuilding } from './LivingGameWorld';
@@ -9,19 +9,21 @@ import type { WorldBuildingDefinition } from './LivingWorldPrimitives';
 import { clampWorldPoint, resolveMovement, worldDepth, WorldObstacle } from '../geometry/livingWorldGeometry';
 
 type Point = { x: number; y: number };
-const EMERALD_LOCATION = getLivingLocationTemplate('emerald-village');
 
 /** Physical learner avatar + compact world joystick. Nearby world objects surface contextual actions. */
 export function LivingPlayerLayer({
   buildings = [],
+  locationId = 'emerald-village',
   onNearbyBuilding,
   onNearbyInteraction,
 }: {
   buildings?: GameWorldBuilding[];
+  locationId?: string;
   onNearbyBuilding?: (building: GameWorldBuilding) => void;
   onNearbyInteraction?: (interaction: WorldInteractionDefinition) => void;
 }) {
   const { width, height } = useWindowDimensions();
+  const location = useMemo(() => getLivingLocationTemplate(locationId), [locationId]);
   const position = useRef(new Animated.ValueXY({ x: 50, y: 62 })).current;
   const [facing, setFacing] = useState<'left' | 'right'>('right');
   const [nearby, setNearby] = useState<GameWorldBuilding | null>(null);
@@ -32,11 +34,12 @@ export function LivingPlayerLayer({
   const movement = useRef({ x: 0, y: 0, active: false }).current;
   const tick = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const depthTick = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
-
   const obstacles = useRef<WorldObstacle[]>([]);
   const interactions = useRef<WorldInteractionDefinition[]>([]);
-  const interactionBuildings: WorldBuildingDefinition[] = buildings.length
-    ? buildings.map(building => ({
+
+  const interactionBuildings = useMemo<WorldBuildingDefinition[]>(() => {
+    if (buildings.length) {
+      return buildings.map(building => ({
         id: building.id,
         type: normalizeBuildingType(building.type),
         x: building.x,
@@ -46,11 +49,13 @@ export function LivingPlayerLayer({
         interactionRadius: building.interactionRadius,
         collisionWidth: building.collisionWidth,
         collisionHeight: building.collisionHeight,
-      }))
-    : EMERALD_LOCATION.buildings;
+      }));
+    }
+    return location.buildings;
+  }, [buildings, location]);
 
   useEffect(() => {
-    const catalogObstacles = locationCollisions(EMERALD_LOCATION.buildings, EMERALD_LOCATION.props);
+    const catalogObstacles = locationCollisions(location.buildings, location.props);
     const buildingObstacles = buildings.map(building => ({
       id: building.id,
       kind: 'building' as const,
@@ -61,8 +66,8 @@ export function LivingPlayerLayer({
       padding: 1.5,
     }));
     obstacles.current = [...catalogObstacles, ...buildingObstacles.filter(item => !catalogObstacles.some(existing => existing.id === item.id))];
-    interactions.current = getLocationInteractions(interactionBuildings, EMERALD_LOCATION.props);
-  }, [buildings]);
+    interactions.current = getLocationInteractions(interactionBuildings, location.props);
+  }, [buildings, interactionBuildings, location]);
 
   useEffect(() => () => {
     if (tick.current) clearInterval(tick.current);
@@ -70,7 +75,7 @@ export function LivingPlayerLayer({
   }, []);
 
   const updateNearby = (point: Point) => {
-    const interaction = findNearestInteraction(point, interactions.current, interactionBuildings, EMERALD_LOCATION.props);
+    const interaction = findNearestInteraction(point, interactions.current, interactionBuildings, location.props);
     setNearbyInteraction(interaction);
 
     if (!interaction || interaction.targetKind !== 'building') {
