@@ -44,21 +44,30 @@ export function resolveWorldExperiencePolicy(kind: WorldLocationKind): WorldExpe
   return POLICIES[kind];
 }
 
+/**
+ * Canonical world gate. Real places are resident-first learning experiences;
+ * fictional places are the playground for games, quests and adventures.
+ */
 export function assertWorldActivityAllowed(
   location: WorldLocationDescriptor,
   activity: 'resident' | 'game' | 'quest' | 'adventure',
 ): boolean {
   const policy = resolveWorldExperiencePolicy(location.kind);
-  if (activity === 'resident') return policy.requiresResidentFocus;
+  if (activity === 'resident') return policy.requiresResidentFocus && Boolean(location.residentId);
   if (activity === 'game') return policy.gamesAllowed;
   if (activity === 'quest') return policy.questsAllowed;
   return policy.adventuresAllowed;
 }
 
-export function createRealLocationDescriptor(input: Omit<WorldLocationDescriptor, 'kind'>): WorldLocationDescriptor {
-  return { ...input, kind: 'real' };
+/** Real locations must always identify the resident who anchors the learning encounter. */
+export function createRealLocationDescriptor(
+  input: Omit<WorldLocationDescriptor, 'kind' | 'residentId'> & { residentId: string },
+): WorldLocationDescriptor {
+  return { ...input, kind: 'real', residentId: input.residentId };
 }
 
-export function createFictionalLocationDescriptor(input: Omit<WorldLocationDescriptor, 'kind'>): WorldLocationDescriptor {
+export function createFictionalLocationDescriptor(
+  input: Omit<WorldLocationDescriptor, 'kind'>,
+): WorldLocationDescriptor {
   return { ...input, kind: 'fictional' };
 }
