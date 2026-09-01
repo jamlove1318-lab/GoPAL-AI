@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Text, View } from 'react-native';
-import { WaveStore } from '../lib/waveStore';
 import { livingWorldObjectsStore, LivingWorldObject } from '../engines/world/livingWorldObjectsStore';
 import { auth } from '../services/auth';
 import { eventBus } from '../engines/events/eventBus';
 
+/** Ambient glimpse of persistent world life — deliberately not a dashboard. */
 export function LivingWorldPulse() {
   const [objects, setObjects] = useState<LivingWorldObject[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
@@ -14,11 +14,10 @@ export function LivingWorldPulse() {
 
   useEffect(() => {
     let alive = true;
-    let userId = 'local-explorer-user';
     const load = async () => {
       try {
         const user = await auth.getCurrentUser();
-        userId = user?.id ?? 'local-explorer-user';
+        const userId = user?.id ?? 'local-explorer-user';
         await livingWorldObjectsStore.migrateLegacyLocalState(userId);
         const next = await livingWorldObjectsStore.getAll(userId);
         if (alive) setObjects(next);
@@ -50,10 +49,7 @@ export function LivingWorldPulse() {
     ];
 
     const timer = setInterval(() => void load(), 10000);
-    const authSubscription = auth.onAuthStateChange((user) => {
-      userId = user?.id ?? 'local-explorer-user';
-      void load();
-    });
+    const authSubscription = auth.onAuthStateChange(() => void load());
     return () => { alive = false; clearInterval(timer); offs.forEach((off) => off()); authSubscription.data.subscription.unsubscribe(); };
   }, [bloom]);
 
