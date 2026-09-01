@@ -7,6 +7,8 @@ import {
   resolveCassidyWorldPresence,
 } from '../../../engines/cassidy/cassidyWorldPresenceEngine';
 import { resolveCassidySceneAnchor } from '../../../engines/cassidy/cassidySceneAnchorEngine';
+import type { CassidyLifeActivity } from '../../../engines/cassidy/cassidyLifeEngine';
+import { eventBus } from '../../../engines/events/eventBus';
 
 interface Props {
   languageCode?: string;
@@ -14,21 +16,46 @@ interface Props {
   locationLabel?: string;
 }
 
+const LIFE_LINES: Partial<Record<CassidyLifeActivity, string>> = {
+  wandering: 'I was just wandering around. You never know what you might find.',
+  cafe: 'I found a nice little café. I think I might stay here for a while.',
+  reading: 'I found a quiet place to read. It is nice to slow down sometimes.',
+  'watching-rain': 'Listen to the rain for a moment. We do not have to rush anywhere.',
+  stargazing: 'The sky is beautiful tonight. I could stay here for hours.',
+  dreaming: 'I had the strangest dream. I will tell you about it later.',
+  storytelling: 'I have a story for you, if you feel like listening.',
+  adventure: 'I discovered something interesting. Want to see where it leads?',
+  helping: 'I noticed you might need a little help.',
+  resting: 'I am taking a quiet moment. Sometimes doing nothing is exactly right.',
+};
+
 /** Cassidy belongs inside the current world scene. The same companion travels
  * across language worlds, while her position and body language adapt to place.
+ * Autonomous-life events can update this presence without forcing an encounter.
  */
 export function LivingCassidyPresence({
   languageCode = 'ja',
   context = 'exploring',
   locationLabel,
 }: Props) {
+  const [lifeActivity, setLifeActivity] = useState<CassidyLifeActivity | undefined>();
+  const [invitation, setInvitation] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = eventBus.on('cassidy:autonomyActed', (payload) => {
+      setLifeActivity(payload.lifeActivity);
+      setInvitation(Boolean(payload.invitation));
+    });
+    return unsubscribe;
+  }, []);
+
   const presence = useMemo(
     () => resolveCassidyWorldPresence(languageCode, context),
     [languageCode, context]
   );
   const anchor = useMemo(
-    () => resolveCassidySceneAnchor(languageCode, context),
-    [languageCode, context]
+    () => resolveCassidySceneAnchor(languageCode, context, lifeActivity),
+    [languageCode, context, lifeActivity]
   );
   const [open, setOpen] = useState(
     context === 'confused' || context === 'learning' || context === 'success'
@@ -43,9 +70,13 @@ export function LivingCassidyPresence({
   if (!presence.visible) return null;
 
   const speaking = open && (
-    context === 'learning' || context === 'confused' || context === 'success'
+    context === 'learning' || context === 'confused' || context === 'success' ||
+    lifeActivity === 'storytelling' || lifeActivity === 'helping'
   );
   const flip = anchor.facing === 'left' ? [{ scaleX: -1 }] : undefined;
+  const lifeLine = lifeActivity ? LIFE_LINES[lifeActivity] : undefined;
+  const line = lifeLine ?? presence.line;
+  const canShowLifeMessage = Boolean(lifeActivity && (invitation || context === 'exploring' || context === 'quiet'));
 
   return (
     <View
@@ -53,7 +84,7 @@ export function LivingCassidyPresence({
       style={{ left: anchor.left, top: anchor.top }}
       pointerEvents="box-none"
     >
-      {open && presence.line && (
+      {open && line && (canShowLifeMessage || !lifeActivity) && (
         <View className="mb-1 w-56 rounded-[22px] border border-emerald-200/15 bg-slate-950/92 px-3 py-2 shadow-xl">
           <Pressable
             accessibilityLabel="Close Cassidy message"
@@ -65,13 +96,13 @@ export function LivingCassidyPresence({
           <Text className="pr-6 text-[9px] font-bold uppercase tracking-[1.6px] text-emerald-300">
             Cassidy{locationLabel ? ` · ${locationLabel}` : ''}
           </Text>
-          <Text className="mt-1 text-xs leading-5 text-slate-100">{presence.line}</Text>
+          <Text className="mt-1 text-xs leading-5 text-slate-100">{line}</Text>
         </View>
       )}
 
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Talk with Cassidy"
+        accessibilityLabel={invitation ? 'Join Cassidy' : 'Talk with Cassidy'}
         onPress={() => setOpen((value) => !value)}
         className="items-center"
       >
