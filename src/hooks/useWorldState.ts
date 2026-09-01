@@ -123,6 +123,7 @@ export function useWorldState() {
     context,
     loading,
     error,
+    userId,
     continuity: snapshot?.continuity ?? null,
     worldEngine: livingWorld,
     changeLocation,
