@@ -18,6 +18,11 @@
 - [x] 60 reusable mini-game concepts documented.
 - [x] Reusable mini-game catalog added.
 - [x] Reusable mini-game selection/history engine added with recent-repeat cooldown logic.
+- [x] Final learning consequence flow now has a persisted idempotency ledger plus an in-flight duplicate guard.
+- [x] Optional activity hotspots can declare a reusable `miniGameId` instead of being anonymous quiz screens.
+- [x] The activity launcher now consults the mini-game selector before starting a game, while preserving a hotspot's preferred mechanic.
+- [x] First playable reusable interaction surfaces are implemented: target/search selection, phrase ordering, memory recall and a generic choice surface.
+- [x] Failed mini-game runs no longer complete their physical hotspot; only a won session can return through the completion path.
 
 ## Current structural findings
 
@@ -28,10 +33,10 @@ Japan has resident hotspots for Kyoto, Tokyo, Kanazawa, Osaka and Fukuoka, but t
 A scenario is an experience inside a place. Completing it must not imply that the whole place is exhausted. Hotspot progression and destination discovery are separate authorities.
 
 ### Optional activity progression
-Quiz/quest/challenge/special hotspots are optional physical activities. Completing one should complete that hotspot, not automatically complete the destination.
+Quiz/quest/challenge/special hotspots are optional physical activities. Completing one should complete that hotspot, not automatically complete the destination. A failed mini-game remains replayable and does not advance physical hotspot progression.
 
 ### Mini-game foundation
-The project now has a 60-game catalog spanning seven families:
+The project has a 60-game catalog spanning seven families:
 - discovery
 - puzzle
 - arcade
@@ -40,21 +45,24 @@ The project now has a 60-game catalog spanning seven families:
 - adventure
 - creative
 
-The current engine foundation supports reusable sessions, scoring, streaks, lives, deterministic seeds and round progression. The catalog and selector are deliberately separate from the world map so the same mechanics can be reused in every language world.
+The engine foundation supports reusable sessions, scoring, streaks, lives, deterministic seeds and round progression. The catalog and selector are deliberately separate from the world map so the same mechanics can be reused in every language world.
+
+The first playable interaction layer now branches by mechanic instead of rendering every activity as the same three-choice quiz. Current reusable surfaces include target/search play, phrase ordering, memory recall and fallback contextual choice. These are the first primitives, not the completed 60-game library.
 
 ## Not yet declared complete
 
-- [ ] End-to-end Japan scenario -> hotspot completion -> next hotspot reveal verification.
-- [ ] Persistence/reload verification for hotspot state.
-- [ ] Exactly-once reward/memory/relationship consequence verification.
+- [ ] End-to-end Japan scenario -> hotspot completion -> next hotspot reveal verification on a running app.
+- [ ] Persistence/reload verification for hotspot state on device.
+- [ ] Exactly-once reward/memory/relationship consequence verification on device and with configured backend.
 - [ ] Cassidy world-reaction verification.
 - [ ] Native resident coverage verification for every Japan resident hotspot.
 - [ ] Cross-world compatibility verification.
 - [ ] Duplicate world runtime/layer conflict audit.
 - [ ] TypeScript validation after the accumulated changes.
-- [ ] Actual playable implementations for the 60 mini-game mechanics.
-- [ ] Connect the selector to activity locations.
-- [ ] Add genuinely different playable interaction surfaces rather than card-only quizzes.
+- [ ] Build/runtime validation after the accumulated changes.
+- [ ] Expand playable mechanics across the full 60-game catalog.
+- [ ] Add more genuinely different interaction primitives: movement, spatial navigation, drag/drop, timed actions, audio following, investigation, crafting, branching story and world-building.
+- [ ] Add destination-specific content packs without duplicating mechanic implementations.
 
 ## Variety principle
 The 60 games are not 60 copies of a question card. They are intended to become different interaction mechanics: searching, movement, sequencing, audio following, dialogue decisions, timed arcade play, map navigation, crafting, investigation, story branching and world-building.
@@ -63,13 +71,11 @@ The same mechanic may be reused across worlds with different language content, c
 
 ## Next order of work
 
-1. Finish current world correctness audit.
-2. Verify consequences are exactly once.
-3. Verify persistence and reload behavior.
-4. Verify Japan and other world compatibility.
-5. Fix remaining contract/type issues.
-6. Wire mini-game selection to optional fictional locations.
-7. Build the first genuinely playable mini-games as reusable interaction primitives.
-8. Expand those primitives until the full 50+ library is playable.
-9. Add variety/anti-repeat selection using history.
-10. Only after a large verified batch is ready, merge to `main` and spend build quota.
+1. Finish current world correctness verification on the running app.
+2. Verify persistence/reload and exactly-once consequence behavior.
+3. Verify Japan and other world compatibility and resident coverage.
+4. Run TypeScript/build validation.
+5. Expand the playable primitive layer with the most mechanically different families first.
+6. Implement the next batch of real games on top of those primitives.
+7. Continue until the full 50+ / 60-game target is genuinely playable.
+8. Only after a large verified batch is ready, merge to `main` and spend build quota.
