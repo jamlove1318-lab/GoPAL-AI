@@ -4,16 +4,26 @@ import Svg, { Circle, Ellipse, Path, Rect } from 'react-native-svg';
 import { GameWorldBuilding } from './LivingGameWorld';
 import { getLivingLocationTemplate } from '../data/livingWorldCatalog';
 import { locationCollisions } from '../data/livingWorldCollision';
-import { clampWorldPoint, distanceToWorldPoint, resolveMovement, worldDepth, WorldObstacle } from '../geometry/livingWorldGeometry';
+import { findNearestInteraction, getLocationInteractions, WorldInteractionDefinition } from '../data/livingWorldInteraction';
+import { clampWorldPoint, resolveMovement, worldDepth, WorldObstacle } from '../geometry/livingWorldGeometry';
 
 type Point = { x: number; y: number };
 
-/** Physical learner avatar + compact world joystick. Nearby locations surface only a contextual world action. */
-export function LivingPlayerLayer({ buildings = [], onNearbyBuilding }: { buildings?: GameWorldBuilding[]; onNearbyBuilding?: (building: GameWorldBuilding) => void }) {
+/** Physical learner avatar + compact world joystick. Nearby world objects surface contextual actions. */
+export function LivingPlayerLayer({
+  buildings = [],
+  onNearbyBuilding,
+  onNearbyInteraction,
+}: {
+  buildings?: GameWorldBuilding[];
+  onNearbyBuilding?: (building: GameWorldBuilding) => void;
+  onNearbyInteraction?: (interaction: WorldInteractionDefinition) => void;
+}) {
   const { width, height } = useWindowDimensions();
   const position = useRef(new Animated.ValueXY({ x: 50, y: 62 })).current;
   const [facing, setFacing] = useState<'left' | 'right'>('right');
   const [nearby, setNearby] = useState<GameWorldBuilding | null>(null);
+  const [nearbyInteraction, setNearbyInteraction] = useState<WorldInteractionDefinition | null>(null);
   const [depth, setDepth] = useState(62);
   const target = useRef<Point>({ x: 50, y: 62 }).current;
   const joystick = useRef(new Animated.ValueXY()).current;
@@ -22,10 +32,14 @@ export function LivingPlayerLayer({ buildings = [], onNearbyBuilding }: { buildi
   const depthTick = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
   const obstacles = useRef<WorldObstacle[]>([]);
+  const interactions = useRef<WorldInteractionDefinition[]>([]);
+  const location = getLivingLocationTemplate('emerald-village');
+
   useEffect(() => {
-    const location = getLivingLocationTemplate('emerald-village');
     const catalogObstacles = locationCollisions(location.buildings, location.props);
     const buildingObstacles = buildings.map(building => ({
+      id: building.id,
+      kind: 'building' as const,
       x: building.x,
       y: building.y,
       width: building.collisionWidth ?? 13,
@@ -33,7 +47,8 @@ export function LivingPlayerLayer({ buildings = [], onNearbyBuilding }: { buildi
       padding: 1.5,
     }));
     obstacles.current = [...catalogObstacles, ...buildingObstacles];
-  }, [buildings]);
+    interactions.current = getLocationInteractions(location.buildings, location.props);
+  }, [buildings, location.buildings, location.props]);
 
   useEffect(() => () => {
     if (tick.current) clearInterval(tick.current);
@@ -41,14 +56,17 @@ export function LivingPlayerLayer({ buildings = [], onNearbyBuilding }: { buildi
   }, []);
 
   const updateNearby = (point: Point) => {
-    let closest: GameWorldBuilding | null = null;
-    let best = Number.POSITIVE_INFINITY;
-    for (const building of buildings) {
-      const distance = distanceToWorldPoint(point, building);
-      const radius = building.interactionRadius ?? 10.5;
-      if (distance < radius && distance < best) { best = distance; closest = building; }
+    const interaction = findNearestInteraction(point, interactions.current, location.buildings, location.props);
+    setNearbyInteraction(interaction);
+
+    if (!interaction || interaction.targetKind !== 'building') {
+      setNearby(null);
+      return;
     }
-    setNearby(closest);
+
+    const building = buildings.find(item => item.id === interaction.targetId)
+      ?? location.buildings.find(item => item.id === interaction.targetId);
+    setNearby(building ?? null);
   };
 
   const stop = () => {
@@ -98,15 +116,22 @@ export function LivingPlayerLayer({ buildings = [], onNearbyBuilding }: { buildi
 
   const translateX = position.x.interpolate({ inputRange: [0, 100], outputRange: [0, width] });
   const translateY = position.y.interpolate({ inputRange: [0, 100], outputRange: [0, height] });
+  const action = nearbyInteraction?.actions[0];
+
+  const activateNearby = () => {
+    if (!nearbyInteraction) return;
+    onNearbyInteraction?.(nearbyInteraction);
+    if (nearby && nearbyInteraction.targetKind === 'building') onNearbyBuilding?.(nearby);
+  };
 
   return <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
     <Animated.View pointerEvents="none" style={[styles.avatar, { zIndex: worldDepth(depth, 120), transform: [{ translateX }, { translateY }, { translateX: -34 }, { translateY: -48 }, { scaleX: facing === 'left' ? -1 : 1 }] }]}>
       <PlayerAvatar />
     </Animated.View>
-    {nearby && <Pressable onPress={() => onNearbyBuilding?.(nearby)} style={styles.nearby}>
+    {nearbyInteraction && <Pressable onPress={activateNearby} style={styles.nearby}>
       <View style={styles.nearbyDot} />
-      <Text style={styles.nearbyText}>{buildingLabel(nearby.id)}</Text>
-      <Text style={styles.nearbyAction}>EXPLORE</Text>
+      <Text style={styles.nearbyText}>{nearbyInteraction.label}</Text>
+      <Text style={styles.nearbyAction}>{action?.toUpperCase() ?? 'EXPLORE'}</Text>
     </Pressable>}
     <View style={styles.joystickWrap} {...responder.panHandlers}>
       <View style={styles.joystickBase}>
@@ -114,10 +139,6 @@ export function LivingPlayerLayer({ buildings = [], onNearbyBuilding }: { buildi
       </View>
     </View>
   </View>;
-}
-
-function buildingLabel(id: GameWorldBuilding['id']) {
-  return id === 'cafe' ? 'Komorebi Café' : id === 'library' ? 'Whispering Library' : id === 'market' ? 'Lantern Market' : id === 'garden' ? 'Whisper Garden' : 'Sanctuary';
 }
 
 function PlayerAvatar() {
