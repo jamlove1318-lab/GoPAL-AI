@@ -6,7 +6,18 @@ import { worldDepth } from '../geometry/livingWorldGeometry';
 export type WorldTheme = 'emerald' | 'sakura' | 'mountain' | 'coastal' | 'festival';
 export type WorldBuildingType = 'house' | 'cafe' | 'library' | 'market' | 'school' | 'sanctuary' | 'workshop';
 export type WorldPropType = 'tree' | 'rock' | 'lamp' | 'bench' | 'fence' | 'flower' | 'sign';
-export type WorldBuildingDefinition = { id:string; type:WorldBuildingType; x:number; y:number; scale?:number; label?:string; onPress?:()=>void };
+export type WorldBuildingDefinition = {
+  id:string;
+  type:WorldBuildingType;
+  x:number;
+  y:number;
+  scale?:number;
+  label?:string;
+  interactionRadius?:number;
+  collisionWidth?:number;
+  collisionHeight?:number;
+  onPress?:()=>void;
+};
 export type WorldPropDefinition = { id:string; type:WorldPropType; x:number; y:number; scale?:number };
 
 const ICON:Record<WorldBuildingType,string>={house:'⌂',cafe:'☕',library:'📚',market:'🏮',school:'✦',sanctuary:'✧',workshop:'⚒'};
