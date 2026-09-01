@@ -27,7 +27,7 @@ export function useWorldState() {
     setLoading(true);
     setError(null);
     try {
-      await worldPresenceEngine.hydrate();
+      await worldPresenceEngine.hydrate(uid);
       syncPresence();
       const next = await livingWorld.load(uid);
       setSnapshot(next);
@@ -76,13 +76,14 @@ export function useWorldState() {
     setLoading(true);
     setError(null);
     try {
-      const next = await worldPresenceEngine.travel(worldId, placeId);
+      const previous = presence;
+      const next = await worldPresenceEngine.travel(worldId, placeId, userId);
       setPresence(next);
       eventBus.emit('world:destinationEntered', next, 'world');
       eventBus.emit('world:locationChanged', {
         locationId: next.kind === 'journey' ? next.placeId : next.worldId,
         userId,
-        previousLocationId: presence.kind === 'journey' ? presence.placeId : undefined,
+        previousLocationId: previous.kind === 'journey' ? previous.placeId : undefined,
       }, 'world');
       return next;
     } catch (cause) {
@@ -92,13 +93,13 @@ export function useWorldState() {
     } finally {
       setLoading(false);
     }
-  }, [presence]);
+  }, [presence, userId]);
 
   const goHome = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const next = await worldPresenceEngine.goHome();
+      const next = await worldPresenceEngine.goHome(userId);
       setPresence(next);
       eventBus.emit('world:returnHome', next, 'world');
       eventBus.emit('world:returned', { userId, lastActiveAt: new Date().toISOString() }, 'world');
