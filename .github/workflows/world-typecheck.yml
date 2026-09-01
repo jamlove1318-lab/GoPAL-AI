@@ -10,7 +10,7 @@ on:
       - "package-lock.json"
       - ".github/workflows/world-typecheck.yml"
   push:
-    branches: [world-integration-work]
+    branches: [main, world-integration-work]
     paths:
       - "src/**"
       - "package.json"
