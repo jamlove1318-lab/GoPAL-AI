@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase, isSupabaseConfigured } from '../../lib/supabaseClient';
 import { LocalStore, SEED_WORLD } from '../../lib/localStore';
 import { WaveStore, StoryLayerState } from '../../lib/waveStore';
@@ -23,9 +24,31 @@ export interface WorldStatePatch {
   lastActiveAt?: string;
 }
 
+const localWorldStateKey = (userId: string) =>
+  `gopal:world-state:v2:${userId.trim() || 'local-explorer-user'}`;
+
 export class WorldEngine {
-  private async loadLocalState(): Promise<ResolvedWorldState> {
-    const state = await LocalStore.getWorldState();
+  private async loadLocalState(userId: string): Promise<ResolvedWorldState> {
+    const fallback: WorldStateRow = {
+      user_id: userId,
+      world_id: SEED_WORLD.id,
+      location_id: 'loc-study-room',
+      time_of_day: resolveTimeOfDay(),
+      season: resolveSeason(),
+      weather: 'gentle_breeze',
+      last_active_at: new Date().toISOString(),
+      daily_refresh_token: `token-${new Date().toDateString()}`,
+      updated_at: new Date().toISOString(),
+    };
+
+    let state = fallback;
+    try {
+      const raw = await AsyncStorage.getItem(localWorldStateKey(userId));
+      if (raw) state = JSON.parse(raw) as WorldStateRow;
+    } catch {
+      // Fall back to a fresh local state when storage is unavailable/corrupt.
+    }
+
     const locations = await LocalStore.getLocations();
     const currentLocation = locations.find((l) => l.id === state.location_id) ?? locations[0] ?? null;
     return {
@@ -39,7 +62,7 @@ export class WorldEngine {
   }
 
   async loadState(userId: string): Promise<ResolvedWorldState | null> {
-    if (!isSupabaseConfigured) return this.loadLocalState();
+    if (!isSupabaseConfigured) return this.loadLocalState(userId);
 
     try {
       const { data: state, error: stateError } = await supabase
@@ -73,7 +96,7 @@ export class WorldEngine {
         lastActiveAt: state.last_active_at,
       };
     } catch {
-      return this.loadLocalState();
+      return this.loadLocalState(userId);
     }
   }
 
@@ -85,6 +108,7 @@ export class WorldEngine {
     const season = resolveSeason();
     const now = new Date().toISOString();
     const initialPatch: Partial<WorldStateRow> = {
+      user_id: userId,
       world_id: worldId,
       location_id: locationId,
       time_of_day: timeOfDay,
@@ -95,8 +119,8 @@ export class WorldEngine {
     };
 
     if (!isSupabaseConfigured) {
-      await LocalStore.saveWorldState(initialPatch);
-      return this.loadLocalState();
+      await this.saveLocalState(userId, initialPatch);
+      return this.loadLocalState(userId);
     }
 
     try {
@@ -111,8 +135,30 @@ export class WorldEngine {
       if (state) return state;
       throw new Error('World state was not readable after initialization.');
     } catch {
-      await LocalStore.saveWorldState(initialPatch);
-      return this.loadLocalState();
+      await this.saveLocalState(userId, initialPatch);
+      return this.loadLocalState(userId);
+    }
+  }
+
+  private async saveLocalState(userId: string, patch: Partial<WorldStateRow>): Promise<void> {
+    const current = await this.loadLocalState(userId);
+    const locations = await LocalStore.getLocations();
+    const currentLocation = locations.find((l) => l.id === patch.location_id) ?? current.location;
+    const state: WorldStateRow = {
+      user_id: userId,
+      world_id: patch.world_id ?? current.world?.id ?? SEED_WORLD.id,
+      location_id: patch.location_id !== undefined ? patch.location_id : currentLocation?.id ?? null,
+      time_of_day: patch.time_of_day ?? current.timeOfDay,
+      season: patch.season ?? current.season,
+      weather: patch.weather ?? current.weather,
+      last_active_at: patch.last_active_at ?? current.lastActiveAt,
+      daily_refresh_token: patch.daily_refresh_token ?? `token-${new Date().toDateString()}`,
+      updated_at: new Date().toISOString(),
+    };
+    try {
+      await AsyncStorage.setItem(localWorldStateKey(userId), JSON.stringify(state));
+    } catch {
+      // Keep the operation usable in memory if persistence is temporarily unavailable.
     }
   }
 
@@ -128,7 +174,7 @@ export class WorldEngine {
     };
 
     if (!isSupabaseConfigured) {
-      await LocalStore.saveWorldState(snakePatch);
+      await this.saveLocalState(userId, snakePatch);
       return;
     }
 
@@ -138,7 +184,7 @@ export class WorldEngine {
         .upsert({ user_id: userId, ...snakePatch, updated_at: new Date().toISOString() });
       if (error) throw error;
     } catch {
-      await LocalStore.saveWorldState(snakePatch);
+      await this.saveLocalState(userId, snakePatch);
     }
   }
 
