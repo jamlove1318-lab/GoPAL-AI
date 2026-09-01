@@ -1,5 +1,4 @@
 import { LocalStore } from '../../lib/localStore';
-import { eventBus } from '../events/eventBus';
 
 const KEY='cassidy_first_welcome_v1';
 export type CassidyWelcomeState={introduced:boolean;introducedAt?:number;introductionVersion:number;};
@@ -19,5 +18,5 @@ export const CASSIDY_INTRODUCTION=[
 ] as const;
 export async function getCassidyWelcomeState(){return LocalStore.get<CassidyWelcomeState>(KEY,{introduced:false,introductionVersion:1});}
 export async function shouldShowCassidyIntroduction(){const state=await getCassidyWelcomeState();return !state.introduced;}
-export async function completeCassidyIntroduction(){const now=Date.now();const next={introduced:true,introducedAt:now,introductionVersion:1};await LocalStore.set(KEY,next);eventBus.emit('cassidy:welcomeCompleted',next,'cassidy');return next;}
+export async function completeCassidyIntroduction(){const now=Date.now();const next={introduced:true,introducedAt:now,introductionVersion:1};await LocalStore.set(KEY,next);return next;}
 export const cassidyWelcomeEngine={get:getCassidyWelcomeState,shouldShow:shouldShowCassidyIntroduction,complete:completeCassidyIntroduction,script:CASSIDY_INTRODUCTION};
