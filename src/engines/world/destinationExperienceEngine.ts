@@ -1,66 +1,29 @@
 import { LanguageWorldId, WorldPlace, resolveLanguageWorld } from './languageWorldEngine';
-
 export type LocationType='neighborhood'|'market'|'cafe'|'tea-shop'|'station'|'landmark'|'garden'|'temple'|'coast'|'workshop'|'festival';
-
-export interface WorldArea{
- id:string;
- name:string;
- destinationId:string;
- description:string;
- locationTypes:LocationType[];
- learningReasons:string[];
- discoverySeeds:string[];
-}
-
-export interface LearningMomentContext{
- worldId:LanguageWorldId;
- destination:WorldPlace;
- area:WorldArea;
- locationType:LocationType;
- situation:string;
- learningReasons:string[];
-}
-
+export interface WorldArea{id:string;name:string;destinationId:string;description:string;locationTypes:LocationType[];learningReasons:string[];discoverySeeds:string[];}
+export interface LearningMomentContext{worldId:LanguageWorldId;destination:WorldPlace;area:WorldArea;locationType:LocationType;situation:string;learningReasons:string[];}
 const AREAS:WorldArea[]=[
- {id:'kyoto-gion-higashiyama',name:'Gion & Higashiyama',destinationId:'kyoto-gion',description:'Historic Kyoto streets, shrines, small shops and everyday encounters.',locationTypes:['neighborhood','tea-shop','temple','landmark'],learningReasons:['polite requests','etiquette','food vocabulary','asking directions'],discoverySeeds:['quiet side street','small tea shop','local craft shop']},
- {id:'tokyo-shibuya',name:'Shibuya',destinationId:'tokyo-shibuya',description:'A dense modern neighborhood where transport, shopping and fast conversation meet.',locationTypes:['neighborhood','station','cafe','market'],learningReasons:['fast listening','transport vocabulary','clarification','casual conversation'],discoverySeeds:['backstreet café','station platform','small record shop']},
- {id:'osaka-namba',name:'Dōtonbori & Namba',destinationId:'osaka-dotonbori',description:'Food streets, busy crossings and casual social interaction.',locationTypes:['neighborhood','market','cafe'],learningReasons:['casual speech','ordering food','humor','social phrases'],discoverySeeds:['tiny food counter','quiet alley','local market stall']},
- {id:'seville-triana',name:'Triana & central Seville',destinationId:'seville',description:'Neighborhood life, plazas, food and conversation in Andalusia.',locationTypes:['neighborhood','market','cafe','landmark'],learningReasons:['everyday conversation','directions','food vocabulary','social expressions'],discoverySeeds:['neighborhood plaza','small tapas counter','local market']},
- {id:'mexico-city-mercado',name:'Neighborhood mercado',destinationId:'mexico-city',description:'A living market environment for practical Mexican Spanish.',locationTypes:['market','neighborhood'],learningReasons:['buying things','numbers','polite requests','informal listening'],discoverySeeds:['family-run stall','local fruit stand','quiet market corner']},
- {id:'paris-montmartre',name:'Montmartre',destinationId:'paris-montmartre',description:'Dense historic streets, cafés, shops and everyday Parisian encounters.',locationTypes:['neighborhood','cafe','landmark'],learningReasons:['ordering','small talk','directions','natural French listening'],discoverySeeds:['neighborhood bakery','quiet square','small bookshop']},
- {id:'busan-jagalchi',name:'Jagalchi & port area',destinationId:'busan',description:'A coastal market district shaped by food, travel and port life.',locationTypes:['market','coast','neighborhood'],learningReasons:['food ordering','travel phrases','casual Korean','listening'],discoverySeeds:['market stall','harbor path','small seafood restaurant']},
- {id:'seoul-ikseondong',name:'Ikseon-dong',destinationId:'seoul-ikseondong',description:'Historic lanes meeting modern cafés and everyday Seoul life.',locationTypes:['neighborhood','cafe','landmark'],learningReasons:['polite Korean','ordering','navigation','social conversation'],discoverySeeds:['hanok café','small stationery shop','alley encounter']}
+{id:'kyoto-gion-higashiyama',name:'Gion & Higashiyama',destinationId:'kyoto-gion',description:'Historic Kyoto streets, shrines, small shops and everyday encounters.',locationTypes:['neighborhood','tea-shop','temple','landmark'],learningReasons:['polite requests','etiquette','food vocabulary','asking directions'],discoverySeeds:['quiet side street','small tea shop','local craft shop']},
+{id:'tokyo-shibuya',name:'Shibuya',destinationId:'tokyo-shibuya',description:'A dense modern neighborhood where transport, shopping and fast conversation meet.',locationTypes:['neighborhood','station','cafe','market'],learningReasons:['fast listening','transport vocabulary','clarification','casual conversation'],discoverySeeds:['backstreet café','station platform','small record shop']},
+{id:'osaka-namba',name:'Dōtonbori & Namba',destinationId:'osaka-dotonbori',description:'Food streets, busy crossings and casual social interaction.',locationTypes:['neighborhood','market','cafe'],learningReasons:['casual speech','ordering food','humor','social phrases'],discoverySeeds:['tiny food counter','quiet alley','local market stall']},
+{id:'kanazawa-center',name:'Kanazawa craft & market district',destinationId:'kanazawa',description:'Gardens, crafts, markets and traditional neighborhoods.',locationTypes:['garden','market','workshop','neighborhood'],learningReasons:['reading signs','craft vocabulary','hospitality','travel language'],discoverySeeds:['craft workshop','market stall','tea district lane']},
+{id:'fukuoka-hakata',name:'Hakata & Fukuoka',destinationId:'fukuoka-hakata',description:'Food stalls, station life and relaxed neighborhood exploration.',locationTypes:['neighborhood','market','station','coast'],learningReasons:['food ordering','listening','directions','casual conversation'],discoverySeeds:['yatai stall','canal walk','quiet temple lane']},
+{id:'seville-triana',name:'Triana & central Seville',destinationId:'seville',description:'Neighborhood life, plazas, food and conversation in Andalusia.',locationTypes:['neighborhood','market','cafe','landmark'],learningReasons:['everyday conversation','directions','food vocabulary','social expressions'],discoverySeeds:['neighborhood plaza','small tapas counter','local market']},
+{id:'barcelona-gothic',name:'Gothic Quarter & Barcelona',destinationId:'barcelona',description:'Dense urban streets, markets and city navigation.',locationTypes:['neighborhood','market','cafe','landmark'],learningReasons:['navigation','shopping','food','city conversation'],discoverySeeds:['small market','quiet plaza','local café']},
+{id:'mexico-city-mercado',name:'Neighborhood mercado',destinationId:'mexico-city',description:'A living market environment for practical Mexican Spanish.',locationTypes:['market','neighborhood','cafe'],learningReasons:['buying things','numbers','polite requests','informal listening'],discoverySeeds:['family-run stall','local fruit stand','quiet market corner']},
+{id:'medellin-center',name:'Medellín neighborhoods',destinationId:'medellin',description:'Metro travel, plazas, cafés and lively neighborhood life.',locationTypes:['neighborhood','market','cafe','landmark'],learningReasons:['directions','social expressions','transport','casual speech'],discoverySeeds:['metro station','small café','neighborhood plaza']},
+{id:'buenos-aires-san-telmo',name:'San Telmo & Buenos Aires',destinationId:'buenos-aires',description:'Cafés, markets, streets and conversation shaped by local culture.',locationTypes:['neighborhood','market','cafe','landmark'],learningReasons:['conversation','food','shopping','Rioplatense expressions'],discoverySeeds:['traditional café','market stall','quiet side street']},
+{id:'paris-montmartre',name:'Montmartre',destinationId:'paris-montmartre',description:'Dense historic streets, cafés, shops and everyday Parisian encounters.',locationTypes:['neighborhood','cafe','market','landmark'],learningReasons:['ordering','small talk','directions','natural French listening'],discoverySeeds:['neighborhood bakery','quiet square','small bookshop']},
+{id:'lyon-vieux-lyon',name:'Vieux Lyon & Presqu’île',destinationId:'lyon',description:'Food, riverside streets and neighborhood conversation.',locationTypes:['neighborhood','market','cafe','landmark'],learningReasons:['food','directions','social conversation','regional culture'],discoverySeeds:['small bouchon','riverside path','hidden passage']},
+{id:'strasbourg-center',name:'Grande Île & Petite France',destinationId:'strasbourg',description:'Historic streets, canals and seasonal markets.',locationTypes:['neighborhood','market','landmark','festival'],learningReasons:['travel','seasonal language','sign reading','directions'],discoverySeeds:['canal lane','market stall','seasonal square']},
+{id:'nice-old-town',name:'Nice Old Town & coast',destinationId:'nice',description:'Coastal streets, markets and tourism.',locationTypes:['coast','market','cafe','neighborhood'],learningReasons:['tourism','food','directions','casual interaction'],discoverySeeds:['Cours Saleya stall','port walk','small café']},
+{id:'seoul-ikseondong',name:'Ikseon-dong',destinationId:'seoul-ikseondong',description:'Historic lanes meeting modern cafés and everyday Seoul life.',locationTypes:['neighborhood','cafe','landmark','market'],learningReasons:['polite Korean','ordering','navigation','social conversation'],discoverySeeds:['hanok café','station exit','alley encounter']},
+{id:'busan-jagalchi',name:'Jagalchi & port area',destinationId:'busan',description:'A coastal market district shaped by food, travel and port life.',locationTypes:['market','coast','neighborhood','cafe'],learningReasons:['food ordering','travel phrases','casual Korean','listening'],discoverySeeds:['market stall','harbor path','small seafood restaurant']},
+{id:'jeonju-hanok',name:'Jeonju Hanok Village',destinationId:'jeonju',description:'Heritage streets, food and traditional workshops.',locationTypes:['neighborhood','market','workshop','landmark'],learningReasons:['heritage vocabulary','food','polite interaction','cultural language'],discoverySeeds:['hanok lane','traditional workshop','market snack']},
+{id:'gangneung-coast',name:'Gangneung coast',destinationId:'gangneung',description:'Beach, cafés, pine forests and seasonal travel.',locationTypes:['coast','cafe','neighborhood','landmark'],learningReasons:['nature vocabulary','travel','ordering','casual conversation'],discoverySeeds:['beach café','pine path','coastal market']}
 ];
-
-const SITUATIONS:Record<LocationType,string[]>= {
- neighborhood:['A resident starts a natural conversation.','You need to ask for help finding a nearby place.'],
- market:['You want to buy something and need to understand the seller.','A vendor asks a follow-up question you did not expect.'],
- cafe:['You need to order and respond to a simple question.','Someone nearby makes a casual comment and you decide whether to reply.'],
- 'tea-shop':['You need to order politely and respond to a question.','A host explains something about the tea and you ask a follow-up.'],
- station:['An announcement or direction question gives you a reason to listen carefully.','You need to confirm which platform or route to take.'],
- landmark:['A local person shares a detail about the place.','You discover something worth asking about rather than simply photographing it.'],
- garden:['The quiet setting creates space for observation and reflection.','A short conversation turns an observation into new vocabulary.'],
- temple:['You encounter a cultural practice and need to understand how to behave.','A local explains something and invites a question.'],
- coast:['You ask about a place, route or local activity.','A spontaneous conversation starts while exploring.'],
- workshop:['You learn by watching someone explain a craft or process.','You try something and need to understand the instructions.'],
- festival:['A seasonal event surrounds you with signs, sounds and conversations.','You need to understand a simple social interaction to participate.']
-};
-
-function findArea(destinationId:string,areaId?:string):WorldArea{
- const matches=AREAS.filter(area=>area.destinationId===destinationId);
- return matches.find(area=>area.id===areaId)||matches[0]||{id:`${destinationId}-center`,name:'Local area',destinationId,description:'Explore the destination through everyday life.',locationTypes:['neighborhood'],learningReasons:['everyday conversation'],discoverySeeds:['something unexpected']};
-}
-
-export function getDestinationAreas(destinationId:string):WorldArea[]{return AREAS.filter(area=>area.destinationId===destinationId);}
-
-export function createLearningMoment(worldId:LanguageWorldId,placeId:string,areaId?:string,locationType?:LocationType):LearningMomentContext{
- const world=resolveLanguageWorld(worldId);
- const destination=world.places.find(place=>place.id===placeId)||world.places[0];
- if(!destination)throw new Error(`Unknown destination: ${placeId}`);
- const area=findArea(destination.id,areaId);
- const type=locationType&&area.locationTypes.includes(locationType)?locationType:area.locationTypes[0];
- const situations=SITUATIONS[type]||SITUATIONS.neighborhood;
- return {worldId,destination,area,locationType:type,situation:situations[0],learningReasons:area.learningReasons};
-}
-
+const SITUATIONS:Record<LocationType,string[]>={neighborhood:['A resident starts a natural conversation.','You need to ask for help finding a nearby place.'],market:['You want to buy something and need to understand the seller.','A vendor asks a follow-up question you did not expect.'],cafe:['You need to order and respond to a simple question.','Someone nearby makes a casual comment and you decide whether to reply.'],'tea-shop':['You need to order politely and respond to a question.','A host explains something about the tea and you ask a follow-up.'],station:['An announcement or direction question gives you a reason to listen carefully.','You need to confirm which platform or route to take.'],landmark:['A local person shares a detail about the place.','You discover something worth asking about rather than simply photographing it.'],garden:['The quiet setting creates space for observation and reflection.','A short conversation turns an observation into new vocabulary.'],temple:['You encounter a cultural practice and need to understand how to behave.','A local explains something and invites a question.'],coast:['You ask about a place, route or local activity.','A spontaneous conversation starts while exploring.'],workshop:['You learn by watching someone explain a craft or process.','You try something and need to understand the instructions.'],festival:['A seasonal event surrounds you with signs, sounds and conversations.','You need to understand a simple social interaction to participate.']};
+function findArea(destinationId:string,areaId?:string):WorldArea{const matches=AREAS.filter(area=>area.destinationId===destinationId);return matches.find(area=>area.id===areaId)||matches[0]||{id:`${destinationId}-center`,name:'Local area',destinationId,description:'Explore the destination through everyday life.',locationTypes:['neighborhood'],learningReasons:['everyday conversation'],discoverySeeds:['something unexpected']};}
+export function getDestinationAreas(destinationId:string){return AREAS.filter(area=>area.destinationId===destinationId);}
+export function createLearningMoment(worldId:LanguageWorldId,placeId:string,areaId?:string,locationType?:LocationType):LearningMomentContext{const world=resolveLanguageWorld(worldId);const destination=world.places.find(place=>place.id===placeId);if(!destination)throw new Error(`Unknown destination: ${placeId}`);const area=findArea(destination.id,areaId);const type=locationType&&area.locationTypes.includes(locationType)?locationType:area.locationTypes[0];const situations=SITUATIONS[type]??SITUATIONS.neighborhood;return{worldId,destination,area,locationType:type,situation:situations[0],learningReasons:area.learningReasons};}
 export const destinationExperienceEngine={getAreas:getDestinationAreas,createMoment:createLearningMoment};
