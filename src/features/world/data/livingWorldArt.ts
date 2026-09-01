@@ -1,0 +1,61 @@
+import type { WorldBuildingType, WorldPropType, WorldTheme } from '../components/LivingWorldPrimitives';
+
+export type WorldPalette = {
+  ground: string;
+  groundDark: string;
+  roof: string;
+  wall: string;
+  window: string;
+  trim: string;
+  accent: string;
+  path: string;
+};
+
+export type BuildingVariant = {
+  roof: string;
+  wall: string;
+  window: string;
+  trim: string;
+  accent: string;
+};
+
+export const WORLD_PALETTES: Record<WorldTheme, WorldPalette> = {
+  emerald: { ground:'#668b5d', groundDark:'#35553c', roof:'#7c5141', wall:'#9a7657', window:'#b9ddd5', trim:'#e0bf82', accent:'#496b52', path:'#d5c391' },
+  sakura: { ground:'#78936f', groundDark:'#4f6650', roof:'#9c5665', wall:'#c69b86', window:'#c9e3df', trim:'#f1d4a5', accent:'#a85f72', path:'#d9c8b1' },
+  mountain: { ground:'#647b70', groundDark:'#344941', roof:'#4c5056', wall:'#8b8373', window:'#b8d3d8', trim:'#d5c18e', accent:'#657e70', path:'#b6a98c' },
+  coastal: { ground:'#6e947e', groundDark:'#3c5d59', roof:'#4c6e82', wall:'#b79b77', window:'#bde1e2', trim:'#ead49e', accent:'#4f8490', path:'#dbcba8' },
+  festival: { ground:'#71865e', groundDark:'#414f3b', roof:'#814e58', wall:'#ad795d', window:'#ffe0a0', trim:'#f0c878', accent:'#9d5960', path:'#d8c08f' },
+};
+
+export function buildingVariant(theme: WorldTheme, type: WorldBuildingType): BuildingVariant {
+  const p = WORLD_PALETTES[theme];
+  const special: Partial<Record<WorldBuildingType, Partial<BuildingVariant>>> = {
+    cafe: { roof:'#a95f4e', accent:'#d18a5f' },
+    library: { roof:'#4c566e', wall:'#778092', accent:'#68788f' },
+    market: { roof:'#a84e42', accent:'#d29b55' },
+    sanctuary: { roof:'#465e52', wall:'#6d8577', accent:'#a6c5b0' },
+    school: { roof:'#52718a', wall:'#b2a17f', accent:'#5e8794' },
+    workshop: { roof:'#6a5b4d', wall:'#917b63', accent:'#a8784f' },
+    house: { roof:p.roof, wall:p.wall, accent:p.accent },
+  };
+  return {
+    roof: special[type]?.roof ?? p.roof,
+    wall: special[type]?.wall ?? p.wall,
+    window: special[type]?.window ?? p.window,
+    trim: special[type]?.trim ?? p.trim,
+    accent: special[type]?.accent ?? p.accent,
+  };
+}
+
+export function propScale(type: WorldPropType) {
+  switch (type) {
+    case 'tree': return 1;
+    case 'rock': return 0.72;
+    case 'lamp': return 0.65;
+    case 'bench': return 0.72;
+    case 'fence': return 0.6;
+    case 'flower': return 0.48;
+    case 'sign': return 0.6;
+    default: return 1;
+  }
+}
