@@ -1,0 +1,10 @@
+import { LocalStore } from '../../lib/localStore';
+import type { CassidyMood } from '../../characters/cassidy';
+
+export type CassidyPersonalityState={curiosity:number;warmth:number;playfulness:number;patience:number;adventurousness:number;confidence:number;favoriteWorlds:Record<string,number>;favoriteActivities:Record<string,number>;sharedMoments:number;lastUpdated:number;};
+const KEY='cassidy_personality_v1';
+const DEFAULT:CassidyPersonalityState={curiosity:50,warmth:70,playfulness:55,patience:80,adventurousness:50,confidence:50,favoriteWorlds:{},favoriteActivities:{},sharedMoments:0,lastUpdated:0};
+export async function getCassidyPersonality(){return LocalStore.get<CassidyPersonalityState>(KEY,DEFAULT);}
+export async function evolveCassidyPersonality(input:{worldId?:string;activity?:string;success?:boolean;interaction?:boolean;discovery?:boolean;adventure?:boolean}){const s=await getCassidyPersonality();const clamp=(n:number)=>Math.max(0,Math.min(100,n));const next={...s,curiosity:clamp(s.curiosity+(input.discovery?2:0)),warmth:clamp(s.warmth+(input.interaction?1:0)),playfulness:clamp(s.playfulness+(input.success?1:0)),patience:clamp(s.patience+(input.success===false?1:0)),adventurousness:clamp(s.adventurousness+(input.adventure?2:0)),confidence:clamp(s.confidence+(input.success?1:0)),favoriteWorlds:{...s.favoriteWorlds},favoriteActivities:{...s.favoriteActivities},sharedMoments:s.sharedMoments+(input.interaction?1:0),lastUpdated:Date.now()};if(input.worldId)next.favoriteWorlds[input.worldId]=(next.favoriteWorlds[input.worldId]??0)+1;if(input.activity)next.favoriteActivities[input.activity]=(next.favoriteActivities[input.activity]??0)+1;await LocalStore.set(KEY,next);return next;}
+export function moodFromPersonality(state:CassidyPersonalityState):CassidyMood{if(state.adventurousness>75)return'excited';if(state.curiosity>70)return'thinking';if(state.warmth>80)return'happy';return'calm';}
+export const cassidyPersonalityEngine={get:getCassidyPersonality,evolve:evolveCassidyPersonality,mood:moodFromPersonality};
