@@ -1,10 +1,10 @@
-import { WaveStore, type StoryLayerState } from '../../lib/waveStore';
 import { WorldEngine } from './worldEngine';
+import { learnerWorldConsequenceStore } from './learnerWorldConsequenceStore';
 import type { WorldLearningOutcome } from '../learning/worldLearningOutcomeEngine';
 
 export type WorldLearningConsequence={
   locationKey:string;
-  storyLayer:StoryLayerState;
+  storyLayer:{ locationKey:string; layer1_identity:string; layer2_history:string; layer3_activeStory:string; layer4_learnerHistory:string };
   revisitNote:string;
   worldEchoId?:string;
 };
@@ -16,40 +16,41 @@ function appendHistory(current:string, addition:string):string{
   return current ? `${current} ${trimmed}` : trimmed;
 }
 
-export async function applyWorldLearningConsequence(outcome:WorldLearningOutcome):Promise<WorldLearningConsequence>{
+/** Applies a learner's learning outcome to that learner's persistent World state. */
+export async function applyWorldLearningConsequence(
+  userId:string,
+  outcome:WorldLearningOutcome,
+):Promise<WorldLearningConsequence>{
+  if(!userId.trim()) throw new Error('Applying a World learning consequence requires a userId');
   const locationKey=outcome.placeId;
-  const existing=await WaveStore.getStoryLayer(locationKey);
-  const base:StoryLayerState=existing ?? {
+  const historyAddition=outcome.success
+    ? outcome.worldChange
+    : `You practised ${outcome.goal} here; the moment remains open.`;
+  const existing=await learnerWorldConsequenceStore.list(userId);
+  const prior=existing.filter(item=>item.placeId===locationKey);
+  const previousHistory=prior.map(item=>item.worldChange).filter(Boolean).join(' ');
+  const layer={
     locationKey,
     layer1_identity:outcome.placeId,
-    layer2_history:'',
-    layer3_activeStory:'',
-    layer4_learnerHistory:'',
+    layer2_history:previousHistory,
+    layer3_activeStory:outcome.success ? outcome.worldChange : '',
+    layer4_learnerHistory:appendHistory(previousHistory,historyAddition),
   };
-  const history=appendHistory(base.layer4_learnerHistory, outcome.success ? outcome.worldChange : `You practised ${outcome.goal} here; the moment remains open.`);
-  const layer:StoryLayerState={
-    ...base,
-    layer3_activeStory:outcome.success ? outcome.worldChange : base.layer3_activeStory,
-    layer4_learnerHistory:history,
-  };
-  await WaveStore.saveStoryLayer(layer);
 
-  let worldEchoId:string|undefined;
-  if(outcome.success){
-    const before=await WaveStore.getWorldEchoes();
-    const existingEcho=before.find((echo)=>echo.worldEvent===outcome.worldChange && echo.unlockedConceptKey===outcome.scenarioId);
-    if(existingEcho){
-      worldEchoId=existingEcho.id;
-    }else{
-      const after=await WaveStore.recordWorldEcho(outcome.worldChange,outcome.scenarioId,outcome.goal);
-      worldEchoId=after[after.length-1]?.id;
-    }
-  }
+  const stored=await learnerWorldConsequenceStore.record(userId,{
+    worldId:outcome.worldId,
+    placeId:outcome.placeId,
+    scenarioId:outcome.scenarioId,
+    success:outcome.success,
+    worldChange:historyAddition,
+  });
 
   const world=new WorldEngine();
-  const revisit=await world.getRevisitDifference(locationKey);
-  const revisitNote=revisit.note ?? (outcome.success ? 'This place now carries a little of your learning history.' : 'The moment is still waiting for you.');
-  return {locationKey,storyLayer:layer,revisitNote,worldEchoId};
+  const revisit=await world.getRevisitDifference(locationKey,userId);
+  const revisitNote=revisit.note ?? (outcome.success
+    ? 'This place now carries a little of your learning history.'
+    : 'The moment is still waiting for you.');
+  return {locationKey,storyLayer:layer,revisitNote,worldEchoId:stored.id};
 }
 
 export const worldLearningConsequenceEngine={apply:applyWorldLearningConsequence};
