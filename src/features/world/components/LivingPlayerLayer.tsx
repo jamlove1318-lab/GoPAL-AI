@@ -38,20 +38,18 @@ export function LivingPlayerLayer({
   const interactions = useRef<WorldInteractionDefinition[]>([]);
 
   const interactionBuildings = useMemo<WorldBuildingDefinition[]>(() => {
-    if (buildings.length) {
-      return buildings.map(building => ({
-        id: building.id,
-        type: normalizeBuildingType(building.type),
-        x: building.x,
-        y: building.y,
-        scale: building.scale,
-        label: building.id,
-        interactionRadius: building.interactionRadius,
-        collisionWidth: building.collisionWidth,
-        collisionHeight: building.collisionHeight,
-      }));
-    }
-    return location.buildings;
+    const source = buildings.length ? buildings : location.buildings;
+    return source.map(building => ({
+      id: building.id,
+      type: normalizeBuildingType(building.type),
+      x: building.x,
+      y: building.y,
+      scale: building.scale,
+      label: building.id,
+      interactionRadius: building.interactionRadius,
+      collisionWidth: building.collisionWidth,
+      collisionHeight: building.collisionHeight,
+    }));
   }, [buildings, location]);
 
   useEffect(() => {
@@ -77,12 +75,10 @@ export function LivingPlayerLayer({
   const updateNearby = (point: Point) => {
     const interaction = findNearestInteraction(point, interactions.current, interactionBuildings, location.props);
     setNearbyInteraction(interaction);
-
     if (!interaction || interaction.targetKind !== 'building') {
       setNearby(null);
       return;
     }
-
     const building = buildings.find(item => item.id === interaction.targetId);
     setNearby(building ?? null);
   };
@@ -135,7 +131,6 @@ export function LivingPlayerLayer({
   const translateX = position.x.interpolate({ inputRange: [0, 100], outputRange: [0, width] });
   const translateY = position.y.interpolate({ inputRange: [0, 100], outputRange: [0, height] });
   const action = nearbyInteraction?.actions[0];
-
   const activateNearby = () => {
     if (!nearbyInteraction) return;
     onNearbyInteraction?.(nearbyInteraction);
@@ -143,58 +138,21 @@ export function LivingPlayerLayer({
   };
 
   return <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
-    <Animated.View pointerEvents="none" style={[styles.avatar, { zIndex: worldDepth(depth, 120), transform: [{ translateX }, { translateY }, { translateX: -34 }, { translateY: -48 }, { scaleX: facing === 'left' ? -1 : 1 }] }]}>
-      <PlayerAvatar />
-    </Animated.View>
-    {nearbyInteraction && <Pressable onPress={activateNearby} style={styles.nearby}>
-      <View style={styles.nearbyDot} />
-      <Text style={styles.nearbyText}>{nearbyInteraction.label}</Text>
-      <Text style={styles.nearbyAction}>{action?.toUpperCase() ?? 'EXPLORE'}</Text>
-    </Pressable>}
-    <View style={styles.joystickWrap} {...responder.panHandlers}>
-      <View style={styles.joystickBase}>
-        <Animated.View style={[styles.joystickKnob, { transform: [{ translateX: joystick.x }, { translateY: joystick.y }] }]} />
-      </View>
-    </View>
+    <Animated.View pointerEvents="none" style={[styles.avatar, { zIndex: worldDepth(depth, 120), transform: [{ translateX }, { translateY }, { translateX: -34 }, { translateY: -48 }, { scaleX: facing === 'left' ? -1 : 1 }] }]}><PlayerAvatar /></Animated.View>
+    {nearbyInteraction && <Pressable onPress={activateNearby} style={styles.nearby}><View style={styles.nearbyDot} /><Text style={styles.nearbyText}>{nearbyInteraction.label}</Text><Text style={styles.nearbyAction}>{action?.toUpperCase() ?? 'EXPLORE'}</Text></Pressable>}
+    <View style={styles.joystickWrap} {...responder.panHandlers}><View style={styles.joystickBase}><Animated.View style={[styles.joystickKnob, { transform: [{ translateX: joystick.x }, { translateY: joystick.y }] }]} /></View></View>
   </View>;
 }
 
 function normalizeBuildingType(type?: string): WorldBuildingDefinition['type'] {
   switch (type) {
-    case 'cafe': case 'library': case 'market': case 'school': case 'sanctuary': case 'workshop': case 'house':
+    case 'cafe': case 'library': case 'market': case 'school': case 'sanctuary': case 'workshop': case 'house': case 'railway-station': case 'airport':
       return type;
     default:
       return 'house';
   }
 }
 
-function PlayerAvatar() {
-  return <View style={styles.avatarSize}>
-    <Svg width={68} height={80} viewBox="0 0 68 80">
-      <Ellipse cx="34" cy="74" rx="24" ry="5" fill="#08120f" opacity={0.42} />
-      <Path d="M22 62L27 74M46 62L41 74" stroke="#202a30" strokeWidth="7" strokeLinecap="round" />
-      <Path d="M16 63Q17 39 34 36Q51 39 52 63Z" fill="#294e5a" />
-      <Path d="M20 60L34 42L48 60" fill="#5b93a0" opacity={0.55} />
-      <Path d="M19 45Q34 35 49 45" stroke="#d7b079" strokeWidth="4" opacity={0.8} />
-      <Circle cx="34" cy="27" r="15" fill="#d8a57f" />
-      <Path d="M20 28Q19 10 34 9Q50 10 49 28Q42 20 34 20Q26 20 20 28Z" fill="#1d2024" />
-      <Path d="M22 20Q28 7 39 10Q47 12 49 22Q39 17 22 20Z" fill="#34383d" />
-      <Circle cx="29" cy="28" r="1.7" fill="#20262b" /><Circle cx="39" cy="28" r="1.7" fill="#20262b" />
-      <Path d="M30 35Q34 38 38 35" stroke="#9b5d58" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-      <Path d="M48 44Q58 47 59 57" stroke="#d6a86a" strokeWidth="4" strokeLinecap="round" />
-      <Rect x="29" y="40" width="10" height="3" rx="1.5" fill="#d6a86a" opacity={0.7} />
-    </Svg>
-  </View>;
-}
+function PlayerAvatar() { return <View style={styles.avatarSize}><Svg width={68} height={80} viewBox="0 0 68 80"><Ellipse cx="34" cy="74" rx="24" ry="5" fill="#08120f" opacity={0.42}/><Path d="M22 62L27 74M46 62L41 74" stroke="#202a30" strokeWidth="7" strokeLinecap="round"/><Path d="M16 63Q17 39 34 36Q51 39 52 63Z" fill="#294e5a"/><Path d="M20 60L34 42L48 60" fill="#5b93a0" opacity={0.55}/><Path d="M19 45Q34 35 49 45" stroke="#d7b079" strokeWidth="4" opacity={0.8}/><Circle cx="34" cy="27" r="15" fill="#d8a57f"/><Path d="M20 28Q19 10 34 9Q50 10 49 28Q42 20 34 20Q26 20 20 28Z" fill="#1d2024"/><Path d="M22 20Q28 7 39 10Q47 12 49 22Q39 17 22 20Z" fill="#34383d"/><Circle cx="29" cy="28" r="1.7" fill="#20262b"/><Circle cx="39" cy="28" r="1.7" fill="#20262b"/><Path d="M30 35Q34 38 38 35" stroke="#9b5d58" strokeWidth="1.5" strokeLinecap="round" fill="none"/><Path d="M48 44Q58 47 59 57" stroke="#d6a86a" strokeWidth="4" strokeLinecap="round"/><Rect x="29" y="40" width="10" height="3" rx="1.5" fill="#d6a86a" opacity={0.7}/></Svg></View>; }
 
-const styles = StyleSheet.create({
-  avatar: { position: 'absolute', width: 68, height: 80 },
-  avatarSize: { width: 68, height: 80 },
-  nearby: { position: 'absolute', left: '50%', top: '50%', marginLeft: -76, marginTop: -100, minWidth: 152, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(167,243,208,0.25)', backgroundColor: 'rgba(2,6,23,0.82)', alignItems: 'center', zIndex: 58 },
-  nearbyDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(110,231,183,0.9)', marginBottom: 4 },
-  nearbyText: { color: '#f8fafc', fontSize: 11, fontWeight: '800' },
-  nearbyAction: { color: '#6ee7b7', fontSize: 8, fontWeight: '800', letterSpacing: 1.8, marginTop: 3 },
-  joystickWrap: { position: 'absolute', left: 18, bottom: 18, width: 92, height: 92, zIndex: 60, alignItems: 'center', justifyContent: 'center' },
-  joystickBase: { width: 82, height: 82, borderRadius: 41, borderWidth: 1, borderColor: 'rgba(167,243,208,0.18)', backgroundColor: 'rgba(2,6,23,0.22)', alignItems: 'center', justifyContent: 'center' },
-  joystickKnob: { width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(110,231,183,0.26)', borderWidth: 1, borderColor: 'rgba(167,243,208,0.45)' },
-});
+const styles = StyleSheet.create({ avatar:{position:'absolute',width:68,height:80}, avatarSize:{width:68,height:80}, nearby:{position:'absolute',left:'50%',top:'50%',marginLeft:-76,marginTop:-100,minWidth:152,paddingHorizontal:12,paddingVertical:8,borderRadius:18,borderWidth:1,borderColor:'rgba(167,243,208,0.25)',backgroundColor:'rgba(2,6,23,0.82)',alignItems:'center',zIndex:58}, nearbyDot:{width:6,height:6,borderRadius:3,backgroundColor:'rgba(110,231,183,0.9)',marginBottom:4}, nearbyText:{color:'#f8fafc',fontSize:11,fontWeight:'800'}, nearbyAction:{color:'#6ee7b7',fontSize:8,fontWeight:'800',letterSpacing:1.8,marginTop:3}, joystickWrap:{position:'absolute',left:18,bottom:18,width:92,height:92,zIndex:60,alignItems:'center',justifyContent:'center'}, joystickBase:{width:82,height:82,borderRadius:41,borderWidth:1,borderColor:'rgba(167,243,208,0.18)',backgroundColor:'rgba(2,6,23,0.22)',alignItems:'center',justifyContent:'center'}, joystickKnob:{width:34,height:34,borderRadius:17,backgroundColor:'rgba(110,231,183,0.26)',borderWidth:1,borderColor:'rgba(167,243,208,0.45)'} });
