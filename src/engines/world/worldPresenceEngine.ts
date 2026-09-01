@@ -7,7 +7,7 @@ export type WorldPresence =
  | { kind:'home'; worldId:'emerald-valley'; label:'Emerald Valley' }
  | { kind:'journey'; worldId:LanguageWorldId; placeId:string; label:string };
 
-const KEY='gopal:world-presence:v1';
+const keyFor = (userId: string) => `gopal:world-presence:v2:${userId.trim() || 'local-explorer-user'}`;
 
 function journey(worldId:LanguageWorldId,place:WorldPlace):WorldPresence{
  return {kind:'journey',worldId,placeId:place.id,label:`${place.name}, ${place.city}`};
@@ -19,8 +19,9 @@ export class WorldPresenceEngine{
 
  async hydrate(userId='local-explorer-user'):Promise<WorldPresence>{
   try{
-   const raw=await AsyncStorage.getItem(KEY);
+   const raw=await AsyncStorage.getItem(keyFor(userId));
    if(!raw){
+    this.currentPresence={kind:'home',worldId:'emerald-valley',label:'Emerald Valley'};
     this.simulation=await livingWorldSimulation.hydrate(userId,'emerald-valley',null);
     return this.currentPresence;
    }
@@ -48,7 +49,7 @@ export class WorldPresenceEngine{
  async goHome(userId='local-explorer-user'):Promise<WorldPresence>{
   this.currentPresence={kind:'home',worldId:'emerald-valley',label:'Emerald Valley'};
   this.simulation=await livingWorldSimulation.advance(userId,'emerald-valley',null,0);
-  try{await AsyncStorage.setItem(KEY,JSON.stringify(this.currentPresence));}catch{}
+  try{await AsyncStorage.setItem(keyFor(userId),JSON.stringify(this.currentPresence));}catch{}
   return this.currentPresence;
  }
 
@@ -60,7 +61,7 @@ export class WorldPresenceEngine{
   if(!descriptor.kind)throw new Error('World location classification failed.');
   this.currentPresence=journey(world.id,place);
   this.simulation=await livingWorldSimulation.advance(userId,world.id,place.id,0);
-  try{await AsyncStorage.setItem(KEY,JSON.stringify(this.currentPresence));}catch{}
+  try{await AsyncStorage.setItem(keyFor(userId),JSON.stringify(this.currentPresence));}catch{}
   return this.currentPresence;
  }
 
