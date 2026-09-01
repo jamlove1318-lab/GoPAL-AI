@@ -2,15 +2,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LanguageWorldId, WorldPlace, languageWorldEngine, resolveLanguageWorld } from './languageWorldEngine';
 import { livingWorldSimulation, type LivingWorldSnapshot } from './livingWorldSimulation';
 import { createRealLocationDescriptor } from './worldRulesEngine';
+import { chooseDestinationResident } from './destinationResidentEngine';
 
 export type WorldPresence =
  | { kind:'home'; worldId:'emerald-valley'; label:'Emerald Valley' }
- | { kind:'journey'; worldId:LanguageWorldId; placeId:string; label:string };
+ | { kind:'journey'; worldId:LanguageWorldId; placeId:string; label:string; residentId:string };
 
 const keyFor = (userId: string) => `gopal:world-presence:v2:${userId.trim() || 'local-explorer-user'}`;
 
-function journey(worldId:LanguageWorldId,place:WorldPlace):WorldPresence{
- return {kind:'journey',worldId,placeId:place.id,label:`${place.name}, ${place.city}`};
+function journey(worldId:LanguageWorldId,place:WorldPlace,residentId:string):WorldPresence{
+ return {kind:'journey',worldId,placeId:place.id,label:`${place.name}, ${place.city}`,residentId};
 }
 
 export class WorldPresenceEngine{
@@ -29,8 +30,10 @@ export class WorldPresenceEngine{
    if(parsed.kind==='journey'){
     const world=resolveLanguageWorld(parsed.worldId);
     const place=world.places.find(item=>item.id===parsed.placeId);
-    if(place){
-     this.currentPresence=journey(world.id,place);
+    const resident=parsed.residentId ? world.id && chooseDestinationResident(world.id,place?.id ?? '') : null;
+    const residentId=parsed.residentId && resident?.id===parsed.residentId ? parsed.residentId : null;
+    if(place && residentId){
+     this.currentPresence=journey(world.id,place,residentId);
      this.simulation=await livingWorldSimulation.hydrate(userId,world.id,place.id);
      return this.currentPresence;
     }
@@ -57,9 +60,11 @@ export class WorldPresenceEngine{
   const world=languageWorldEngine.resolve(worldId);
   const place=world.places.find(item=>item.id===placeId)||world.places[0];
   if(!place)throw new Error(`No destinations configured for ${worldId}`);
-  const descriptor=createRealLocationDescriptor({id:place.id,worldId:world.id,label:place.name});
-  if(!descriptor.kind)throw new Error('World location classification failed.');
-  this.currentPresence=journey(world.id,place);
+  const resident=chooseDestinationResident(world.id,place.id);
+  if(!resident)throw new Error(`No resident configured for ${place.id}.`);
+  const descriptor=createRealLocationDescriptor({id:place.id,worldId:world.id,label:place.name,residentId:resident.id});
+  if(!descriptor.kind || !descriptor.residentId)throw new Error('Real-world resident classification failed.');
+  this.currentPresence=journey(world.id,place,resident.id);
   this.simulation=await livingWorldSimulation.advance(userId,world.id,place.id,0);
   try{await AsyncStorage.setItem(keyFor(userId),JSON.stringify(this.currentPresence));}catch{}
   return this.currentPresence;
