@@ -4,6 +4,7 @@ import { worldLearningIntegrationEngine } from './worldLearningIntegrationEngine
 import { worldLearningRelationshipBridge } from '../world/worldLearningRelationshipBridge';
 import { getWorldLearningScenarioById } from './worldLearningScenarioEngine';
 import { cassidyLearningReactionEngine, type CassidyLearningReaction } from '../cassidy/cassidyLearningReactionEngine';
+import { processCassidyInteraction, type CassidyInteractionResult } from '../cassidy/cassidyInteractionLifecycleEngine';
 import { worldLearningConsequenceEngine, type WorldLearningConsequence } from '../world/worldLearningConsequenceEngine';
 
 export type WorldLearningFlowResult = {
@@ -13,6 +14,7 @@ export type WorldLearningFlowResult = {
   integration: Awaited<ReturnType<typeof worldLearningIntegrationEngine.integrate>>;
   relationship: Awaited<ReturnType<typeof worldLearningRelationshipBridge.apply>>;
   cassidy: CassidyLearningReaction;
+  cassidyInteraction: CassidyInteractionResult;
   world: WorldLearningConsequence;
 };
 
@@ -88,6 +90,20 @@ export async function completeWorldLearningFlow(input: {
     if (!integration) return null;
     const relationship = await worldLearningRelationshipBridge.apply(integration.outcome, residentId);
     const world = await worldLearningConsequenceEngine.apply(integration.outcome);
+
+    const cassidyInteraction = await processCassidyInteraction({
+      userId,
+      characterId: 'cassidy',
+      interactionId: `world-learning:${scenarioId}:${success ? 'success' : 'practice'}`,
+      outcome: success ? 'success' : 'neutral',
+      summary: success
+        ? `Cassidy witnessed the learner successfully use ${scenario.targetLanguage} for ${scenario.goal} in ${scenario.placeId}.`
+        : `Cassidy witnessed the learner practise ${scenario.goal} in ${scenario.placeId}.`,
+      worldId: scenario.worldId,
+      destinationId: scenario.placeId,
+      activity: 'learning',
+    });
+
     const cassidy = cassidyLearningReactionEngine.react(integration.outcome, relationship?.relationship ? {
       residentId: relationship.residentId,
       familiarity: relationship.relationship.familiarity,
@@ -95,7 +111,7 @@ export async function completeWorldLearningFlow(input: {
       worldEchoId: world.worldEchoId,
     } : { worldEchoId: world.worldEchoId });
 
-    const result = { scenarioId, success, capability, integration, relationship, cassidy, world };
+    const result = { scenarioId, success, capability, integration, relationship, cassidy, cassidyInteraction, world };
     await rememberCompleted(key);
     return result;
   } finally {
