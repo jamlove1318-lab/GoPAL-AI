@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, PanResponder, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import Svg, { Circle, Ellipse, Path, Rect } from 'react-native-svg';
 import { GameWorldBuilding } from './LivingGameWorld';
 import { getLivingLocationTemplate } from '../data/livingWorldCatalog';
 import { locationCollisions } from '../data/livingWorldCollision';
 import { findNearestInteraction, getLocationInteractions, WorldInteractionDefinition } from '../data/livingWorldInteraction';
+import type { WorldBuildingDefinition } from './LivingWorldPrimitives';
 import { clampWorldPoint, resolveMovement, worldDepth, WorldObstacle } from '../geometry/livingWorldGeometry';
 
 type Point = { x: number; y: number };
@@ -33,11 +35,23 @@ export function LivingPlayerLayer({
 
   const obstacles = useRef<WorldObstacle[]>([]);
   const interactions = useRef<WorldInteractionDefinition[]>([]);
-  const interactionBuildings = buildings.length ? buildings : EMERALD_LOCATION.buildings;
+  const interactionBuildings: WorldBuildingDefinition[] = buildings.length
+    ? buildings.map(building => ({
+        id: building.id,
+        type: normalizeBuildingType(building.type),
+        x: building.x,
+        y: building.y,
+        scale: building.scale,
+        label: building.id,
+        interactionRadius: building.interactionRadius,
+        collisionWidth: building.collisionWidth,
+        collisionHeight: building.collisionHeight,
+      }))
+    : EMERALD_LOCATION.buildings;
 
   useEffect(() => {
     const catalogObstacles = locationCollisions(EMERALD_LOCATION.buildings, EMERALD_LOCATION.props);
-    const buildingObstacles = interactionBuildings.map(building => ({
+    const buildingObstacles = buildings.map(building => ({
       id: building.id,
       kind: 'building' as const,
       x: building.x,
@@ -64,7 +78,7 @@ export function LivingPlayerLayer({
       return;
     }
 
-    const building = interactionBuildings.find(item => item.id === interaction.targetId);
+    const building = buildings.find(item => item.id === interaction.targetId);
     setNearby(building ?? null);
   };
 
@@ -138,6 +152,15 @@ export function LivingPlayerLayer({
       </View>
     </View>
   </View>;
+}
+
+function normalizeBuildingType(type?: string): WorldBuildingDefinition['type'] {
+  switch (type) {
+    case 'cafe': case 'library': case 'market': case 'school': case 'sanctuary': case 'workshop': case 'house':
+      return type;
+    default:
+      return 'house';
+  }
 }
 
 function PlayerAvatar() {
