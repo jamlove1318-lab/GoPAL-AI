@@ -17,17 +17,26 @@ export class LivingWorldRuntime {
 
   async load(userId: string): Promise<WorldSnapshot> {
     const resolved = await this.worldEngine.ensureState(userId, 'emerald-valley', 'loc-study-room');
+
+    // Capture the persisted timestamp BEFORE touching it. Otherwise every load
+    // reports zero elapsed world time and the simulation never observes time
+    // spent away from the app.
+    const previousLastActiveAt = resolved.lastActiveAt;
+    const elapsedMinutes = this.elapsedMinutes(previousLastActiveAt);
     const now = new Date().toISOString();
-    await this.worldEngine.saveState(userId, { lastActiveAt: now });
+
     const simulation = await this.simulation.advance(
       userId,
       resolved.world?.id ?? 'emerald-valley',
       resolved.location?.id ?? null,
-      this.elapsedMinutes(resolved.lastActiveAt),
+      elapsedMinutes,
     );
+
+    await this.worldEngine.saveState(userId, { lastActiveAt: now });
     const continuity = resolved.location
       ? await this.worldEngine.getRevisitDifference(resolved.location.id)
       : { note: null, visitCount: 0 };
+
     return { resolved: { ...resolved, lastActiveAt: now }, simulation, continuity };
   }
 
@@ -38,6 +47,7 @@ export class LivingWorldRuntime {
     const destination = locations.find((location) => location.id === locationId);
     if (!destination) throw new Error(`Location ${locationId} does not belong to world ${worldId}.`);
 
+    const elapsedMinutes = this.elapsedMinutes(previous?.lastActiveAt);
     await this.worldEngine.setLocation(userId, locationId);
     const now = new Date().toISOString();
     await this.worldEngine.saveState(userId, { lastActiveAt: now });
@@ -48,7 +58,7 @@ export class LivingWorldRuntime {
       userId,
       resolved.world?.id ?? worldId,
       locationId,
-      this.elapsedMinutes(previous?.lastActiveAt),
+      elapsedMinutes,
     );
     const continuity = await this.worldEngine.getRevisitDifference(locationId);
     eventBus.emit('world:locationChanged', {
@@ -61,8 +71,10 @@ export class LivingWorldRuntime {
 
   private elapsedMinutes(lastActiveAt?: string | null): number {
     if (!lastActiveAt) return 0;
-    const elapsed = Date.now() - new Date(lastActiveAt).getTime();
-    if (!Number.isFinite(elapsed) || elapsed < 0) return 0;
+    const timestamp = new Date(lastActiveAt).getTime();
+    if (!Number.isFinite(timestamp)) return 0;
+    const elapsed = Date.now() - timestamp;
+    if (elapsed < 0) return 0;
     return Math.floor(elapsed / 60000);
   }
 }
