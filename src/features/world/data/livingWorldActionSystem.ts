@@ -24,8 +24,8 @@ export type WorldActionDefinition = {
 const ACTIONS: Record<WorldActionId, WorldActionDefinition> = {
   talk: { id: 'talk', label: 'Talk', priority: 100, tags: ['character'] },
   learn: { id: 'learn', label: 'Learn', priority: 95, tags: ['learning'] },
-  enter: { id: 'enter', label: 'Enter', priority: 90, tags: ['entrance'] },
-  exit: { id: 'exit', label: 'Exit', priority: 90, tags: ['entrance'] },
+  enter: { id: 'enter', label: 'Enter', priority: 90, requiresUnlock: true, tags: ['entrance'] },
+  exit: { id: 'exit', label: 'Exit', priority: 90, requiresUnlock: true, tags: ['entrance'] },
   inspect: { id: 'inspect', label: 'Inspect', priority: 60 },
   discover: { id: 'discover', label: 'Discover', priority: 55 },
   collect: { id: 'collect', label: 'Collect', priority: 85 },
@@ -53,6 +53,8 @@ const TYPE_ACTIONS: Record<string, WorldActionId[]> = {
   nature: ['inspect', 'discover'],
 };
 
+const ENTRANCE_TYPES = new Set(['door', 'gate', 'arch', 'portal', 'boarding-gate', 'entrance']);
+
 export function getWorldAction(id: WorldActionId) { return ACTIONS[id]; }
 
 export function getAvailableWorldActions(context: WorldActionContext): WorldActionDefinition[] {
@@ -61,14 +63,18 @@ export function getAvailableWorldActions(context: WorldActionContext): WorldActi
   for (const action of object.interaction?.actions ?? []) {
     if (action in ACTIONS) actionIds.add(action as WorldActionId);
   }
+  if (object.category === 'gameplay' && ENTRANCE_TYPES.has(object.type)) {
+    actionIds.add('enter');
+    actionIds.delete('activate');
+  }
   if (object.category === 'gameplay' && object.type === 'save-point') actionIds.add('save');
   if (object.category === 'gameplay' && object.type === 'quest-marker') actionIds.add('quest');
   if (object.category === 'gameplay' && object.type === 'puzzle') actionIds.add('play');
   if (object.category === 'infrastructure' && (object.type === 'bus-stop' || object.type === 'parking')) actionIds.add('travel');
   if (object.category === 'transport') actionIds.add('inspect');
   if (object.category === 'vehicle') actionIds.add('board');
-  if (object.state?.unlocked === false) return [...actionIds].map(id => ACTIONS[id]).filter(action => !action.requiresUnlock);
-  return [...actionIds].map(id => ACTIONS[id]).sort((a, b) => b.priority - a.priority);
+  const unlocked = context.unlocked ?? object.state?.unlocked !== false;
+  return [...actionIds].map(id => ACTIONS[id]).filter(action => unlocked || action.requiresUnlock !== true).sort((a, b) => b.priority - a.priority);
 }
 
 export function findBestWorldAction(context: WorldActionContext) {
