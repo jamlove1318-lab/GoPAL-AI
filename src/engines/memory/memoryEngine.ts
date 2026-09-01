@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from '../../lib/supabaseClient';
 import { LocalStore } from '../../lib/localStore';
+import { addLocalMemory, getLocalMemories } from './localMemoryStore';
 import type { MemoriesRow, Json } from '../../types/database';
 
 export type MemoryLayer =
@@ -25,11 +26,10 @@ export class MemoryEngine {
     if (!normalizedFact) throw new Error('Memory fact cannot be empty');
 
     if (!isSupabaseConfigured) {
-      return LocalStore.addMemory(layer, normalizedFact);
+      return addLocalMemory(userId, layer, normalizedFact);
     }
 
     try {
-      // Prefer an existing canonical memory so repeated events remain idempotent.
       const { data: existing, error: lookupError } = await supabase
         .from('memories')
         .select('*')
@@ -50,27 +50,27 @@ export class MemoryEngine {
         occurred_at: new Date().toISOString(),
       };
       const { data, error } = await supabase.from('memories').insert(row).select('*').single();
-      if (error || !data) return LocalStore.addMemory(layer, normalizedFact);
+      if (error || !data) return addLocalMemory(userId, layer, normalizedFact);
       return data as MemoriesRow;
     } catch {
-      return LocalStore.addMemory(layer, normalizedFact);
+      return addLocalMemory(userId, layer, normalizedFact);
     }
   }
 
   async list(userId: string, layer?: MemoryLayer): Promise<MemoriesRow[]> {
     if (!isSupabaseConfigured) {
-      const list = await LocalStore.getMemories();
-      return layer ? list.filter((m) => m.layer === layer) : list;
+      const list = await getLocalMemories(userId);
+      return layer ? list.filter(m => m.layer === layer) : list;
     }
 
     try {
       let query = supabase.from('memories').select('*').eq('user_id', userId).order('occurred_at', { ascending: false });
       if (layer) query = query.eq('layer', layer);
       const { data } = await query;
-      return (data && data.length ? data : await LocalStore.getMemories()) as MemoriesRow[];
+      return (data && data.length ? data : await getLocalMemories(userId)) as MemoriesRow[];
     } catch {
-      const list = await LocalStore.getMemories();
-      return layer ? list.filter((m) => m.layer === layer) : list;
+      const list = await getLocalMemories(userId);
+      return layer ? list.filter(m => m.layer === layer) : list;
     }
   }
 
