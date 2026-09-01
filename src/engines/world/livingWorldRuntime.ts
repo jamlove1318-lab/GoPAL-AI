@@ -1,3 +1,4 @@
+import { eventBus } from '../events/eventBus';
 import { WorldEngine, type ResolvedWorldState } from './worldEngine';
 import { livingWorldSimulation, type LivingWorldSnapshot } from './livingWorldSimulation';
 
@@ -16,6 +17,8 @@ export class LivingWorldRuntime {
 
   async load(userId: string): Promise<WorldSnapshot> {
     const resolved = await this.worldEngine.ensureState(userId, 'emerald-valley', 'loc-study-room');
+    const now = new Date().toISOString();
+    await this.worldEngine.saveState(userId, { lastActiveAt: now });
     const simulation = await this.simulation.advance(
       userId,
       resolved.world?.id ?? 'emerald-valley',
@@ -25,23 +28,35 @@ export class LivingWorldRuntime {
     const continuity = resolved.location
       ? await this.worldEngine.getRevisitDifference(resolved.location.id)
       : { note: null, visitCount: 0 };
-    return { resolved, simulation, continuity };
+    return { resolved: { ...resolved, lastActiveAt: now }, simulation, continuity };
   }
 
   async changeLocation(userId: string, locationId: string): Promise<WorldSnapshot> {
     const previous = await this.worldEngine.loadState(userId);
+    const worldId = previous?.world?.id ?? 'emerald-valley';
+    const locations = await this.worldEngine.listLocations(worldId);
+    const destination = locations.find((location) => location.id === locationId);
+    if (!destination) throw new Error(`Location ${locationId} does not belong to world ${worldId}.`);
+
     await this.worldEngine.setLocation(userId, locationId);
+    const now = new Date().toISOString();
+    await this.worldEngine.saveState(userId, { lastActiveAt: now });
     const resolved = await this.worldEngine.loadState(userId);
     if (!resolved) throw new Error('World state was not readable after changing location.');
 
     const simulation = await this.simulation.advance(
       userId,
-      resolved.world?.id ?? 'emerald-valley',
+      resolved.world?.id ?? worldId,
       locationId,
       this.elapsedMinutes(previous?.lastActiveAt),
     );
     const continuity = await this.worldEngine.getRevisitDifference(locationId);
-    return { resolved, simulation, continuity };
+    eventBus.emit('world:locationChanged', {
+      locationId,
+      userId,
+      previousLocationId: previous?.location?.id ?? undefined,
+    }, 'world');
+    return { resolved: { ...resolved, lastActiveAt: now }, simulation, continuity };
   }
 
   private elapsedMinutes(lastActiveAt?: string | null): number {
