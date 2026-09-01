@@ -41,3 +41,5 @@ export type { CreationTemplate } from './creation/creationStudio';
 
 export { KnowledgeEngine } from './knowledge/knowledgeEngine';
 export type { SearchResultCategory } from './knowledge/knowledgeEngine';
+
+export { startCassidyRuntimeBridge } from './cassidy/cassidyRuntimeBridge';

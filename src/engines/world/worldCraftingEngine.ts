@@ -1,0 +1,7 @@
+export type CraftingMaterial={id:string;label:string;quantity?:number};
+export type CraftingRecipe={id:string;label:string;inputs:{materialId:string;quantity:number}[];output:CraftingMaterial};
+export type CraftingState={materials:CraftingMaterial[];craftedRecipeIds:string[]};
+export const createCraftingState=(materials:CraftingMaterial[]=[]):CraftingState=>({materials:materials.map(item=>({...item})),craftedRecipeIds:[]});
+const quantity=(state:CraftingState,id:string)=>state.materials.find(item=>item.id===id)?.quantity??0;
+export function canCraft(state:CraftingState,recipe:CraftingRecipe){return recipe.inputs.every(input=>quantity(state,input.materialId)>=input.quantity)&&!state.craftedRecipeIds.includes(recipe.id)}
+export function craft(state:CraftingState,recipe:CraftingRecipe):CraftingState{if(!canCraft(state,recipe))return state;const materials=state.materials.map(item=>{const input=recipe.inputs.find(value=>value.materialId===item.id);return input?{...item,quantity:Math.max(0,(item.quantity??0)-input.quantity)}:item}).filter(item=>(item.quantity??0)>0);const output=state.materials.find(item=>item.id===recipe.output.id);const withOutput=output?materials.map(item=>item.id===output.id?{...item,quantity:(item.quantity??0)+(recipe.output.quantity??1)}:item):[...materials,{...recipe.output,quantity:recipe.output.quantity??1}];return{materials:withOutput,craftedRecipeIds:[...state.craftedRecipeIds,recipe.id]}}

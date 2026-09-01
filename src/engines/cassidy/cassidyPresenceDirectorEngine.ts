@@ -1,0 +1,42 @@
+import type { CassidyMood } from '../../characters/cassidy';
+import type { CassidyLifeActivity } from './cassidyLifeEngine';
+import { getCassidyLifeState, saveCassidyLifeState } from './cassidyLifeStateEngine';
+import { getCassidyPersonality, moodFromPersonality } from './cassidyPersonalityEngine';
+import { createCassidyLifeMoment } from './cassidyLifeDirectorEngine';
+
+export type CassidyPresenceDecision={activity:CassidyLifeActivity;mood:CassidyMood;invitation:boolean;moment?:Awaited<ReturnType<typeof createCassidyLifeMoment>>;};
+const ACTIVITIES:ReadonlyArray<CassidyLifeActivity>=['wandering','cafe','reading','watching-rain','stargazing','dreaming','storytelling','adventure','helping','resting','discovering','celebrating'];
+const INVITATION_COOLDOWN_MS=30*60*1000;
+const MIN_STAY_MS=15*60*1000;
+function hash(input:string){let h=2166136261;for(let i=0;i<input.length;i++)h=Math.imul(h^input.charCodeAt(i),16777619);return h>>>0;}
+export async function decideCassidyPresence(input:{worldId:string;destinationId?:string;allowStory?:boolean;allowAdventure?:boolean;allowDream?:boolean}):Promise<CassidyPresenceDecision>{
+ const state=await getCassidyLifeState();
+ const personality=await getCassidyPersonality();
+ const now=Date.now();
+ const stateTime=Date.parse(state.updatedAt);
+ const elapsed=Number.isFinite(stateTime)?Math.max(0,now-stateTime):Infinity;
+ const samePlace=state.worldId===input.worldId&&state.destinationId===input.destinationId;
+ let activity:CassidyLifeActivity=samePlace&&elapsed<MIN_STAY_MS?state.activity:ACTIVITIES[hash(`${input.worldId}:${input.destinationId??''}:${state.visits}:${Math.floor(now/3600000)}`)%ACTIVITIES.length]!;
+ if(!input.allowStory&&activity==='storytelling')activity='wandering';
+ if(!input.allowAdventure&&activity==='adventure')activity='discovering';
+ if(!input.allowDream&&activity==='dreaming')activity='resting';
+ if(activity==='adventure'&&personality.adventurousness<35)activity='wandering';
+ if(activity==='cafe'&&personality.warmth<35)activity='reading';
+ const mood=moodFromPersonality(personality);
+ const invitationAt=state.lastInvitationAt?Date.parse(state.lastInvitationAt):NaN;
+ const recentlyInvited=Number.isFinite(invitationAt)&&now-invitationAt<INVITATION_COOLDOWN_MS;
+ const invitation=!recentlyInvited&&(activity==='storytelling'||activity==='adventure'||activity==='helping'||activity==='discovering');
+ // A life moment is an event, not a polling result. Repeated presence polling while
+ // Cassidy remains in the same special activity must not create duplicate dreams,
+ // stories, or adventures.
+ const enteringActivity=state.activity!==activity||!samePlace;
+ let moment: CassidyPresenceDecision['moment'];
+ if(enteringActivity){
+  if(activity==='dreaming'&&input.allowDream)moment=await createCassidyLifeMoment('dream');
+  else if(activity==='storytelling'&&input.allowStory)moment=await createCassidyLifeMoment('story');
+  else if(activity==='adventure'&&input.allowAdventure)moment=await createCassidyLifeMoment('adventure');
+ }
+ await saveCassidyLifeState({activity,mood,worldId:input.worldId,destinationId:input.destinationId,lastInvitationAt:invitation?new Date(now).toISOString():state.lastInvitationAt});
+ return{activity,mood,invitation,moment};
+}
+export const cassidyPresenceDirectorEngine={decide:decideCassidyPresence};
