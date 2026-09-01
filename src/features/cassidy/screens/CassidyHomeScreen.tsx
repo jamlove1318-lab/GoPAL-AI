@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, ScrollView, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { WaveStore } from '../../../lib/waveStore';
+import { auth } from '../../../services/auth';
+import { livingWorldObjectsStore } from '../../../engines/world/livingWorldObjectsStore';
 import { Cassidy, CassidyMood } from '../../../characters/cassidy';
 import { CassidyCharacter } from '../../../components/CassidyCharacter';
 import { Radio, BookOpen } from 'lucide-react-native';
@@ -35,11 +36,18 @@ export function CassidyHomeScreen() {
   useEffect(() => {
     let active = true;
     const refresh = async () => {
-      const nextObjects = await WaveStore.getLivingObjects();
-      if (active) setObjects(nextObjects);
+      try {
+        const user = await auth.getCurrentUser();
+        const userId = user?.id ?? 'local-explorer-user';
+        await livingWorldObjectsStore.migrateLegacyLocalState(userId);
+        const nextObjects = await livingWorldObjectsStore.getAll(userId);
+        if (active) setObjects(nextObjects);
+      } catch {
+        if (active) setObjects([]);
+      }
     };
-    refresh();
-    const id = setInterval(refresh, 30_000);
+    void refresh();
+    const id = setInterval(() => void refresh(), 30_000);
     return () => {
       active = false;
       clearInterval(id);
