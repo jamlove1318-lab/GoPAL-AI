@@ -4,7 +4,6 @@ import { worldLearningRelationshipBridge } from '../world/worldLearningRelations
 import { getWorldLearningScenarioById } from './worldLearningScenarioEngine';
 import { cassidyLearningReactionEngine, type CassidyLearningReaction } from '../cassidy/cassidyLearningReactionEngine';
 import { worldLearningConsequenceEngine, type WorldLearningConsequence } from '../world/worldLearningConsequenceEngine';
-import { worldDiscoveryProgressionEngine } from '../world/worldDiscoveryProgressionEngine';
 
 export type WorldLearningFlowResult = {
   scenarioId: string;
@@ -14,7 +13,6 @@ export type WorldLearningFlowResult = {
   relationship: Awaited<ReturnType<typeof worldLearningRelationshipBridge.apply>>;
   cassidy: CassidyLearningReaction;
   world: WorldLearningConsequence;
-  discovery: Awaited<ReturnType<typeof worldDiscoveryProgressionEngine.complete>> | null;
 };
 
 export async function completeWorldLearningTurn(input: {
@@ -36,6 +34,13 @@ export async function completeWorldLearningTurn(input: {
   return languageCapabilityEngine.scenario(input.scenarioId);
 }
 
+/**
+ * Applies consequences for a genuinely completed scenario.
+ * Place discovery is deliberately NOT completed here: a lesson is one
+ * experience inside a physical place, not proof that the whole place has
+ * been exhausted. Physical hotspot progression owns hotspot completion;
+ * destination discovery owns explicit place completion.
+ */
 export async function completeWorldLearningFlow(input: {
   userId: string;
   scenarioId: string;
@@ -63,11 +68,8 @@ export async function completeWorldLearningFlow(input: {
     trust: relationship.relationship.trust,
     worldEchoId: world.worldEchoId,
   } : { worldEchoId: world.worldEchoId });
-  const discovery = success
-    ? await worldDiscoveryProgressionEngine.complete(scenario.worldId, scenario.placeId, scenarioId)
-    : null;
 
-  return { scenarioId, success, capability, integration, relationship, cassidy, world, discovery };
+  return { scenarioId, success, capability, integration, relationship, cassidy, world };
 }
 
 export const worldLearningFlowEngine = { complete: completeWorldLearningFlow, completeTurn: completeWorldLearningTurn };
