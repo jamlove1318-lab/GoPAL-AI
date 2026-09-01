@@ -6,3 +6,4 @@ export * from './LivingWorldParallax';
 export * from './LivingWorldActivityField';
 export * from './LivingWorldActorMotion';
 export * from './LivingWorldActivityActors';
+export * from './LivingWorldAmbientMoments';
