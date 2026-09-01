@@ -1,5 +1,6 @@
 import { LocalStore } from '../../lib/localStore';
 import { MemoryEngine } from '../memory/memoryEngine';
+import { evolveCassidyPersonality } from './cassidyPersonalityEngine';
 
 const KEY='cassidy_first_welcome_v1';
 const INTRODUCTION_VERSION=1;
@@ -22,5 +23,5 @@ export const CASSIDY_INTRODUCTION=[
 const DEFAULT_STATE:CassidyWelcomeState={introduced:false,introductionVersion:INTRODUCTION_VERSION};
 export async function getCassidyWelcomeState(){const stored=await LocalStore.get<Partial<CassidyWelcomeState>>(KEY,{});return{...DEFAULT_STATE,...stored,introductionVersion:typeof stored.introductionVersion==='number'&&stored.introductionVersion>0?stored.introductionVersion:INTRODUCTION_VERSION};}
 export async function shouldShowCassidyIntroduction(){const state=await getCassidyWelcomeState();return !state.introduced;}
-export async function completeCassidyIntroduction(userId='local-explorer-user'){const current=await getCassidyWelcomeState();if(current.introduced)return current;const now=Date.now();const next:CassidyWelcomeState={introduced:true,introducedAt:now,introductionVersion:INTRODUCTION_VERSION};await LocalStore.set(KEY,next);await new MemoryEngine().record(userId,'character',FIRST_MEETING_MEMORY,`cassidy:first-meeting:v${INTRODUCTION_VERSION}`);return next;}
+export async function completeCassidyIntroduction(userId='local-explorer-user'){const current=await getCassidyWelcomeState();if(current.introduced)return current;const now=Date.now();const next:CassidyWelcomeState={introduced:true,introducedAt:now,introductionVersion:INTRODUCTION_VERSION};await LocalStore.set(KEY,next);const memoryId=`cassidy:first-meeting:v${INTRODUCTION_VERSION}`;await new MemoryEngine().record(userId,'character',FIRST_MEETING_MEMORY,memoryId);await evolveCassidyPersonality({eventId:memoryId,interaction:true,success:true});return next;}
 export const cassidyWelcomeEngine={get:getCassidyWelcomeState,shouldShow:shouldShowCassidyIntroduction,complete:completeCassidyIntroduction,script:CASSIDY_INTRODUCTION};
