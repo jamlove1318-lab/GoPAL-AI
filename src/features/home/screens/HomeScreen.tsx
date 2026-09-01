@@ -6,7 +6,8 @@ import { useCassidy } from '../../../hooks/useCassidy';
 import { tutorEngine } from '../../../engines/tutor/tutorEngine';
 import { ExperienceDirector, TodayMoment, ExperienceIntent, ExperiencePlan, SessionPlanStep } from '../../../engines/director/experienceDirector';
 import { LocalStore, SessionBookmark } from '../../../lib/localStore';
-import { WaveStore } from '../../../lib/waveStore';
+import { auth } from '../../../services/auth';
+import { livingWorldObjectsStore } from '../../../engines/world/livingWorldObjectsStore';
 import { Cassidy } from '../../../characters/cassidy';
 import { CassidyCharacter } from '../../../components/CassidyCharacter';
 import type { CassidySnapshot } from '../../../characters/cassidyContext';
@@ -38,10 +39,20 @@ export function HomeScreen({ snapshot, onNavigate, onStartScenario }: HomeScreen
   const [selfModel, setSelfModel] = useState<string | null>(null);
 
   useEffect(() => {
+    let active = true;
     ExperienceDirector.getTodayPrimaryMoment().then(setTodayMoment);
     ExperienceDirector.getContinuityCard().then(setContinuityCard);
-    WaveStore.getLivingObjects().then(setLivingObjects);
     ExperienceDirector.selfModelReflection().then(setSelfModel);
+    void (async () => {
+      try {
+        const user = await auth.getCurrentUser();
+        const userId = user?.id ?? 'local-explorer-user';
+        await livingWorldObjectsStore.migrateLegacyLocalState(userId);
+        const next = await livingWorldObjectsStore.getAll(userId);
+        if (active) setLivingObjects(next);
+      } catch { /* ambient UI must never block the world */ }
+    })();
+    return () => { active = false; };
   }, []);
 
   const handleIntentSelect = async (intent: ExperienceIntent) => {
