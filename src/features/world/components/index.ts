@@ -8,3 +8,4 @@ export * from './LivingWorldActorMotion';
 export * from './LivingWorldActivityActors';
 export * from './LivingWorldAmbientMoments';
 export * from './LivingWorldResidentActivity';
+export * from './LivingWorldConversationMoment';
