@@ -1,4 +1,5 @@
 import type { CassidyAutonomyDecision } from './cassidyAutonomyEngine';
+import type { CassidyLifeActivity } from './cassidyLifeEngine';
 import { eventBus } from '../events/eventBus';
 
 export type CassidyAction={
@@ -7,21 +8,25 @@ export type CassidyAction={
  text:string;
  canInterrupt:boolean;
  priority:number;
+ lifeActivity?:CassidyLifeActivity;
+ invitation?:boolean;
+ visualAction:'idle'|'talking'|'waving'|'walking';
 };
 
+const LIFE_TEXT:Record<CassidyLifeActivity,string>={
+ wandering:'Cassidy is wandering through the world, following her curiosity.',cafe:'Cassidy found a quiet café and decided to stay for a while.',reading:'Cassidy is sitting somewhere peaceful, absorbed in a book.','watching-rain':'Cassidy stopped to watch the rain for a little while.',stargazing:'Cassidy is looking up at the sky, taking in the stars.',dreaming:'Cassidy is lost in one of her strange little dreams.',storytelling:'Cassidy has a story she wants to share with you.',adventure:'Cassidy discovered something interesting and wants to explore it.',helping:'Cassidy noticed you could use a little help.',resting:'Cassidy is simply taking a quiet moment for herself.',
+};
+const LIFE_VISUAL:Record<CassidyLifeActivity,CassidyAction['visualAction']>={wandering:'walking',cafe:'idle',reading:'idle','watching-rain':'idle',stargazing:'idle',dreaming:'idle',storytelling:'talking',adventure:'walking',helping:'talking',resting:'idle'};
+
 export function executeCassidyDecision(decision:CassidyAutonomyDecision):CassidyAction{
- const canInterrupt=decision.action==='help'||decision.action==='celebrate'||decision.priority>=90;
- const text={
-  observe:'Cassidy stays close and lets the moment breathe.',
-  join:'Cassidy notices the person nearby and joins you without taking over.',
-  suggest:'Cassidy notices something interesting and leaves the choice to you.',
-  help:'Cassidy gives you a small clue, then lets you try.',
-  celebrate:'Cassidy shares the moment with you. You did it.',
-  wander:'Cassidy wanders alongside you, curious about what you might find.'
- }[decision.action];
- const action={action:decision.action,mood:decision.mood,text,canInterrupt,priority:decision.priority};
- eventBus.emit('cassidy:autonomyActed',{action:action.action,mood:action.mood,priority:action.priority,canInterrupt:action.canInterrupt},'cassidy');
- return action;
+ const lifeActivity=decision.lifeActivity;
+ const action=decision.action;
+ const canInterrupt=action==='help'||action==='celebrate'||decision.priority>=90;
+ const text=lifeActivity?LIFE_TEXT[lifeActivity]:({observe:'Cassidy stays close and lets the moment breathe.',join:'Cassidy notices the person nearby and joins you without taking over.',suggest:'Cassidy notices something interesting and leaves the choice to you.',help:'Cassidy gives you a small clue, then lets you try.',celebrate:'Cassidy shares the moment with you. You did it.',wander:'Cassidy wanders alongside you, curious about what you might find.',live:'Cassidy is living her own moment in the world.'}[action]);
+ const visualAction=lifeActivity?LIFE_VISUAL[lifeActivity]:(action==='wander'||action==='join'?'walking':action==='help'||action==='celebrate'?'talking':'idle');
+ const result={action,mood:decision.mood,text,canInterrupt,priority:decision.priority,lifeActivity,invitation:decision.invitation,visualAction};
+ eventBus.emit('cassidy:autonomyActed',{action:result.action,mood:result.mood,priority:result.priority,canInterrupt:result.canInterrupt,lifeActivity:result.lifeActivity,invitation:result.invitation,visualAction:result.visualAction},'cassidy');
+ return result;
 }
 
 export const cassidyActionEngine={execute:executeCassidyDecision};
