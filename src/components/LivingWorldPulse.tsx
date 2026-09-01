@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Text, View } from 'react-native';
-import { WaveStore, LivingObject } from '../lib/waveStore';
+import { WaveStore } from '../lib/waveStore';
+import { livingWorldObjectsStore, LivingWorldObject } from '../engines/world/livingWorldObjectsStore';
+import { auth } from '../services/auth';
 import { eventBus } from '../engines/events/eventBus';
 
-/** Ambient glimpse of persistent world life — deliberately not a dashboard. */
 export function LivingWorldPulse() {
-  const [objects, setObjects] = useState<LivingObject[]>([]);
+  const [objects, setObjects] = useState<LivingWorldObject[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
   const opacity = useRef(new Animated.Value(0)).current;
   const drift = useRef(new Animated.Value(0)).current;
@@ -13,8 +14,15 @@ export function LivingWorldPulse() {
 
   useEffect(() => {
     let alive = true;
+    let userId = 'local-explorer-user';
     const load = async () => {
-      try { const next = await WaveStore.getLivingObjects(); if (alive) setObjects(next); } catch { /* ambient UI must never block the world */ }
+      try {
+        const user = await auth.getCurrentUser();
+        userId = user?.id ?? 'local-explorer-user';
+        await livingWorldObjectsStore.migrateLegacyLocalState(userId);
+        const next = await livingWorldObjectsStore.getAll(userId);
+        if (alive) setObjects(next);
+      } catch { /* ambient UI must never block the world */ }
     };
     void load();
 
@@ -30,29 +38,23 @@ export function LivingWorldPulse() {
       void load();
     };
 
-    const locationNames: Record<string, string> = {
-      study_room: 'Study Room',
-      cozy_cafe: 'Cozy Café',
-      whispering_library: 'Whispering Library',
-      lantern_market: 'Lantern Market',
-      zen_garden: 'Zen Garden',
-    };
     const offs = [
       eventBus.on('learning:sessionCompleted', () => showChange('Something in the study changed with you.')),
       eventBus.on('discovery:made', () => showChange('A new memory has taken root.')),
       eventBus.on('achievement:earned', () => showChange('The world noticed what you accomplished.')),
       eventBus.on('world:returned', () => showChange('The valley remembers your return.')),
       eventBus.on('world:locationChanged', ({ locationId, previousLocationId }) => {
-        if (locationId !== previousLocationId) {
-          const destination = locationNames[locationId] ?? 'a new place';
-          showChange(`The valley noticed your journey to ${destination}.`);
-        }
+        if (locationId !== previousLocationId) showChange(`The valley noticed your journey to ${locationId}.`);
       }),
       eventBus.on('conversation:completed', () => showChange('A conversation became part of the journey.')),
     ];
 
     const timer = setInterval(() => void load(), 10000);
-    return () => { alive = false; clearInterval(timer); offs.forEach((off) => off()); };
+    const authSubscription = auth.onAuthStateChange((user) => {
+      userId = user?.id ?? 'local-explorer-user';
+      void load();
+    });
+    return () => { alive = false; clearInterval(timer); offs.forEach((off) => off()); authSubscription.data.subscription.unsubscribe(); };
   }, [bloom]);
 
   useEffect(() => {
@@ -86,14 +88,10 @@ export function LivingWorldPulse() {
           <Text className="ml-2 text-[10px] font-semibold uppercase tracking-[1.5px] text-emerald-300">The world remembers</Text>
           <Animated.Text style={{ opacity: eventOpacity }} className="ml-auto text-xs">✦</Animated.Text>
         </View>
-        {notice ? (
-          <Animated.Text style={{ opacity: eventOpacity }} className="mt-1 text-[10px] leading-4 text-emerald-100">{notice}</Animated.Text>
-        ) : (
-          <>
-            {bonsai && <Text className="mt-1 text-[10px] leading-4 text-slate-300">Your bonsai is quietly growing · {bonsai.growth}%</Text>}
-            {radio?.memory?.[radio.memory.length - 1] && <Text className="mt-0.5 text-[9px] italic leading-3 text-slate-500">{radio.memory[radio.memory.length - 1]}</Text>}
-          </>
-        )}
+        {notice ? <Animated.Text style={{ opacity: eventOpacity }} className="mt-1 text-[10px] leading-4 text-emerald-100">{notice}</Animated.Text> : <>
+          {bonsai && <Text className="mt-1 text-[10px] leading-4 text-slate-300">Your bonsai is quietly growing · {bonsai.growth}%</Text>}
+          {radio?.memory?.[radio.memory.length - 1] && <Text className="mt-0.5 text-[9px] italic leading-3 text-slate-500">{radio.memory[radio.memory.length - 1]}</Text>}
+        </>}
       </View>
     </Animated.View>
   );
