@@ -3,12 +3,21 @@ import { CassidyPresenceContext } from './cassidyWorldPresenceEngine';
 import type { CassidyLifeActivity } from './cassidyLifeEngine';
 import { LanguageWorldId, resolveLanguageWorld } from '../world/languageWorldEngine';
 
+export type CassidyPhysicalAnchor = {
+  id: string;
+  x: number;
+  y: number;
+  facing?: 'left' | 'right';
+  activity?: CassidyLifeActivity;
+};
+
 export type CassidySceneAnchor = {
   left: string;
   top: string;
   height: number;
   action: CassidyAction;
   facing: 'left' | 'right';
+  physicalAnchorId?: string;
 };
 
 const WORLD_ANCHORS: Record<LanguageWorldId, Record<CassidyPresenceContext, CassidySceneAnchor>> = {
@@ -59,16 +68,31 @@ const LIFE_CONTEXT: Record<CassidyLifeActivity, CassidyPresenceContext> = {
   resting: 'quiet',
 };
 
+function applyPhysicalAnchor(base: CassidySceneAnchor, physicalAnchor?: CassidyPhysicalAnchor): CassidySceneAnchor {
+  if (!physicalAnchor) return base;
+  const action = physicalAnchor.activity
+    ? (physicalAnchor.activity === 'wandering' || physicalAnchor.activity === 'adventure' ? 'walking' : physicalAnchor.activity === 'storytelling' || physicalAnchor.activity === 'helping' ? 'talking' : 'idle')
+    : base.action;
+  return {
+    ...base,
+    left: `${Math.max(0, Math.min(100, physicalAnchor.x))}%`,
+    top: `${Math.max(0, Math.min(100, physicalAnchor.y))}%`,
+    facing: physicalAnchor.facing ?? base.facing,
+    action,
+    physicalAnchorId: physicalAnchor.id,
+  };
+}
+
 export function resolveCassidySceneAnchor(
   languageCode: string,
   context: CassidyPresenceContext,
-  lifeActivity?: CassidyLifeActivity
+  lifeActivity?: CassidyLifeActivity,
+  physicalAnchor?: CassidyPhysicalAnchor
 ): CassidySceneAnchor {
   const world = resolveLanguageWorld(languageCode);
   const resolvedContext = lifeActivity ? LIFE_CONTEXT[lifeActivity] : context;
   const base = WORLD_ANCHORS[world.id][resolvedContext];
-
-  if (!lifeActivity) return base;
+  if (!lifeActivity && !physicalAnchor) return base;
 
   const activityAdjustments: Partial<Record<CassidyLifeActivity, Pick<CassidySceneAnchor, 'height' | 'action'>>> = {
     cafe: { height: Math.max(72, base.height - 10), action: 'idle' },
@@ -83,7 +107,8 @@ export function resolveCassidySceneAnchor(
     adventure: { action: 'walking' },
   };
 
-  return { ...base, ...activityAdjustments[lifeActivity] };
+  const adjusted = lifeActivity ? { ...base, ...activityAdjustments[lifeActivity] } : base;
+  return applyPhysicalAnchor(adjusted, physicalAnchor);
 }
 
 export const cassidySceneAnchorEngine = { resolve: resolveCassidySceneAnchor };
