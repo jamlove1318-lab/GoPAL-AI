@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, PanResponder, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import Svg, { Circle, Ellipse, Path } from 'react-native-svg';
+import Svg, { Circle, Ellipse, Path, Rect } from 'react-native-svg';
 import { GameWorldBuilding } from './LivingGameWorld';
+import { clampWorldPoint, distanceToWorldPoint, resolveMovement, worldDepth, WorldObstacle } from '../geometry/livingWorldGeometry';
 
 type Point = { x: number; y: number };
 
@@ -12,11 +13,20 @@ export function LivingPlayerLayer({ buildings = [], onNearbyBuilding }: { buildi
   const [facing, setFacing] = useState<'left' | 'right'>('right');
   const [nearby, setNearby] = useState<GameWorldBuilding | null>(null);
   const [depth, setDepth] = useState(62);
-  const target = useRef<Point>({ x: 50, y: 62 });
+  const target = useRef<Point>({ x: 50, y: 62 }).current;
   const joystick = useRef(new Animated.ValueXY()).current;
   const movement = useRef({ x: 0, y: 0, active: false }).current;
   const tick = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const depthTick = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+
+  const obstacles = useRef<WorldObstacle[]>(buildings.map(building => ({
+    x: building.x,
+    y: building.y,
+    width: building.collisionWidth ?? 13,
+    height: building.collisionHeight ?? 10,
+    padding: 1.5,
+  })));
+  useEffect(() => { obstacles.current = buildings.map(building => ({ x: building.x, y: building.y, width: building.collisionWidth ?? 13, height: building.collisionHeight ?? 10, padding: 1.5 })); }, [buildings]);
 
   useEffect(() => () => {
     if (tick.current) clearInterval(tick.current);
@@ -27,8 +37,9 @@ export function LivingPlayerLayer({ buildings = [], onNearbyBuilding }: { buildi
     let closest: GameWorldBuilding | null = null;
     let best = 10.5;
     for (const building of buildings) {
-      const distance = Math.hypot(point.x - building.x, (point.y - building.y) * 0.9);
-      if (distance < best) { best = distance; closest = building; }
+      const distance = distanceToWorldPoint(point, building);
+      const radius = building.interactionRadius ?? 10.5;
+      if (distance < Math.min(best, radius)) { best = distance; closest = building; }
     }
     setNearby(closest);
   };
@@ -42,21 +53,22 @@ export function LivingPlayerLayer({ buildings = [], onNearbyBuilding }: { buildi
     if (depthTick.current) clearInterval(depthTick.current);
     tick.current = undefined;
     depthTick.current = undefined;
-    setDepth(target.current.y);
-    updateNearby(target.current);
+    setDepth(target.y);
+    updateNearby(target);
   };
 
   const start = () => {
     if (movement.active) return;
     movement.active = true;
     tick.current = setInterval(() => {
-      const nextX = clamp(target.current.x + movement.x * 0.72, 8, 92);
-      const nextY = clamp(target.current.y + movement.y * 0.72, 14, 88);
-      target.current = { x: nextX, y: nextY };
-      position.setValue({ x: nextX, y: nextY });
-      updateNearby(target.current);
+      const desired = clampWorldPoint({ x: target.x + movement.x * 0.72, y: target.y + movement.y * 0.72 });
+      const next = resolveMovement(target, desired, obstacles.current);
+      target.x = next.x;
+      target.y = next.y;
+      position.setValue({ x: next.x, y: next.y });
+      updateNearby(next);
     }, 32);
-    depthTick.current = setInterval(() => setDepth(target.current.y), 96);
+    depthTick.current = setInterval(() => setDepth(target.y), 64);
   };
 
   const responder = useRef(PanResponder.create({
@@ -64,8 +76,8 @@ export function LivingPlayerLayer({ buildings = [], onNearbyBuilding }: { buildi
     onMoveShouldSetPanResponder: () => true,
     onPanResponderGrant: start,
     onPanResponderMove: (_, gesture) => {
-      const dx = clamp(gesture.dx, -38, 38);
-      const dy = clamp(gesture.dy, -38, 38);
+      const dx = Math.max(-38, Math.min(38, gesture.dx));
+      const dy = Math.max(-38, Math.min(38, gesture.dy));
       const length = Math.hypot(dx, dy) || 1;
       const normalized = Math.min(length, 38) / 38;
       movement.x = (dx / length) * normalized;
@@ -81,7 +93,7 @@ export function LivingPlayerLayer({ buildings = [], onNearbyBuilding }: { buildi
   const translateY = position.y.interpolate({ inputRange: [0, 100], outputRange: [0, height] });
 
   return <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
-    <Animated.View pointerEvents="none" style={[styles.avatar, { zIndex: Math.round(depth * 10), transform: [{ translateX }, { translateY }, { translateX: -34 }, { translateY: -48 }, { scaleX: facing === 'left' ? -1 : 1 }] }]}>
+    <Animated.View pointerEvents="none" style={[styles.avatar, { zIndex: worldDepth(depth, 120), transform: [{ translateX }, { translateY }, { translateX: -34 }, { translateY: -48 }, { scaleX: facing === 'left' ? -1 : 1 }] }]}>
       <PlayerAvatar />
     </Animated.View>
     {nearby && <Pressable onPress={() => onNearbyBuilding?.(nearby)} style={styles.nearby}>
@@ -103,27 +115,26 @@ function buildingLabel(id: GameWorldBuilding['id']) {
 
 function PlayerAvatar() {
   return <View style={styles.avatarSize}>
-    <Svg width={68} height={76} viewBox="0 0 68 76">
-      <Ellipse cx="34" cy="70" rx="24" ry="5" fill="#08120f" opacity={0.42} />
-      <Path d="M23 61L27 72" stroke="#202a30" strokeWidth="6" strokeLinecap="round" />
-      <Path d="M45 61L41 72" stroke="#202a30" strokeWidth="6" strokeLinecap="round" />
-      <Path d="M17 62Q18 39 34 36Q50 39 51 62Z" fill="#294e5a" />
-      <Path d="M21 59L34 42L47 59" fill="#3f7180" opacity={0.6} />
+    <Svg width={68} height={80} viewBox="0 0 68 80">
+      <Ellipse cx="34" cy="74" rx="24" ry="5" fill="#08120f" opacity={0.42} />
+      <Path d="M22 62L27 74M46 62L41 74" stroke="#202a30" strokeWidth="7" strokeLinecap="round" />
+      <Path d="M16 63Q17 39 34 36Q51 39 52 63Z" fill="#294e5a" />
+      <Path d="M20 60L34 42L48 60" fill="#5b93a0" opacity={0.55} />
+      <Path d="M19 45Q34 35 49 45" stroke="#d7b079" strokeWidth="4" opacity={0.8} />
       <Circle cx="34" cy="27" r="15" fill="#d8a57f" />
       <Path d="M20 28Q19 10 34 9Q50 10 49 28Q42 20 34 20Q26 20 20 28Z" fill="#1d2024" />
-      <Circle cx="29" cy="28" r="1.7" fill="#20262b" />
-      <Circle cx="39" cy="28" r="1.7" fill="#20262b" />
+      <Path d="M22 20Q28 7 39 10Q47 12 49 22Q39 17 22 20Z" fill="#34383d" />
+      <Circle cx="29" cy="28" r="1.7" fill="#20262b" /><Circle cx="39" cy="28" r="1.7" fill="#20262b" />
       <Path d="M30 35Q34 38 38 35" stroke="#9b5d58" strokeWidth="1.5" strokeLinecap="round" fill="none" />
       <Path d="M48 44Q58 47 59 57" stroke="#d6a86a" strokeWidth="4" strokeLinecap="round" />
+      <Rect x="29" y="40" width="10" height="3" rx="1.5" fill="#d6a86a" opacity={0.7} />
     </Svg>
   </View>;
 }
 
-function clamp(value: number, min: number, max: number) { return Math.max(min, Math.min(max, value)); }
-
 const styles = StyleSheet.create({
-  avatar: { position: 'absolute', width: 68, height: 76 },
-  avatarSize: { width: 68, height: 76 },
+  avatar: { position: 'absolute', width: 68, height: 80 },
+  avatarSize: { width: 68, height: 80 },
   nearby: { position: 'absolute', left: '50%', top: '50%', marginLeft: -76, marginTop: -100, minWidth: 152, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(167,243,208,0.25)', backgroundColor: 'rgba(2,6,23,0.82)', alignItems: 'center', zIndex: 58 },
   nearbyDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(110,231,183,0.9)', marginBottom: 4 },
   nearbyText: { color: '#f8fafc', fontSize: 11, fontWeight: '800' },
