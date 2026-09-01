@@ -1,30 +1,28 @@
-name: repair-world-modal
+name: verify-world-modal
+
 on:
-  push:
-    branches: [world-integration-work]
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "src/features/learning/components/WorldActivityExperienceModal.tsx"
+      - ".github/workflows/repair-world-modal.yml"
+
 permissions:
-  contents: write
+  contents: read
+
 jobs:
-  repair:
-    if: ${{ !contains(github.event.head_commit.message, 'fix(world): repair activity modal syntax') }}
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Repair malformed Array.from expression
+      - name: Verify activity modal syntax repair is present
         run: |
           python - <<'PY'
           from pathlib import Path
           p = Path('src/features/learning/components/WorldActivityExperienceModal.tsx')
           s = p.read_text()
-          old = 'items:Array.from({length:9},(_,cell)=>cell===((i*3+2)%9)?correct:`path-${cell+1}`,correct,kind:\'grid\''
-          new = 'items:Array.from({length:9},(_,cell)=>cell===((i*3+2)%9)?correct:`path-${cell+1}`),correct,kind:\'grid\''
-          if old not in s:
-              print('No repair needed')
-              raise SystemExit(0)
-          p.write_text(s.replace(old, new, 1))
+          malformed = "items:Array.from({length:9},(_,cell)=>cell===((i*3+2)%9)?correct:`path-${cell+1}`,correct,kind:'grid'"
+          if malformed in s:
+              raise SystemExit('Malformed Array.from expression is still present')
+          print('World activity modal syntax repair verified')
           PY
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/features/learning/components/WorldActivityExperienceModal.tsx
-          git commit -m 'fix(world): repair activity modal syntax'
-          git push
