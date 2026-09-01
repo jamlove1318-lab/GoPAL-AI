@@ -2,6 +2,7 @@ import React, { ReactNode, useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Ellipse, Path, Polygon, Rect } from 'react-native-svg';
 import { getLivingLocationTemplate } from '../data/livingWorldCatalog';
+import { LivingTerrainLayer } from './LivingTerrainLayer';
 import { WorldProp } from './LivingWorldPrimitives';
 import { worldDepth } from '../geometry/livingWorldGeometry';
 
@@ -63,12 +64,9 @@ export function LivingGameWorld({
 
   return <View style={styles.root}>
     <View style={[styles.ground, { backgroundColor: night ? '#142725' : evening ? '#53684f' : time === 'morning' ? '#789d69' : '#668b5d' }]} />
+    <LivingTerrainLayer locationId={location.id} />
     <Svg style={StyleSheet.absoluteFill} viewBox="0 0 400 800" preserveAspectRatio="none" pointerEvents="none">
       <Path d="M0 125Q100 60 205 105T400 80V0H0Z" fill={night ? '#14283b' : '#9ac2b9'} opacity=".34" />
-      <Path d="M-20 610C70 560 95 450 175 405C235 370 275 330 292 210" fill="none" stroke="#8f7a55" strokeWidth="50" opacity=".22" strokeLinecap="round" />
-      <Path d="M-20 610C70 560 95 450 175 405C235 370 275 330 292 210" fill="none" stroke="#d5c391" strokeWidth="39" opacity=".68" strokeLinecap="round" />
-      <Path d="M175 405C235 465 305 500 420 505" fill="none" stroke="#d5c391" strokeWidth="31" opacity=".68" strokeLinecap="round" />
-      <Path d="M175 405C130 505 95 640 70 820" fill="none" stroke="#d5c391" strokeWidth="25" opacity=".62" strokeLinecap="round" />
       <Path d="M0 0H400V800H0Z" fill={night ? '#081521' : evening ? '#473a52' : '#ffffff'} opacity={night ? '.20' : evening ? '.08' : '.015'} />
     </Svg>
 
