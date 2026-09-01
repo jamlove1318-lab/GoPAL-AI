@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, PanResponder, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Circle, Ellipse, Path, Rect } from 'react-native-svg';
 import { GameWorldBuilding } from './LivingGameWorld';
+import { getLivingLocationTemplate } from '../data/livingWorldCatalog';
+import { locationCollisions } from '../data/livingWorldCollision';
 import { clampWorldPoint, distanceToWorldPoint, resolveMovement, worldDepth, WorldObstacle } from '../geometry/livingWorldGeometry';
 
 type Point = { x: number; y: number };
@@ -19,14 +21,19 @@ export function LivingPlayerLayer({ buildings = [], onNearbyBuilding }: { buildi
   const tick = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const depthTick = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
-  const obstacles = useRef<WorldObstacle[]>(buildings.map(building => ({
-    x: building.x,
-    y: building.y,
-    width: building.collisionWidth ?? 13,
-    height: building.collisionHeight ?? 10,
-    padding: 1.5,
-  })));
-  useEffect(() => { obstacles.current = buildings.map(building => ({ x: building.x, y: building.y, width: building.collisionWidth ?? 13, height: building.collisionHeight ?? 10, padding: 1.5 })); }, [buildings]);
+  const obstacles = useRef<WorldObstacle[]>([]);
+  useEffect(() => {
+    const location = getLivingLocationTemplate('emerald-village');
+    const catalogObstacles = locationCollisions(location.buildings, location.props);
+    const buildingObstacles = buildings.map(building => ({
+      x: building.x,
+      y: building.y,
+      width: building.collisionWidth ?? 13,
+      height: building.collisionHeight ?? 10,
+      padding: 1.5,
+    }));
+    obstacles.current = [...catalogObstacles, ...buildingObstacles];
+  }, [buildings]);
 
   useEffect(() => () => {
     if (tick.current) clearInterval(tick.current);
@@ -35,11 +42,11 @@ export function LivingPlayerLayer({ buildings = [], onNearbyBuilding }: { buildi
 
   const updateNearby = (point: Point) => {
     let closest: GameWorldBuilding | null = null;
-    let best = 10.5;
+    let best = Number.POSITIVE_INFINITY;
     for (const building of buildings) {
       const distance = distanceToWorldPoint(point, building);
       const radius = building.interactionRadius ?? 10.5;
-      if (distance < Math.min(best, radius)) { best = distance; closest = building; }
+      if (distance < radius && distance < best) { best = distance; closest = building; }
     }
     setNearby(closest);
   };
