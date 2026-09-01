@@ -10,7 +10,28 @@ type MiniGameHistory={played:Array<{id:string;placeId:string;worldId:string;at:n
 async function readHistory():Promise<MiniGameHistory>{return LocalStore.get<MiniGameHistory>(KEY,{played:[]});}
 async function writeHistory(value:MiniGameHistory){await LocalStore.set(KEY,value);}
 
-export type WorldMiniGameSelectionContext={worldId:string;placeId:string;skills?:WorldMiniGameSkill[];preferredFamily?:WorldMiniGameCatalogEntry['family'];preferredGameId?:string;maxMinutes?:number;excludeIds?:string[];count?:number};
+/**
+ * Mini-games belong to fictional locations. Real-world locations are reserved
+ * for the resident-led living-world experience. Keeping the boundary here
+ * prevents callers from accidentally turning a real destination into a game hub.
+ */
+export type WorldLearningLocationKind='real'|'fictional';
+
+export type WorldMiniGameSelectionContext={
+ worldId:string;
+ placeId:string;
+ locationKind:WorldLearningLocationKind;
+ skills?:WorldMiniGameSkill[];
+ preferredFamily?:WorldMiniGameCatalogEntry['family'];
+ preferredGameId?:string;
+ maxMinutes?:number;
+ excludeIds?:string[];
+ count?:number;
+};
+
+export function canUseMiniGamesAtLocation(locationKind:WorldLearningLocationKind){
+ return locationKind==='fictional';
+}
 
 export async function rememberMiniGamePlayed(input:{id:string;worldId:string;placeId:string}){
  const history=await readHistory();
@@ -23,6 +44,7 @@ export async function getMiniGameHistory(){return readHistory();}
 
 /** Picks varied games without turning the world into a fixed lesson path. */
 export async function selectMiniGames(context:WorldMiniGameSelectionContext){
+ if(!canUseMiniGamesAtLocation(context.locationKind))return [];
  const history=await readHistory();
  const recentIds=new Set(history.played.slice(-12).map(item=>item.id));
  const excluded=new Set(context.excludeIds??[]);
@@ -54,4 +76,4 @@ export async function selectMiniGames(context:WorldMiniGameSelectionContext){
  return selected;
 }
 
-export const worldMiniGameSelectionEngine={select:selectMiniGames,remember:rememberMiniGamePlayed,history:getMiniGameHistory};
+export const worldMiniGameSelectionEngine={select:selectMiniGames,remember:rememberMiniGamePlayed,history:getMiniGameHistory,canUse:canUseMiniGamesAtLocation};
