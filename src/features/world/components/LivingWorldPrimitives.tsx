@@ -30,7 +30,7 @@ export function WorldBuilding({building,theme='emerald'}:{building:WorldBuilding
 
 export function WorldProp({prop,theme='emerald'}:{prop:WorldPropDefinition;theme?:WorldTheme}){
  const scale=(prop.scale??1)*propScale(prop.type); const palette=WORLD_PALETTES[theme];
- return <View pointerEvents="none" style={{position:'absolute',left:`${prop.x}%`,top:`${prop.y}%`,zIndex:worldDepth(prop.y,10),transform:[{scale}],transformOrigin:'center'}}>
+ return <View pointerEvents="none" style={{position:'absolute',left:`${prop.x}%`,top:`${prop.y}%`,zIndex:worldDepth(prop.y,10),transform:[{scale}]}}>
   <View style={{alignItems:'center',justifyContent:'center'}}>
    <View style={{position:'absolute',bottom:0,width:28,height:7,borderRadius:8,backgroundColor:'#0f172a',opacity:.2}}/>
    <Text style={{fontSize:prop.type==='tree'?31:22}}>{PROP[prop.type]}</Text>
