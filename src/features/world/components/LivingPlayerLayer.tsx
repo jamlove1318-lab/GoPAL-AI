@@ -11,12 +11,17 @@ export function LivingPlayerLayer({ buildings = [], onNearbyBuilding }: { buildi
   const position = useRef(new Animated.ValueXY({ x: 50, y: 62 })).current;
   const [facing, setFacing] = useState<'left' | 'right'>('right');
   const [nearby, setNearby] = useState<GameWorldBuilding | null>(null);
+  const [depth, setDepth] = useState(62);
   const target = useRef<Point>({ x: 50, y: 62 });
   const joystick = useRef(new Animated.ValueXY()).current;
   const movement = useRef({ x: 0, y: 0, active: false }).current;
   const tick = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const depthTick = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
-  useEffect(() => () => { if (tick.current) clearInterval(tick.current); }, [tick]);
+  useEffect(() => () => {
+    if (tick.current) clearInterval(tick.current);
+    if (depthTick.current) clearInterval(depthTick.current);
+  }, []);
 
   const updateNearby = (point: Point) => {
     let closest: GameWorldBuilding | null = null;
@@ -34,7 +39,10 @@ export function LivingPlayerLayer({ buildings = [], onNearbyBuilding }: { buildi
     movement.y = 0;
     Animated.spring(joystick, { toValue: { x: 0, y: 0 }, useNativeDriver: true, tension: 140, friction: 10 }).start();
     if (tick.current) clearInterval(tick.current);
+    if (depthTick.current) clearInterval(depthTick.current);
     tick.current = undefined;
+    depthTick.current = undefined;
+    setDepth(target.current.y);
     updateNearby(target.current);
   };
 
@@ -48,6 +56,7 @@ export function LivingPlayerLayer({ buildings = [], onNearbyBuilding }: { buildi
       position.setValue({ x: nextX, y: nextY });
       updateNearby(target.current);
     }, 32);
+    depthTick.current = setInterval(() => setDepth(target.current.y), 96);
   };
 
   const responder = useRef(PanResponder.create({
@@ -72,7 +81,7 @@ export function LivingPlayerLayer({ buildings = [], onNearbyBuilding }: { buildi
   const translateY = position.y.interpolate({ inputRange: [0, 100], outputRange: [0, height] });
 
   return <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
-    <Animated.View pointerEvents="none" style={[styles.avatar, { transform: [{ translateX }, { translateY }, { translateX: -34 }, { translateY: -48 }, { scaleX: facing === 'left' ? -1 : 1 }] }]}>
+    <Animated.View pointerEvents="none" style={[styles.avatar, { zIndex: Math.round(depth * 10), transform: [{ translateX }, { translateY }, { translateX: -34 }, { translateY: -48 }, { scaleX: facing === 'left' ? -1 : 1 }] }]}>
       <PlayerAvatar />
     </Animated.View>
     {nearby && <Pressable onPress={() => onNearbyBuilding?.(nearby)} style={styles.nearby}>
@@ -113,7 +122,7 @@ function PlayerAvatar() {
 function clamp(value: number, min: number, max: number) { return Math.max(min, Math.min(max, value)); }
 
 const styles = StyleSheet.create({
-  avatar: { position: 'absolute', width: 68, height: 76, zIndex: 24 },
+  avatar: { position: 'absolute', width: 68, height: 76 },
   avatarSize: { width: 68, height: 76 },
   nearby: { position: 'absolute', left: '50%', top: '50%', marginLeft: -76, marginTop: -100, minWidth: 152, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(167,243,208,0.25)', backgroundColor: 'rgba(2,6,23,0.82)', alignItems: 'center', zIndex: 58 },
   nearbyDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(110,231,183,0.9)', marginBottom: 4 },
