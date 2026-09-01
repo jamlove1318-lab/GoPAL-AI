@@ -1,4 +1,3 @@
-import { eventBus } from '../events/eventBus';
 import { WorldEngine, type ResolvedWorldState } from './worldEngine';
 import { livingWorldSimulation, type LivingWorldSnapshot } from './livingWorldSimulation';
 
@@ -8,10 +7,7 @@ export interface WorldSnapshot {
   continuity: { note: string | null; visitCount: number };
 }
 
-/**
- * Canonical bridge between persisted world state and the living-world simulation.
- * Keeps the hook/UI from owning world persistence or simulation rules.
- */
+/** Canonical bridge between persisted world state and the living-world simulation. */
 export class LivingWorldRuntime {
   constructor(
     private readonly worldEngine = new WorldEngine(),
@@ -45,7 +41,6 @@ export class LivingWorldRuntime {
       this.elapsedMinutes(previous?.lastActiveAt),
     );
     const continuity = await this.worldEngine.getRevisitDifference(locationId);
-    eventBus.emit('world:livingStateChanged', { userId, previousLocationId: previous?.location?.id ?? null, locationId }, 'world');
     return { resolved, simulation, continuity };
   }
 
