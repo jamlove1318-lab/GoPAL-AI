@@ -1,4 +1,5 @@
 import type { WorldPlaceHotspot } from './WorldPlaceHotspots';
+
 const catalog:Record<string,WorldPlaceHotspot[]>={
  'kyoto-gion':[
   {id:'gion-street',label:'Gion street',kind:'landmark',x:25,y:40,nextHotspotId:'tea-house'},
@@ -63,4 +64,7 @@ const catalog:Record<string,WorldPlaceHotspot[]>={
   {id:'hidden',label:'Hidden place',kind:'locked',x:79,y:70},
  ]
 };
-export function getWorldPlaceHotspots(placeId:string):WorldPlaceHotspot[]{return(catalog[placeId]??catalog.default).map(item=>({...item,placeId,scenarioIds:item.scenarioIds?[...item.scenarioIds]:undefined}));}
+
+export function getWorldPlaceHotspots(placeId:string):WorldPlaceHotspot[]{
+ return(catalog[placeId]??catalog.default).map(item=>({...item,placeId,enabled:item.enabled??item.kind!=='locked',scenarioIds:item.scenarioIds?[...item.scenarioIds]:undefined}));
+}
