@@ -4,6 +4,7 @@ import Svg, { Circle, Ellipse, Path, Polygon, Rect } from 'react-native-svg';
 import { getLivingLocationTemplate } from '../data/livingWorldCatalog';
 import { LivingTerrainLayer } from './LivingTerrainLayer';
 import { LivingTransportLayer } from './LivingTransportLayer';
+import { LivingInfrastructureLayer } from './LivingInfrastructureLayer';
 import { WorldProp } from './LivingWorldPrimitives';
 import { worldDepth } from '../geometry/livingWorldGeometry';
 
@@ -53,6 +54,7 @@ export function LivingGameWorld({ children, buildings = LIVING_BUILDINGS, time =
     <View style={[styles.ground, { backgroundColor: night ? '#142725' : evening ? '#53684f' : time === 'morning' ? '#789d69' : '#668b5d' }]} />
     <LivingTerrainLayer locationId={location.id} />
     <LivingTransportLayer locationId={location.id} />
+    <LivingInfrastructureLayer locationId={location.id} />
     <Svg style={StyleSheet.absoluteFill} viewBox="0 0 400 800" preserveAspectRatio="none" pointerEvents="none">
       <Path d="M0 125Q100 60 205 105T400 80V0H0Z" fill={night ? '#14283b' : '#9ac2b9'} opacity=".34" />
       <Path d="M0 0H400V800H0Z" fill={night ? '#081521' : evening ? '#473a52' : '#ffffff'} opacity={night ? '.20' : evening ? '.08' : '.015'} />
