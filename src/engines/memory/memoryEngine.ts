@@ -1,5 +1,4 @@
 import { supabase, isSupabaseConfigured } from '../../lib/supabaseClient';
-import { LocalStore } from '../../lib/localStore';
 import { addLocalMemory, getLocalMemories } from './localMemoryStore';
 import type { MemoriesRow, Json } from '../../types/database';
 
