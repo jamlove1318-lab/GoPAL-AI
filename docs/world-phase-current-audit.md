@@ -21,8 +21,11 @@
 - [x] Final learning consequence flow now has a persisted idempotency ledger plus an in-flight duplicate guard.
 - [x] Optional activity hotspots can declare a reusable `miniGameId` instead of being anonymous quiz screens.
 - [x] The activity launcher now consults the mini-game selector before starting a game, while preserving a hotspot's preferred mechanic.
-- [x] First playable reusable interaction surfaces are implemented: target/search selection, phrase ordering, memory recall and a generic choice surface.
+- [x] Playable target/search, phrase ordering, memory recall and contextual-choice interaction surfaces implemented.
+- [x] Playable timed-reaction and spatial-map interaction surfaces added.
+- [x] Timed-round lifecycle stabilized so its countdown is not restarted on every render.
 - [x] Failed mini-game runs no longer complete their physical hotspot; only a won session can return through the completion path.
+- [x] Branch-only TypeScript CI workflow added; it does not build an APK and therefore does not consume the release-build workflow.
 
 ## Current structural findings
 
@@ -45,12 +48,27 @@ The project has a 60-game catalog spanning seven families:
 - adventure
 - creative
 
-The engine foundation supports reusable sessions, scoring, streaks, lives, deterministic seeds and round progression. The catalog and selector are deliberately separate from the world map so the same mechanics can be reused in every language world.
+The engine foundation supports reusable sessions, scoring, streaks, lives, deterministic seeds and round progression. The catalog and selector are deliberately separate from the world map so the same mechanics can be reused in every language world. fileciteturn46file0L1-L2
 
-The first playable interaction layer now branches by mechanic instead of rendering every activity as the same three-choice quiz. Current reusable surfaces include target/search play, phrase ordering, memory recall and fallback contextual choice. These are the first primitives, not the completed 60-game library.
+The playable layer now has distinct interaction shapes rather than rendering every activity as the same three-choice quiz:
+- target/search interaction
+- phrase construction/order
+- memory recall
+- timed reaction
+- spatial map navigation
+- contextual choice/investigation
+
+These are the first reusable primitives, not the completed 60-game library.
+
+## Verification status
+
+Repository-level inspection confirms the current contracts are wired together. A branch-only TypeScript workflow is now configured to validate every source-changing push to `world-integration-work`, but its result must still be observed after the latest commits.
+
+The release APK workflow intentionally remains triggered by `main` pushes or manual dispatch, so world development does not automatically consume the user's release-build quota. fileciteturn56file0L2-L2
 
 ## Not yet declared complete
 
+- [ ] Observe successful branch TypeScript CI run after the latest changes.
 - [ ] End-to-end Japan scenario -> hotspot completion -> next hotspot reveal verification on a running app.
 - [ ] Persistence/reload verification for hotspot state on device.
 - [ ] Exactly-once reward/memory/relationship consequence verification on device and with configured backend.
@@ -58,10 +76,9 @@ The first playable interaction layer now branches by mechanic instead of renderi
 - [ ] Native resident coverage verification for every Japan resident hotspot.
 - [ ] Cross-world compatibility verification.
 - [ ] Duplicate world runtime/layer conflict audit.
-- [ ] TypeScript validation after the accumulated changes.
 - [ ] Build/runtime validation after the accumulated changes.
 - [ ] Expand playable mechanics across the full 60-game catalog.
-- [ ] Add more genuinely different interaction primitives: movement, spatial navigation, drag/drop, timed actions, audio following, investigation, crafting, branching story and world-building.
+- [ ] Add genuinely different primitives for movement, drag/drop, audio following, investigation, crafting, branching story and world-building.
 - [ ] Add destination-specific content packs without duplicating mechanic implementations.
 
 ## Variety principle
@@ -71,11 +88,11 @@ The same mechanic may be reused across worlds with different language content, c
 
 ## Next order of work
 
-1. Finish current world correctness verification on the running app.
-2. Verify persistence/reload and exactly-once consequence behavior.
-3. Verify Japan and other world compatibility and resident coverage.
-4. Run TypeScript/build validation.
-5. Expand the playable primitive layer with the most mechanically different families first.
+1. Observe/fix TypeScript CI from the accumulated world changes.
+2. Finish running-app Japan correctness verification.
+3. Verify persistence/reload and exactly-once consequence behavior.
+4. Verify Japan and other world compatibility and resident coverage.
+5. Add the next mechanically different primitive batch: drag/drop, richer spatial navigation, audio-following, clue chains, object interaction and construction.
 6. Implement the next batch of real games on top of those primitives.
 7. Continue until the full 50+ / 60-game target is genuinely playable.
 8. Only after a large verified batch is ready, merge to `main` and spend build quota.
