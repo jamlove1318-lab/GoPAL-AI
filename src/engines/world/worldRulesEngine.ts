@@ -26,7 +26,7 @@ const POLICIES: Record<WorldLocationKind, WorldExperiencePolicy> = {
     requiresArrivalCinematic: true,
     requiresResidentFocus: true,
     gamesAllowed: false,
-    questsAllowed: true,
+    questsAllowed: false,
     adventuresAllowed: false,
   },
   fictional: {
