@@ -1,19 +1,20 @@
 import React, { ReactNode, useEffect, useRef } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Ellipse, Path, Polygon, Rect } from 'react-native-svg';
 
 export type GameWorldBuildingId = 'sanctuary' | 'cafe' | 'library' | 'market' | 'garden';
-export type GameWorldBuilding = { id: GameWorldBuildingId; x: number; y: number; scale?: number; label?: string; onPress?: () => void };
+export type GameWorldBuilding = { id: GameWorldBuildingId; x: number; y: number; scale?: number; onPress?: () => void };
 
-const BUILDINGS: GameWorldBuilding[] = [
-  { id: 'sanctuary', x: 14, y: 70, scale: .95 },
-  { id: 'cafe', x: 47, y: 41, scale: 1.05 },
-  { id: 'library', x: 75, y: 23, scale: .92 },
-  { id: 'market', x: 78, y: 68 },
-  { id: 'garden', x: 31, y: 82, scale: .9 },
+/** Single source of truth for physical location anchors. */
+export const LIVING_BUILDINGS: GameWorldBuilding[] = [
+  { id: 'sanctuary', x: 12, y: 70, scale: .95 },
+  { id: 'cafe', x: 47, y: 38, scale: 1.05 },
+  { id: 'library', x: 73, y: 20, scale: .92 },
+  { id: 'market', x: 78, y: 67 },
+  { id: 'garden', x: 31, y: 79, scale: .9 },
 ];
 
-export function LivingGameWorld({ children, buildings = BUILDINGS, time = 'afternoon' }: { children?: ReactNode; buildings?: GameWorldBuilding[]; time?: 'morning'|'afternoon'|'evening'|'night' }) {
+export function LivingGameWorld({ children, buildings = LIVING_BUILDINGS, time = 'afternoon' }: { children?: ReactNode; buildings?: GameWorldBuilding[]; time?: 'morning'|'afternoon'|'evening'|'night' }) {
   const motion = useRef(new Animated.Value(0)).current;
   useEffect(() => { const a = Animated.loop(Animated.sequence([
     Animated.timing(motion, { toValue: 1, duration: 5000, easing: Easing.inOut(Easing.sin), useNativeDriver: true, isInteraction: false }),
