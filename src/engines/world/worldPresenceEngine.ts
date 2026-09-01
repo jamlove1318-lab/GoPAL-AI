@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LanguageWorldId, WorldPlace, languageWorldEngine, resolveLanguageWorld } from './languageWorldEngine';
 import { livingWorldSimulation, type LivingWorldSnapshot } from './livingWorldSimulation';
 import { createRealLocationDescriptor } from './worldRulesEngine';
-import { chooseDestinationResident } from './destinationResidentEngine';
+import { chooseDestinationResident, getDestinationResident } from './destinationResidentEngine';
 
 export type WorldPresence =
  | { kind:'home'; worldId:'emerald-valley'; label:'Emerald Valley' }
@@ -30,10 +30,9 @@ export class WorldPresenceEngine{
    if(parsed.kind==='journey'){
     const world=resolveLanguageWorld(parsed.worldId);
     const place=world.places.find(item=>item.id===parsed.placeId);
-    const resident=parsed.residentId ? world.id && chooseDestinationResident(world.id,place?.id ?? '') : null;
-    const residentId=parsed.residentId && resident?.id===parsed.residentId ? parsed.residentId : null;
-    if(place && residentId){
-     this.currentPresence=journey(world.id,place,residentId);
+    const resident=place && parsed.residentId ? getDestinationResident(world.id,place.id,parsed.residentId) : null;
+    if(place && resident){
+     this.currentPresence=journey(world.id,place,resident.id);
      this.simulation=await livingWorldSimulation.hydrate(userId,world.id,place.id);
      return this.currentPresence;
     }
