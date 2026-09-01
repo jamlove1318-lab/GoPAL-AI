@@ -6,7 +6,7 @@ import { decideCassidyLife, type CassidyLifeActivity, type CassidyLifeInput } fr
 export type CassidyAutonomyInput = CassidyPerceptionSnapshot & {
  opportunity?: DestinationOpportunity|null; learnerNeedsHelp:boolean; learnerRecentlySucceeded:boolean;
  learnerIsExploring:boolean; minutesSinceCassidySpoke:number; hour?:number;
- weather?:CassidyLifeInput['weather']; seed?:number;
+ weather?:CassidyLifeInput['weather']; seed?:number; destinationId?:string;
 };
 export type CassidyAutonomyDecision={
  action:'observe'|'join'|'suggest'|'help'|'celebrate'|'wander'|'live'; mood:CassidyMood;
