@@ -14,6 +14,7 @@ export async function integrateWorldLearningOutcome(
   scenarioId:string,
   success:boolean,
 ):Promise<WorldLearningIntegrationResult|null>{
+  if(!userId.trim()) throw new Error('World learning integration requires a userId');
   const outcome=resolveWorldLearningOutcome(scenarioId,success);
   if(!outcome)return null;
   const memory=new MemoryEngine();
@@ -22,7 +23,7 @@ export async function integrateWorldLearningOutcome(
     : `Practised ${outcome.language} for ${outcome.goal} in ${outcome.placeId}.`;
   const recorded=await memory.record(userId,memoryLayer,memoryFact,`world-learning:${scenarioId}:${outcome.success?'success':'practice'}`);
   eventBus.emit('memory:recorded',{memoryId:recorded.id,layer:memoryLayer,userId},'learning');
-  eventBus.emit('world:learningOutcomeResolved',{worldId:outcome.worldId,placeId:outcome.placeId,scenarioId:outcome.scenarioId,success:outcome.success,worldChange:outcome.worldChange},'world');
+  eventBus.emit('world:learningOutcomeResolved',{userId,worldId:outcome.worldId,placeId:outcome.placeId,scenarioId:outcome.scenarioId,success:outcome.success,worldChange:outcome.worldChange},'world');
   return {outcome,memoryRecorded:!!recorded};
 }
 
