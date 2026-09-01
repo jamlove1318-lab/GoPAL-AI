@@ -1,25 +1,25 @@
-import React, { useRef, useState } from 'react';
-import { Animated, PanResponder, StyleSheet, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, PanResponder, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Svg, { Circle, Ellipse, Path } from 'react-native-svg';
 
 type Point = { x: number; y: number };
 
 /** Physical learner avatar + compact world joystick. The world stays visually primary; controls are intentionally translucent. */
 export function LivingPlayerLayer() {
+  const { width, height } = useWindowDimensions();
   const position = useRef(new Animated.ValueXY({ x: 50, y: 62 })).current;
   const [facing, setFacing] = useState<'left' | 'right'>('right');
   const target = useRef<Point>({ x: 50, y: 62 });
   const joystick = useRef(new Animated.ValueXY()).current;
-  const knob = useRef({ x: 0, y: 0 });
   const movement = useRef({ x: 0, y: 0, active: false }).current;
-  const tick = useRef<ReturnType<typeof setInterval> | undefined>();
+  const tick = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+
+  useEffect(() => () => { if (tick.current) clearInterval(tick.current); }, [tick]);
 
   const stop = () => {
     movement.active = false;
     movement.x = 0;
     movement.y = 0;
-    knob.x = 0;
-    knob.y = 0;
     Animated.spring(joystick, { toValue: { x: 0, y: 0 }, useNativeDriver: true, tension: 140, friction: 10 }).start();
     if (tick.current) clearInterval(tick.current);
     tick.current = undefined;
@@ -39,7 +39,7 @@ export function LivingPlayerLayer() {
   const responder = useRef(PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onMoveShouldSetPanResponder: () => true,
-    onPanResponderGrant: () => start(),
+    onPanResponderGrant: start,
     onPanResponderMove: (_, gesture) => {
       const dx = clamp(gesture.dx, -38, 38);
       const dy = clamp(gesture.dy, -38, 38);
@@ -47,8 +47,6 @@ export function LivingPlayerLayer() {
       const normalized = Math.min(length, 38) / 38;
       movement.x = (dx / length) * normalized;
       movement.y = (dy / length) * normalized;
-      knob.x = dx;
-      knob.y = dy;
       joystick.setValue({ x: dx, y: dy });
       if (Math.abs(dx) > 3) setFacing(dx < 0 ? 'left' : 'right');
     },
@@ -56,8 +54,11 @@ export function LivingPlayerLayer() {
     onPanResponderTerminate: stop,
   })).current;
 
+  const translateX = position.x.interpolate({ inputRange: [0, 100], outputRange: [0, width] });
+  const translateY = position.y.interpolate({ inputRange: [0, 100], outputRange: [0, height] });
+
   return <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
-    <Animated.View pointerEvents="none" style={[styles.avatar, { left: 0, top: 0, transform: [{ translateX: position.x as any }, { translateY: position.y as any }, { translateX: -34 }, { translateY: -48 }, { scaleX: facing === 'left' ? -1 : 1 }] }]}>
+    <Animated.View pointerEvents="none" style={[styles.avatar, { transform: [{ translateX }, { translateY }, { translateX: -34 }, { translateY: -48 }, { scaleX: facing === 'left' ? -1 : 1 }] }]}>
       <PlayerAvatar />
     </Animated.View>
     <View style={styles.joystickWrap} {...responder.panHandlers}>
