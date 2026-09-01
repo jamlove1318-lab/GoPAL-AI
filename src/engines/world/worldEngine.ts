@@ -50,7 +50,7 @@ export class WorldEngine {
     }
 
     const locations = await LocalStore.getLocations();
-    const currentLocation = locations.find((l) => l.id === state.location_id) ?? locations[0] ?? null;
+    const currentLocation = locations.find((l) => l.id === state.location_id && l.world_id === state.world_id) ?? locations[0] ?? null;
     return {
       world: SEED_WORLD,
       location: currentLocation,
@@ -82,7 +82,7 @@ export class WorldEngine {
 
       let location: LocationsRow | null = null;
       if (state.location_id) {
-        const result = await supabase.from('locations').select('*').eq('id', state.location_id).maybeSingle();
+        const result = await supabase.from('locations').select('*').eq('id', state.location_id).eq('world_id', state.world_id).maybeSingle();
         if (result.error) throw result.error;
         location = result.data;
       }
@@ -143,7 +143,7 @@ export class WorldEngine {
   private async saveLocalState(userId: string, patch: Partial<WorldStateRow>): Promise<void> {
     const current = await this.loadLocalState(userId);
     const locations = await LocalStore.getLocations();
-    const currentLocation = locations.find((l) => l.id === patch.location_id) ?? current.location;
+    const currentLocation = locations.find((l) => l.id === patch.location_id && l.world_id === (patch.world_id ?? current.world?.id)) ?? current.location;
     const state: WorldStateRow = {
       user_id: userId,
       world_id: patch.world_id ?? current.world?.id ?? SEED_WORLD.id,
@@ -163,6 +163,15 @@ export class WorldEngine {
   }
 
   async saveState(userId: string, patch: WorldStatePatch): Promise<void> {
+    if (patch.locationId !== undefined) {
+      const current = await this.loadState(userId);
+      const worldId = patch.worldId ?? current?.world?.id;
+      if (!worldId) throw new Error('Cannot validate a location without an active world.');
+      const locations = await this.listLocations(worldId);
+      const destination = locations.find((location) => location.id === patch.locationId && location.world_id === worldId);
+      if (!destination) throw new Error(`Location ${patch.locationId} does not belong to world ${worldId}.`);
+    }
+
     const snakePatch: Partial<WorldStateRow> = {
       ...(patch.worldId !== undefined ? { world_id: patch.worldId } : {}),
       ...(patch.locationId !== undefined ? { location_id: patch.locationId } : {}),
