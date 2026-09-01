@@ -79,6 +79,11 @@ export function useWorldState() {
       const next = await worldPresenceEngine.travel(worldId, placeId);
       setPresence(next);
       eventBus.emit('world:destinationEntered', next, 'world');
+      eventBus.emit('world:locationChanged', {
+        locationId: next.kind === 'journey' ? next.placeId : next.worldId,
+        userId,
+        previousLocationId: presence.kind === 'journey' ? presence.placeId : undefined,
+      }, 'world');
       return next;
     } catch (cause) {
       const nextError = cause instanceof Error ? cause : new Error('Unable to begin that journey.');
@@ -87,7 +92,7 @@ export function useWorldState() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [presence]);
 
   const goHome = useCallback(async () => {
     setLoading(true);
@@ -96,6 +101,7 @@ export function useWorldState() {
       const next = await worldPresenceEngine.goHome();
       setPresence(next);
       eventBus.emit('world:returnHome', next, 'world');
+      eventBus.emit('world:returned', { userId, lastActiveAt: new Date().toISOString() }, 'world');
       return next;
     } catch (cause) {
       const nextError = cause instanceof Error ? cause : new Error('Unable to return home.');
@@ -104,7 +110,7 @@ export function useWorldState() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userId]);
 
   const refresh = useCallback(() => load(userId), [load, userId]);
   const context: WorldContext = worldContextEngine.resolve(presence);
