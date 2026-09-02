@@ -1,6 +1,6 @@
 import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
-import Svg, { Circle, Ellipse, Path, Polygon, Rect } from 'react-native-svg';
+import Svg, { Circle, Ellipse, Line, Path, Polygon, Rect } from 'react-native-svg';
 import { buildWorldLocation } from '../data/livingWorldLocationFactory';
 import type { LivingWorldRuntime } from '../data/livingWorldRuntime';
 import type { WorldObjectDefinition } from '../data/livingWorldObjects';
@@ -95,7 +95,6 @@ export function LivingGameWorld({ children, buildings, time = 'afternoon', locat
       <Path d="M0 0H400V800H0Z" fill={night ? '#081521' : evening ? '#473a52' : '#ffffff'} opacity={night ? '.20' : evening ? '.08' : '.015'} />
     </Svg>
 
-    {/* Static physical props now come from the canonical runtime object stream. */}
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       {canonicalProps.map(prop => <WorldProp key={prop.id} prop={prop} theme={location.theme} />)}
     </View>
@@ -109,21 +108,67 @@ export function LivingGameWorld({ children, buildings, time = 'afternoon', locat
 }
 
 function PhysicalBuilding({ building, night }: { building: GameWorldBuilding; night: boolean }) {
-  const s = building.scale ?? 1; const w = 150*s;
+  const s = building.scale ?? 1;
+  const w = 150 * s;
   return <Pressable disabled={!building.onPress} onPress={building.onPress} style={{position:'absolute',left:`${building.x}%`,top:`${building.y}%`,width:w,height:w,marginLeft:-w/2,marginTop:-w*.75,zIndex:worldDepth(building.y,20)}}>
     <View style={{position:'absolute',left:18*s,right:18*s,bottom:8*s,height:24*s,borderRadius:40,backgroundColor:'#15231c',opacity:.4}} />
     <BuildingArt id={building.id} type={building.type} night={night} s={s} />
   </Pressable>;
 }
 
+/** Reusable physical construction art. Location code only chooses the building type; this layer owns the visual primitive. */
 function BuildingArt({ id, type, night, s }: { id: string; type?: string; night: boolean; s: number }) {
-  const win = night ? '#ffd477' : '#b9d9d2'; const p = { width:150*s, height:125*s };
+  const win = night ? '#ffd477' : '#b9d9d2';
+  const p = { width:150*s, height:125*s };
   const visualId = ['sanctuary','cafe','library','market','garden'].includes(id) ? id : type;
-  if(visualId==='cafe') return <Svg {...p} viewBox="0 0 150 125"><Polygon points="14,59 75,14 136,59" fill="#4b302c"/><Polygon points="20,55 75,19 130,55" fill="#c56b50"/><Path d="M20 55H130V108H20Z" fill="#9b5b43"/><Path d="M24 55H126" stroke="#e2a071" strokeWidth="3"/><Rect x="38" y="64" width="23" height="24" rx="3" fill={win}/><Rect x="89" y="64" width="23" height="24" rx="3" fill={win}/><Path d="M65 108V78Q75 68 85 78V108Z" fill="#33282a"/><Path d="M112 39Q124 31 128 19" stroke="#d7e0d9" strokeWidth="5" opacity=".28" strokeLinecap="round"/><Circle cx="75" cy="32" r="6" fill="#f4c77b" opacity=".65"/></Svg>;
-  if(visualId==='library') return <Svg {...p} viewBox="0 0 150 125"><Polygon points="18,48 75,11 132,48" fill="#303e56"/><Path d="M22 47H128V108H22Z" fill="#667084"/><Path d="M28 57H122" stroke="#9da9b9" strokeWidth="4"/><Path d="M33 48V108M54 48V108M75 48V108M96 48V108M117 48V108" stroke="#3d4657" strokeWidth="3"/><Rect x="38" y="63" width="16" height="24" fill={win}/><Rect x="96" y="63" width="16" height="24" fill={win}/><Path d="M65 108V68Q75 56 85 68V108Z" fill="#2b303b"/><Circle cx="75" cy="31" r="6" fill="#c7d3e2" opacity=".7"/></Svg>;
-  if(visualId==='market') return <Svg {...p} viewBox="0 0 150 125"><Path d="M13 48Q27 18 41 48Q55 18 69 48Q83 18 97 48Q111 18 137 48Z" fill="#b34f3d"/><Path d="M15 48H135V104H15Z" fill="#714037"/><Path d="M22 63H128M22 79H128" stroke="#d49366" strokeWidth="3" opacity=".45"/><Path d="M33 104V49M117 104V49" stroke="#312523" strokeWidth="5"/><Circle cx="28" cy="37" r="6" fill={win}/><Circle cx="122" cy="37" r="6" fill={win}/><Circle cx="75" cy="76" r="8" fill="#e0a85b" opacity=".65"/></Svg>;
-  if(visualId==='garden') return <Svg {...p} viewBox="0 0 150 125"><Path d="M15 103Q35 45 55 103M40 103Q62 30 80 103M69 103Q90 43 108 103M95 103Q119 49 137 103" stroke="#2f6749" strokeWidth="12" fill="none" strokeLinecap="round"/><Path d="M17 105Q75 70 135 105" stroke="#b0a078" strokeWidth="8" fill="none"/><Circle cx="75" cy="87" r="14" fill="#6e7a7c"/><Circle cx="75" cy="87" r="8" fill="#b9e2d8"/><Circle cx="44" cy="75" r="4" fill="#f2c4cf"/><Circle cx="106" cy="70" r="4" fill="#f2c4cf"/></Svg>;
+
+  if (visualId === 'railway-station') return <RailwayStationArt {...p} night={night} />;
+  if (visualId === 'airport') return <AirportArt {...p} night={night} />;
+  if (visualId === 'cafe') return <Svg {...p} viewBox="0 0 150 125"><Polygon points="14,59 75,14 136,59" fill="#4b302c"/><Polygon points="20,55 75,19 130,55" fill="#c56b50"/><Path d="M20 55H130V108H20Z" fill="#9b5b43"/><Path d="M24 55H126" stroke="#e2a071" strokeWidth="3"/><Rect x="38" y="64" width="23" height="24" rx="3" fill={win}/><Rect x="89" y="64" width="23" height="24" rx="3" fill={win}/><Path d="M65 108V78Q75 68 85 78V108Z" fill="#33282a"/><Path d="M112 39Q124 31 128 19" stroke="#d7e0d9" strokeWidth="5" opacity=".28" strokeLinecap="round"/><Circle cx="75" cy="32" r="6" fill="#f4c77b" opacity=".65"/></Svg>;
+  if (visualId === 'library') return <Svg {...p} viewBox="0 0 150 125"><Polygon points="18,48 75,11 132,48" fill="#303e56"/><Path d="M22 47H128V108H22Z" fill="#667084"/><Path d="M28 57H122" stroke="#9da9b9" strokeWidth="4"/><Path d="M33 48V108M54 48V108M75 48V108M96 48V108M117 48V108" stroke="#3d4657" strokeWidth="3"/><Rect x="38" y="63" width="16" height="24" fill={win}/><Rect x="96" y="63" width="16" height="24" fill={win}/><Path d="M65 108V68Q75 56 85 68V108Z" fill="#2b303b"/><Circle cx="75" cy="31" r="6" fill="#c7d3e2" opacity=".7"/></Svg>;
+  if (visualId === 'market') return <Svg {...p} viewBox="0 0 150 125"><Path d="M13 48Q27 18 41 48Q55 18 69 48Q83 18 97 48Q111 18 137 48Z" fill="#b34f3d"/><Path d="M15 48H135V104H15Z" fill="#714037"/><Path d="M22 63H128M22 79H128" stroke="#d49366" strokeWidth="3" opacity=".45"/><Path d="M33 104V49M117 104V49" stroke="#312523" strokeWidth="5"/><Circle cx="28" cy="37" r="6" fill={win}/><Circle cx="122" cy="37" r="6" fill={win}/><Circle cx="75" cy="76" r="8" fill="#e0a85b" opacity=".65"/></Svg>;
+  if (visualId === 'garden') return <Svg {...p} viewBox="0 0 150 125"><Path d="M15 103Q35 45 55 103M40 103Q62 30 80 103M69 103Q90 43 108 103M95 103Q119 49 137 103" stroke="#2f6749" strokeWidth="12" fill="none" strokeLinecap="round"/><Path d="M17 105Q75 70 135 105" stroke="#b0a078" strokeWidth="8" fill="none"/><Circle cx="75" cy="87" r="14" fill="#6e7a7c"/><Circle cx="75" cy="87" r="8" fill="#b9e2d8"/><Circle cx="44" cy="75" r="4" fill="#f2c4cf"/><Circle cx="106" cy="70" r="4" fill="#f2c4cf"/></Svg>;
   return <Svg {...p} viewBox="0 0 150 125"><Polygon points="24,58 75,20 126,58" fill="#314d43"/><Path d="M28 57H122V108H28Z" fill="#52695e"/><Path d="M62 108V73Q75 62 88 73V108Z" fill="#2d3a35"/><Rect x="69" y="59" width="12" height="9" fill={win}/><Circle cx="75" cy="38" r="8" fill="#b8d9c8" opacity=".65"/></Svg>;
+}
+
+function RailwayStationArt({ width, height, night }: { width:number; height:number; night:boolean }) {
+  const win = night ? '#ffd477' : '#b9d9d2';
+  return <Svg width={width} height={height} viewBox="0 0 150 125">
+    <Ellipse cx="75" cy="111" rx="61" ry="9" fill="#15231c" opacity=".34"/>
+    <Polygon points="8,48 75,10 142,48" fill="#263b43"/>
+    <Polygon points="14,46 75,15 136,46" fill="#5b7180"/>
+    <Rect x="15" y="45" width="120" height="63" rx="3" fill="#7b776c" stroke="#343b3b" strokeWidth="2"/>
+    <Rect x="22" y="52" width="106" height="8" fill="#4e5b60"/>
+    <Rect x="29" y="65" width="25" height="22" rx="2" fill={win}/>
+    <Rect x="96" y="65" width="25" height="22" rx="2" fill={win}/>
+    <Path d="M61 108V71Q75 58 89 71V108Z" fill="#293337"/>
+    <Rect x="67" y="48" width="16" height="12" rx="2" fill="#e1c879"/>
+    <Rect x="62" y="35" width="26" height="9" rx="2" fill="#374b54"/>
+    <Line x1="31" y1="91" x2="119" y2="91" stroke="#d1c7a5" strokeWidth="3"/>
+    <Rect x="43" y="27" width="64" height="10" rx="3" fill="#34474e"/>
+    <Path d="M47 30H103" stroke="#f0d37a" strokeWidth="2" opacity=".9"/>
+    <Rect x="12" y="99" width="126" height="5" fill="#4d4f4b"/>
+  </Svg>;
+}
+
+function AirportArt({ width, height, night }: { width:number; height:number; night:boolean }) {
+  const win = night ? '#ffd477' : '#b9d9d2';
+  return <Svg width={width} height={height} viewBox="0 0 150 125">
+    <Ellipse cx="75" cy="112" rx="64" ry="8" fill="#15231c" opacity=".34"/>
+    <Polygon points="8,58 24,42 126,42 142,58" fill="#45545a"/>
+    <Path d="M12 56Q20 47 30 43H120Q130 47 138 56V104H12Z" fill="#727d7b" stroke="#343b3b" strokeWidth="2"/>
+    <Path d="M18 60H132V72H18Z" fill="#3f4c50"/>
+    <Rect x="23" y="75" width="104" height="24" rx="3" fill="#596866"/>
+    <Rect x="29" y="79" width="17" height="15" fill={win}/><Rect x="51" y="79" width="17" height="15" fill={win}/><Rect x="82" y="79" width="17" height="15" fill={win}/><Rect x="104" y="79" width="17" height="15" fill={win}/>
+    <Path d="M67 104V76Q75 68 83 76V104Z" fill="#2c3739"/>
+    <Rect x="58" y="27" width="34" height="31" rx="3" fill="#53625f" stroke="#303b3d" strokeWidth="2"/>
+    <Rect x="63" y="20" width="24" height="8" rx="2" fill="#39484c"/>
+    <Rect x="69" y="11" width="12" height="10" fill="#4e5d60"/>
+    <Line x1="75" y1="5" x2="75" y2="11" stroke="#313b3e" strokeWidth="2"/>
+    <Circle cx="75" cy="4" r="2.5" fill={night ? '#ffd477' : '#d6d0b0'}/>
+    <Path d="M28 105H122" stroke="#d0c6a5" strokeWidth="4"/>
+    <Path d="M17 111H133" stroke="#3c4545" strokeWidth="5"/>
+  </Svg>;
 }
 
 const styles=StyleSheet.create({root:{...StyleSheet.absoluteFillObject,overflow:'hidden'},ground:{...StyleSheet.absoluteFillObject}});
