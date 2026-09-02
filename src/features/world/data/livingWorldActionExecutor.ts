@@ -16,6 +16,7 @@ export class WorldActionExecutor {
 
   execute(locationId: string, object: WorldObjectDefinition, action: WorldActionId, actorId = 'player'): WorldActionResult {
     const stateChanges: Record<string, unknown> = {};
+
     if (action === 'collect') stateChanges.collected = true;
     if (action === 'discover') stateChanges.discovered = true;
     if (action === 'enter') stateChanges.active = true;
@@ -25,6 +26,12 @@ export class WorldActionExecutor {
     if (action === 'learn') stateChanges.learningStarted = true;
     if (action === 'quest') stateChanges.questStarted = true;
     if (action === 'travel') stateChanges.travelRequested = true;
+    if (action === 'board') stateChanges.boarded = true;
+    if (action === 'ride') stateChanges.riding = true;
+    if (action === 'open') stateChanges.open = true;
+    if (action === 'close') stateChanges.open = false;
+    if (action === 'use') stateChanges.used = true;
+    if (action === 'play') stateChanges.playStarted = true;
 
     const event = this.events.emit(eventForAction(locationId, object.id, action, actorId, { stateChanges }));
     return { handled: true, event, stateChanges };
