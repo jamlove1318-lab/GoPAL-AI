@@ -1,55 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LanguageWorldId, WorldPlace, languageWorldEngine, resolveLanguageWorld } from './languageWorldEngine';
-
-export type WorldPresence =
- | { kind:'home'; worldId:'emerald-valley'; label:'Emerald Valley' }
- | { kind:'journey'; worldId:LanguageWorldId; placeId:string; label:string };
-
+export type WorldPresence=|{kind:'home';worldId:'emerald-valley';label:'Emerald Valley'}|{kind:'journey';worldId:LanguageWorldId;placeId:string;label:string};
 const KEY='gopal:world-presence:v1';
-
-function journey(worldId:LanguageWorldId,place:WorldPlace):WorldPresence{
- return {kind:'journey',worldId,placeId:place.id,label:`${place.name}, ${place.city}`};
-}
-
-export class WorldPresenceEngine{
- private currentPresence:WorldPresence={kind:'home',worldId:'emerald-valley',label:'Emerald Valley'};
-
- async hydrate():Promise<WorldPresence>{
-  try{
-   const raw=await AsyncStorage.getItem(KEY);
-   if(!raw)return this.currentPresence;
-   const parsed=JSON.parse(raw) as WorldPresence;
-   if(parsed.kind==='journey'){
-    const world=resolveLanguageWorld(parsed.worldId);
-    const place=world.places.find(item=>item.id===parsed.placeId);
-    if(place){this.currentPresence=journey(world.id,place);return this.currentPresence;}
-   }
-   this.currentPresence={kind:'home',worldId:'emerald-valley',label:'Emerald Valley'};
-  }catch{this.currentPresence={kind:'home',worldId:'emerald-valley',label:'Emerald Valley'};}
-  return this.currentPresence;
- }
-
- current():WorldPresence{return this.currentPresence;}
-
- async goHome():Promise<WorldPresence>{
-  this.currentPresence={kind:'home',worldId:'emerald-valley',label:'Emerald Valley'};
-  try{await AsyncStorage.setItem(KEY,JSON.stringify(this.currentPresence));}catch{}
-  return this.currentPresence;
- }
-
- async travel(worldId:LanguageWorldId,placeId?:string):Promise<WorldPresence>{
-  const world=languageWorldEngine.resolve(worldId);
-  const place=world.places.find(item=>item.id===placeId)||world.places[0];
-  if(!place)throw new Error(`No destinations configured for ${worldId}`);
-  this.currentPresence=journey(world.id,place);
-  try{await AsyncStorage.setItem(KEY,JSON.stringify(this.currentPresence));}catch{}
-  return this.currentPresence;
- }
-
- destination():WorldPlace|null{
-  if(this.currentPresence.kind!=='journey')return null;
-  return resolveLanguageWorld(this.currentPresence.worldId).places.find(item=>item.id===this.currentPresence.placeId)??null;
- }
-}
-
+function journey(worldId:LanguageWorldId,place:WorldPlace):WorldPresence{return{kind:'journey',worldId,placeId:place.id,label:`${place.name}, ${place.city}`};}
+export class WorldPresenceEngine{private currentPresence:WorldPresence={kind:'home',worldId:'emerald-valley',label:'Emerald Valley'};async hydrate():Promise<WorldPresence>{try{const raw=await AsyncStorage.getItem(KEY);if(!raw)return this.currentPresence;const parsed=JSON.parse(raw) as WorldPresence;if(parsed.kind==='journey'){const world=resolveLanguageWorld(parsed.worldId);const place=world.places.find(item=>item.id===parsed.placeId);if(place){this.currentPresence=journey(world.id,place);return this.currentPresence;}}this.currentPresence={kind:'home',worldId:'emerald-valley',label:'Emerald Valley'};}catch{this.currentPresence={kind:'home',worldId:'emerald-valley',label:'Emerald Valley'};}return this.currentPresence;}current():WorldPresence{return this.currentPresence;}async goHome():Promise<WorldPresence>{this.currentPresence={kind:'home',worldId:'emerald-valley',label:'Emerald Valley'};try{await AsyncStorage.setItem(KEY,JSON.stringify(this.currentPresence));}catch{}return this.currentPresence;}async travel(worldId:LanguageWorldId,placeId?:string):Promise<WorldPresence>{const world=languageWorldEngine.resolve(worldId);const place=world.places.find(item=>item.id===placeId)||world.places[0];if(!place)throw new Error(`No destinations configured for ${worldId}`);this.currentPresence=journey(world.id,place);try{await AsyncStorage.setItem(KEY,JSON.stringify(this.currentPresence));}catch{}return this.currentPresence;}destination():WorldPlace|null{if(this.currentPresence.kind!=='journey')return null;const worldId=this.currentPresence.worldId;const placeId=this.currentPresence.placeId;return resolveLanguageWorld(worldId).places.find(item=>item.id===placeId)??null;}}
 export const worldPresenceEngine=new WorldPresenceEngine();
