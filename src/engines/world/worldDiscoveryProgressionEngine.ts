@@ -1,7 +1,8 @@
 import { LocalStore } from '../../lib/localStore';
 import { destinationExperienceEngine, type WorldArea } from './destinationExperienceEngine';
 import { resolveLanguageWorld, type LanguageWorldId } from './languageWorldEngine';
-import { getWorldLearningScenarios, type WorldLearningScenario } from '../learning/worldLearningScenarioEngine';
+import { getLanguageWorldLocation, getLanguageWorldLocations } from '../../features/world/data/livingLanguageWorldLocations';
+import { getWorldLearningScenarios } from '../learning/worldLearningScenarioEngine';
 
 export type DiscoveryStatus = 'locked' | 'available' | 'completed' | 'secret' | 'event';
 
@@ -35,13 +36,36 @@ async function writeProgress(progress: DiscoveryProgress) {
   await LocalStore.set(KEY, progress);
 }
 
+/**
+ * Canonical physical-language locations are authoritative for Japanese/French.
+ * Legacy Spanish/Korean worlds keep their existing catalog until their canonical
+ * physical catalogs are introduced. This lets the physical world grow without
+ * creating a second registry or breaking persisted journey IDs.
+ */
+function getDiscoveryPlaces(worldId: LanguageWorldId) {
+  const canonicalWorldId = worldId === 'ja' ? 'japanese' : worldId === 'fr' ? 'french' : null;
+  if (!canonicalWorldId) return resolveLanguageWorld(worldId).places;
+
+  return getLanguageWorldLocations(canonicalWorldId).map(location => ({
+    id: location.id,
+    name: location.name,
+    city: location.city ?? location.country,
+    country: location.country,
+    realWorldLocation: [location.city, location.country].filter(Boolean).join(', '),
+    purpose: location.description,
+    landmarks: location.kind === 'real' ? ['Real-world location'] : ['Fictional learning location'],
+    hiddenGems: location.experiences.includes('quest') ? ['Contextual learning encounter'] : [],
+  }));
+}
+
 export function buildWorldDiscovery(worldId: LanguageWorldId): WorldDiscoveryNode[] {
-  const world = resolveLanguageWorld(worldId);
-  return world.places.map((place, index) => {
+  const places = getDiscoveryPlaces(worldId);
+  return places.map((place, index) => {
+    const canonicalLocation = getLanguageWorldLocation(place.id);
     const areas = destinationExperienceEngine.getAreas(place.id);
     const area = areas[0] ?? destinationExperienceEngine.createMoment(worldId, place.id).area;
     const scenarios = getWorldLearningScenarios(worldId, place.id);
-    const previous = world.places[index - 1];
+    const previous = places[index - 1];
     return {
       id: `place:${worldId}:${place.id}`,
       worldId,
@@ -53,8 +77,8 @@ export function buildWorldDiscovery(worldId: LanguageWorldId): WorldDiscoveryNod
       status: index === 0 ? 'available' : 'locked',
       prerequisiteId: previous ? `place:${worldId}:${previous.id}` : undefined,
       scenarioIds: scenarios.map((scenario) => scenario.id),
-      landmark: place.landmarks.length > 0,
-      hiddenGem: place.hiddenGems.length > 0,
+      landmark: canonicalLocation?.kind === 'real' || place.landmarks.length > 0,
+      hiddenGem: canonicalLocation?.kind === 'fictional' || place.hiddenGems.length > 0,
     };
   });
 }
