@@ -4,7 +4,9 @@ export type WorldEventType =
   | 'interaction' | 'entered' | 'exited' | 'discovered' | 'collected' | 'learned'
   | 'dialogue-started' | 'quest-started' | 'quest-completed' | 'travel-requested'
   | 'vehicle-boarded' | 'vehicle-ridden' | 'object-activated' | 'world-state-changed'
-  | 'actor-spawned' | 'actor-despawned' | 'actor-arrived' | 'activity-started' | 'activity-completed';
+  | 'actor-spawned' | 'actor-despawned' | 'actor-arrived' | 'activity-started' | 'activity-completed'
+  | 'game-started' | 'checkpoint-reached' | 'challenge-started' | 'challenge-completed' | 'game-completed' | 'game-failed'
+  | 'game-transition-requested' | 'learning-xp-awarded' | 'vocabulary-learned' | 'grammar-practiced';
 
 export type WorldEvent = {
   id: string;
