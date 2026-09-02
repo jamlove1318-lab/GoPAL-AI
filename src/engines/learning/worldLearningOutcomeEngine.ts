@@ -1,4 +1,5 @@
 import type { LanguageWorldId } from '../world/languageWorldEngine';
+import type { LearningSkill } from './contextualLanguageLearningEngine';
 import { getWorldLearningScenarioById } from './worldLearningScenarioEngine';
 
 export type WorldLearningOutcome={
@@ -6,7 +7,7 @@ export type WorldLearningOutcome={
   worldId:LanguageWorldId;
   placeId:string;
   success:boolean;
-  skill:'speaking'|'listening'|'reading'|'writing';
+  skill:LearningSkill;
   language:string;
   goal:string;
   worldChange:string;
