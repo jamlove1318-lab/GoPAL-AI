@@ -28,20 +28,6 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm install --legacy-peer-deps
-      - name: Repair known modal syntax before validation
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('src/features/learning/components/WorldActivityExperienceModal.tsx')
-          s = p.read_text()
-          old = "items:Array.from({length:9},(_,cell)=>cell===((i*3+2)%9)?correct:`path-${cell+1}`,correct,kind:'grid'"
-          new = "items:Array.from({length:9},(_,cell)=>cell===((i*3+2)%9)?correct:`path-${cell+1}`),correct,kind:'grid'"
-          if old in s:
-              p.write_text(s.replace(old, new, 1))
-              print('Repaired known modal syntax')
-          else:
-              print('No known modal repair needed')
-          PY
       - name: TypeScript validation
         run: npm run typecheck
       - name: World integrity smoke check
