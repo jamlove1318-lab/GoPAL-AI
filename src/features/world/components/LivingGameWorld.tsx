@@ -1,7 +1,8 @@
 import React, { ReactNode, useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Ellipse, Path, Polygon, Rect } from 'react-native-svg';
-import { getLivingLocationTemplate } from '../data/livingWorldCatalog';
+import { buildWorldLocation } from '../data/livingWorldLocationFactory';
+import type { WorldObjectDefinition } from '../data/livingWorldObjects';
 import { LivingTerrainLayer } from './LivingTerrainLayer';
 import { LivingTransportLayer } from './LivingTransportLayer';
 import { LivingInfrastructureLayer } from './LivingInfrastructureLayer';
@@ -23,27 +24,44 @@ export type GameWorldBuilding = {
   collisionHeight?: number;
 };
 
-const EMERALD_LOCATION = getLivingLocationTemplate('emerald-village');
+/** Legacy compatibility export. The source of truth is now the canonical world object stream. */
+const EMERALD_OBJECTS = buildWorldLocation('emerald-village').objects;
+export const LIVING_BUILDINGS: GameWorldBuilding[] = EMERALD_OBJECTS
+  .filter(object => object.category === 'building')
+  .map(object => canonicalBuilding(object));
 
-export const LIVING_BUILDINGS: GameWorldBuilding[] = EMERALD_LOCATION.buildings.map(building => ({
-  id: building.id,
-  type: building.type,
-  x: building.x,
-  y: building.y,
-  scale: building.scale,
-  interactionRadius: building.id === 'garden' ? 9 : 11,
-  collisionWidth: building.id === 'garden' ? 13 : 15,
-  collisionHeight: building.id === 'garden' ? 9 : 11,
-}));
+function canonicalBuilding(object: WorldObjectDefinition): GameWorldBuilding {
+  return {
+    id: object.id,
+    type: String(object.type),
+    x: object.transform.x,
+    y: object.transform.y,
+    scale: object.transform.scale,
+    interactionRadius: object.interaction?.radius,
+    collisionWidth: object.collision?.width,
+    collisionHeight: object.collision?.height,
+  };
+}
 
-export function LivingGameWorld({ children, buildings = LIVING_BUILDINGS, time = 'afternoon', locationId = 'emerald-village' }: {
+function canonicalProp(object: WorldObjectDefinition): { id:string; type:'tree'|'rock'|'lamp'|'bench'|'fence'|'flower'|'sign'; x:number; y:number; scale?:number } | null {
+  if (!['nature', 'prop'].includes(object.category)) return null;
+  const type = String(object.type);
+  if (!['tree','rock','lamp','bench','fence','flower','sign'].includes(type)) return null;
+  return { id: object.id, type: type as 'tree'|'rock'|'lamp'|'bench'|'fence'|'flower'|'sign', x: object.transform.x, y: object.transform.y, scale: object.transform.scale };
+}
+
+export function LivingGameWorld({ children, buildings, time = 'afternoon', locationId = 'emerald-village' }: {
   children?: ReactNode;
   buildings?: GameWorldBuilding[];
   time?: 'morning'|'afternoon'|'evening'|'night';
   locationId?: string;
 }) {
   const motion = useRef(new Animated.Value(0)).current;
-  const location = useMemo(() => getLivingLocationTemplate(locationId), [locationId]);
+  const location = useMemo(() => buildWorldLocation(locationId), [locationId]);
+  const canonicalBuildings = useMemo(() => location.objects.filter(object => object.category === 'building').map(canonicalBuilding), [location]);
+  const canonicalProps = useMemo(() => location.objects.map(canonicalProp).filter((prop): prop is NonNullable<ReturnType<typeof canonicalProp>> => prop !== null), [location]);
+  const renderBuildings = buildings ?? canonicalBuildings;
+
   useEffect(() => {
     const a = Animated.loop(Animated.sequence([
       Animated.timing(motion, { toValue: 1, duration: 5000, easing: Easing.inOut(Easing.sin), useNativeDriver: true, isInteraction: false }),
@@ -51,11 +69,12 @@ export function LivingGameWorld({ children, buildings = LIVING_BUILDINGS, time =
     ]));
     a.start(); return () => a.stop();
   }, [motion]);
-  const night = time === 'night'; const evening = time === 'evening';
+
+  const night = time === 'night';
+  const evening = time === 'evening';
   return <View style={styles.root}>
     <View style={[styles.ground, { backgroundColor: night ? '#142725' : evening ? '#53684f' : time === 'morning' ? '#789d69' : '#668b5d' }]} />
 
-    {/* World infrastructure is deliberately layered below movable entities. */}
     <LivingTerrainLayer locationId={location.id} />
     <LivingTransportLayer locationId={location.id} />
     <LivingInfrastructureLayer locationId={location.id} />
@@ -65,22 +84,17 @@ export function LivingGameWorld({ children, buildings = LIVING_BUILDINGS, time =
       <Path d="M0 0H400V800H0Z" fill={night ? '#081521' : evening ? '#473a52' : '#ffffff'} opacity={night ? '.20' : evening ? '.08' : '.015'} />
     </Svg>
 
-    <WorldTrees motion={motion} />
-    <View pointerEvents="none" style={StyleSheet.absoluteFill}>{location.props.map(prop => <WorldProp key={prop.id} prop={prop} theme={location.theme} />)}</View>
-    {buildings.map(b => <PhysicalBuilding key={b.id} building={b} night={night} />)}
+    {/* Static physical props now come from the canonical object stream. */}
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      {canonicalProps.map(prop => <WorldProp key={prop.id} prop={prop} theme={location.theme} />)}
+    </View>
+    {renderBuildings.map(building => <PhysicalBuilding key={building.id} building={building} night={night} />)}
 
-    {/* Reusable gameplay and transport entities sit above static world art. */}
     <LivingGameplayLayer locationId={location.id} />
     <LivingVehicleLayer locationId={location.id} />
 
     <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>{children}</View>
   </View>;
-}
-
-function WorldTrees({ motion }: { motion: Animated.Value }) {
-  const trees = [[6,18,1],[20,12,.75],[88,12,.95],[94,43,.72],[8,52,.8],[58,7,.65],[60,89,.8],[94,83,.85]] as const;
-  const rotate = motion.interpolate({ inputRange:[0,1], outputRange:['-1deg','1deg'] });
-  return <View pointerEvents="none" style={StyleSheet.absoluteFill}>{trees.map(([x,y,s],i)=><Animated.View key={i} style={{position:'absolute',left:`${x}%`,top:`${y}%`,width:58*s,height:78*s,marginLeft:-29*s,marginTop:-62*s,zIndex:worldDepth(y,10),transform:[{rotate}]}}><Svg width="100%" height="100%" viewBox="0 0 58 78"><Ellipse cx="29" cy="73" rx="23" ry="5" fill="#183022" opacity=".35"/><Rect x="24" y="42" width="10" height="30" rx="3" fill="#60472e"/><Circle cx="19" cy="35" r="17" fill="#315a39"/><Circle cx="40" cy="32" r="19" fill="#3f6d42"/><Circle cx="29" cy="18" r="18" fill="#4d7a47"/><Circle cx="20" cy="27" r="6" fill="#6e9658" opacity=".55"/><Circle cx="39" cy="18" r="7" fill="#78a45e" opacity=".42"/></Svg></Animated.View>)}</View>;
 }
 
 function PhysicalBuilding({ building, night }: { building: GameWorldBuilding; night: boolean }) {
