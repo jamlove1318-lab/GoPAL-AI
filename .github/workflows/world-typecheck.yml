@@ -6,16 +6,16 @@ on:
     paths:
       - "src/**"
       - "package.json"
+      - "package-lock.json"
       - "tsconfig.json"
-      - "yarn.lock"
       - ".github/workflows/world-typecheck.yml"
   push:
-    branches: [main, world-integration-work]
+    branches: [main, world-integration-work, safe-main-world-integration]
     paths:
       - "src/**"
       - "package.json"
+      - "package-lock.json"
       - "tsconfig.json"
-      - "yarn.lock"
       - ".github/workflows/world-typecheck.yml"
 
 jobs:
@@ -32,10 +32,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: yarn
-      - name: Enable Yarn
-        run: corepack enable
+          cache: npm
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: npm install --legacy-peer-deps
       - name: TypeScript validation
-        run: yarn typecheck
+        run: npm run typecheck
