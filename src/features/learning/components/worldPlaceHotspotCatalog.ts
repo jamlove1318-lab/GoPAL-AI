@@ -26,7 +26,7 @@ const catalog:Record<string,WorldPlaceHotspot[]>={
   {id:'dotonbori-street',label:'Dotonbori street',kind:'landmark',x:24,y:41,nextHotspotId:'food-stall'},
   {id:'food-stall',label:'Food stall',kind:'discovery',x:69,y:46,scenarioIds:['ja-osaka-food-order'],nextHotspotId:'street-vendor'},
   {id:'street-vendor',label:'Street vendor',kind:'resident',x:52,y:62,scenarioIds:['ja-osaka-food-order'],nextHotspotId:'canal-walk'},
-  {id:'canal-walk',label:'Canal walk',kind:'path'},
+  {id:'canal-walk',label:'Canal walk',kind:'path',x:34,y:74},
   {id:'neon-view',label:'Neon view',kind:'locked',x:79,y:70},
   {id:'takoyaki-quiz',label:'Takoyaki Quiz House',kind:'quiz',x:13,y:57,scenarioIds:['ja-osaka-food-order'],optional:true},
   {id:'memory-lantern-room',label:'Memory Lantern Room',kind:'quest',x:87,y:57,scenarioIds:['ja-kanazawa-market-reading'],optional:true},
@@ -37,7 +37,7 @@ const catalog:Record<string,WorldPlaceHotspot[]>={
   {id:'kanazawa-garden',label:'Kenroku-en',kind:'landmark',x:24,y:40,nextHotspotId:'craft-shop'},
   {id:'craft-shop',label:'Craft shop',kind:'discovery',x:69,y:46,scenarioIds:['ja-kanazawa-market-reading'],nextHotspotId:'artisan'},
   {id:'artisan',label:'Local artisan',kind:'resident',x:52,y:62,scenarioIds:['ja-kanazawa-market-reading'],nextHotspotId:'garden-path'},
-  {id:'garden-path',label:'Garden path',kind:'path'},
+  {id:'garden-path',label:'Garden path',kind:'path',x:34,y:74},
   {id:'hidden-workshop',label:'Hidden workshop',kind:'locked',x:79,y:70},
   {id:'craft-quiz-room',label:'Craft Quiz Room',kind:'quiz',x:13,y:57,scenarioIds:['ja-kanazawa-market-reading'],optional:true},
   {id:'memory-teahouse',label:'Memory Teahouse',kind:'quest',x:87,y:57,scenarioIds:['ja-kyoto-tea-order'],optional:true},
@@ -48,7 +48,7 @@ const catalog:Record<string,WorldPlaceHotspot[]>={
   {id:'hakata-street',label:'Hakata street',kind:'landmark',x:24,y:40,nextHotspotId:'ramen-stall'},
   {id:'ramen-stall',label:'Ramen stall',kind:'discovery',x:69,y:46,scenarioIds:['ja-fukuoka-stall-listening'],nextHotspotId:'stall-owner'},
   {id:'stall-owner',label:'Stall owner',kind:'resident',x:52,y:62,scenarioIds:['ja-fukuoka-stall-listening'],nextHotspotId:'canal-path'},
-  {id:'canal-path',label:'Canal path',kind:'path'},
+  {id:'canal-path',label:'Canal path',kind:'path',x:34,y:74},
   {id:'night-market',label:'Night market',kind:'locked',x:79,y:70},
   {id:'ramen-quiz-house',label:'Ramen Quiz House',kind:'quiz',x:13,y:57,scenarioIds:['ja-fukuoka-stall-listening'],optional:true},
   {id:'memory-market',label:'Memory Market',kind:'quest',x:87,y:57,scenarioIds:['ja-kanazawa-market-reading'],optional:true},
@@ -64,3 +64,5 @@ const catalog:Record<string,WorldPlaceHotspot[]>={
  ]
 };
 export function getWorldPlaceHotspots(placeId:string):WorldPlaceHotspot[]{return(catalog[placeId]??catalog.default).map(item=>({...item,placeId,enabled:item.enabled??item.kind!=='locked',scenarioIds:item.scenarioIds?[...item.scenarioIds]:undefined}));}
+export type { WorldPlaceHotspotKind, WorldPlaceHotspotCatalog } from './WorldPlaceHotspots';
+export type WorldPlaceHotspotCatalog = Record<string,WorldPlaceHotspot[]>;
