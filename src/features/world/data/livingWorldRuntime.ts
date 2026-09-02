@@ -4,7 +4,7 @@ import type { WorldLocationDefinition } from './livingWorldLocationSchema';
 import { findNearestObjectInteraction, type WorldInteractionDefinition } from './livingWorldInteraction';
 import { getAvailableWorldActions, type WorldActionId } from './livingWorldActionSystem';
 import { WorldActionExecutor, type WorldActionResult } from './livingWorldActionExecutor';
-import { WorldEventBus } from './livingWorldEvents';
+import { createWorldEvent, WorldEventBus } from './livingWorldEvents';
 import { clampWorldPoint, resolveMovement } from '../geometry/livingWorldGeometry';
 
 export type WorldRuntimeSnapshot = {
@@ -74,24 +74,72 @@ export class LivingWorldRuntime {
   getAvailableActions(): WorldActionId[] {
     const state = this.getInteractionState();
     if (!state.object || state.distance === null) return [];
-    return getAvailableWorldActions({ object: state.object, distance: state.distance }).map(action => action.id);
+    return getAvailableWorldActions({
+      object: state.object,
+      distance: state.distance,
+      unlocked: state.object.state?.unlocked !== false,
+    }).map(action => action.id).filter(action => !this.isActionConsumed(state.object!, action));
   }
 
   interact(action: WorldActionId, actorId = 'player'): WorldActionResult | null {
     const state = this.getInteractionState();
     if (!state.object || state.distance === null) return null;
-    const available = getAvailableWorldActions({ object: state.object, distance: state.distance, unlocked: state.object.state?.unlocked !== false });
-    if (!available.some(item => item.id === action)) return null;
-    return this.actions.execute(this.location.id, state.object, action, actorId);
+
+    const available = getAvailableWorldActions({
+      object: state.object,
+      distance: state.distance,
+      unlocked: state.object.state?.unlocked !== false,
+    });
+    if (!available.some(item => item.id === action) || this.isActionConsumed(state.object, action)) return null;
+
+    const result = this.actions.execute(this.location.id, state.object, action, actorId);
+    if (!result.handled) return result;
+
+    if (Object.keys(result.stateChanges).length > 0) {
+      const previousState = { ...(state.object.state ?? {}) };
+      const nextState = { ...previousState, ...result.stateChanges };
+      this.location = {
+        ...this.location,
+        objects: this.location.objects.map(object => object.id === state.object!.id
+          ? { ...object, state: nextState }
+          : object),
+      };
+
+      this.events.emit(createWorldEvent({
+        type: 'world-state-changed',
+        locationId: this.location.id,
+        objectId: state.object.id,
+        action,
+        actorId,
+        payload: {
+          previousState,
+          stateChanges: { ...result.stateChanges },
+          nextState,
+        },
+      }));
+    }
+
+    return result;
   }
 
   snapshot(): WorldRuntimeSnapshot {
     return {
       locationId: this.location.id,
       player: { ...this.player },
-      objects: [...this.location.objects],
+      objects: this.location.objects.map(object => ({
+        ...object,
+        transform: { ...object.transform },
+        state: object.state ? { ...object.state } : undefined,
+      })),
       nearby: this.getNearbyInteraction(),
     };
+  }
+
+  private isActionConsumed(object: WorldObjectDefinition, action: WorldActionId) {
+    if (action === 'collect') return object.state?.collected === true;
+    if (action === 'discover') return object.state?.discovered === true;
+    if (action === 'save') return object.state?.saved === true;
+    return false;
   }
 
   private spawnPlayer() {
