@@ -16,8 +16,8 @@ export function LivingWorldScreen({ locationId='emerald-village', onTravel }: { 
   const [revision, setRevision] = useState(0);
   const [environment, setEnvironment] = useState(() => resolveLivingEnvironment());
   const world = getGoPalWorld(safeLocationId);
-  useEffect(() => runtime.start(), [runtime]);
-  useEffect(() => runtime.events.subscribe(() => setRevision(value => value + 1)), [runtime]);
+  useEffect(() => { runtime.start(); return () => runtime.dispose(); }, [runtime]);
+  useEffect(() => { const unsubscribe=runtime.events.subscribe(() => setRevision(value => value + 1)); return () => { unsubscribe(); }; }, [runtime]);
   useEffect(() => { const timer=setInterval(()=>runtime.tick(),100); return()=>clearInterval(timer); }, [runtime]);
   useEffect(() => { setEnvironment(resolveLivingEnvironment()); }, [safeLocationId, revision]);
   const location=runtime.getLocation();
