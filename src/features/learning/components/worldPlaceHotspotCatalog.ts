@@ -1,62 +1,16 @@
-import type { WorldPlaceHotspot } from './WorldPlaceHotspots';
+export type WorldPlaceHotspot={id:string;label:string;kind:'landmark'|'resident'|'discovery'|'path'|'quiz'|'quest'|'challenge'|'special'|'locked';x:number;y:number;enabled?:boolean;scenarioIds?:string[];nextHotspotId?:string;placeId?:string;optional?:boolean;miniGameId?:string};
 const catalog:Record<string,WorldPlaceHotspot[]>={
  'kyoto-gion':[
-  {id:'gion-street',label:'Gion street',kind:'landmark',x:25,y:40,nextHotspotId:'tea-house'},
-  {id:'tea-house',label:'Tea house',kind:'discovery',x:69,y:45,scenarioIds:['ja-kyoto-tea-order'],nextHotspotId:'local-resident'},
-  {id:'local-resident',label:'Local resident',kind:'resident',x:51,y:62,scenarioIds:['ja-kyoto-tea-order'],nextHotspotId:'lantern-path'},
-  {id:'lantern-path',label:'Lantern path',kind:'path',x:34,y:75,nextHotspotId:'hidden-alley'},
-  {id:'hidden-alley',label:'Hidden alley',kind:'locked',x:79,y:71},
-  {id:'lantern-quiz-house',label:'Lantern Quiz House',kind:'quiz',x:13,y:57,scenarioIds:['ja-kyoto-tea-order'],optional:true},
-  {id:'memory-garden',label:'Memory Garden',kind:'quest',x:87,y:57,scenarioIds:['ja-kanazawa-market-reading'],optional:true},
-  {id:'echo-arcade',label:'Echo Arcade',kind:'challenge',x:14,y:86,scenarioIds:['ja-tokyo-station-listening'],optional:true},
-  {id:'dream-theatre',label:'Dream Theatre',kind:'special',x:69,y:86,scenarioIds:['ja-kyoto-tea-order'],optional:true}],
+  {id:'gion-street',label:'Gion street',kind:'landmark',x:25,y:40,nextHotspotId:'tea-house'},{id:'tea-house',label:'Tea house',kind:'discovery',x:69,y:45,scenarioIds:['ja-kyoto-tea-order'],nextHotspotId:'local-resident'},{id:'local-resident',label:'Local resident',kind:'resident',x:51,y:62,scenarioIds:['ja-kyoto-tea-order'],nextHotspotId:'lantern-path'},{id:'lantern-path',label:'Lantern path',kind:'path',x:34,y:75,nextHotspotId:'hidden-alley'},{id:'hidden-alley',label:'Hidden alley',kind:'locked',x:79,y:71},{id:'lantern-quiz-house',label:'Lantern Quiz House',kind:'quiz',x:13,y:57,scenarioIds:['ja-kyoto-tea-order'],optional:true},{id:'memory-garden',label:'Memory Garden',kind:'quest',x:87,y:57,scenarioIds:['ja-kanazawa-market-reading'],optional:true},{id:'echo-arcade',label:'Echo Arcade',kind:'challenge',x:14,y:86,scenarioIds:['ja-tokyo-station-listening'],optional:true},{id:'dream-theatre',label:'Dream Theatre',kind:'special',x:69,y:86,scenarioIds:['ja-kyoto-tea-order'],optional:true}],
  'shibuya-crossing':[
-  {id:'crossing',label:'Shibuya Crossing',kind:'landmark',x:27,y:40,scenarioIds:['ja-tokyo-station-listening'],nextHotspotId:'cafe'},
-  {id:'cafe',label:'Café',kind:'discovery',x:69,y:46,scenarioIds:['ja-kyoto-tea-order'],nextHotspotId:'commuter'},
-  {id:'commuter',label:'Someone nearby',kind:'resident',x:52,y:63,scenarioIds:['ja-tokyo-station-listening'],nextHotspotId:'side-street'},
-  {id:'side-street',label:'Side street',kind:'path',x:35,y:75,nextHotspotId:'rooftop'},
-  {id:'rooftop',label:'Rooftop view',kind:'locked',x:79,y:70},
-  {id:'neon-quiz-club',label:'Neon Quiz Club',kind:'quiz',x:13,y:57,scenarioIds:['ja-tokyo-station-listening'],optional:true},
-  {id:'memory-garden-tokyo',label:'Memory Garden',kind:'quest',x:87,y:57,scenarioIds:['ja-kanazawa-market-reading'],optional:true},
-  {id:'echo-station',label:'Echo Station',kind:'challenge',x:14,y:86,scenarioIds:['ja-tokyo-station-listening'],optional:true},
-  {id:'dream-crossing',label:'Dream Crossing',kind:'special',x:69,y:86,scenarioIds:['ja-kyoto-tea-order'],optional:true}],
+  {id:'crossing',label:'Shibuya Crossing',kind:'landmark',x:27,y:40,scenarioIds:['ja-tokyo-station-listening'],nextHotspotId:'cafe'},{id:'cafe',label:'Café',kind:'discovery',x:69,y:46,scenarioIds:['ja-kyoto-tea-order'],nextHotspotId:'commuter'},{id:'commuter',label:'Someone nearby',kind:'resident',x:52,y:63,scenarioIds:['ja-tokyo-station-listening'],nextHotspotId:'side-street'},{id:'side-street',label:'Side street',kind:'path',x:35,y:75,nextHotspotId:'rooftop'},{id:'rooftop',label:'Rooftop view',kind:'locked',x:79,y:70},{id:'neon-quiz-club',label:'Neon Quiz Club',kind:'quiz',x:13,y:57,scenarioIds:['ja-tokyo-station-listening'],optional:true},{id:'memory-garden-tokyo',label:'Memory Garden',kind:'quest',x:87,y:57,scenarioIds:['ja-kanazawa-market-reading'],optional:true},{id:'echo-station',label:'Echo Station',kind:'challenge',x:14,y:86,scenarioIds:['ja-tokyo-station-listening'],optional:true},{id:'dream-crossing',label:'Dream Crossing',kind:'special',x:69,y:86,scenarioIds:['ja-kyoto-tea-order'],optional:true}],
  'osaka-dotonbori':[
-  {id:'dotonbori-street',label:'Dotonbori street',kind:'landmark',x:24,y:41,nextHotspotId:'food-stall'},
-  {id:'food-stall',label:'Food stall',kind:'discovery',x:69,y:46,scenarioIds:['ja-osaka-food-order'],nextHotspotId:'street-vendor'},
-  {id:'street-vendor',label:'Street vendor',kind:'resident',x:52,y:62,scenarioIds:['ja-osaka-food-order'],nextHotspotId:'canal-walk'},
-  {id:'canal-walk',label:'Canal walk',kind:'path',x:34,y:74},
-  {id:'neon-view',label:'Neon view',kind:'locked',x:79,y:70},
-  {id:'takoyaki-quiz',label:'Takoyaki Quiz House',kind:'quiz',x:13,y:57,scenarioIds:['ja-osaka-food-order'],optional:true},
-  {id:'memory-lantern-room',label:'Memory Lantern Room',kind:'quest',x:87,y:57,scenarioIds:['ja-kanazawa-market-reading'],optional:true},
-  {id:'neon-listening-booth',label:'Neon Listening Booth',kind:'challenge',x:14,y:86,scenarioIds:['ja-fukuoka-stall-listening'],optional:true},
-  {id:'midnight-level',label:'Midnight Special',kind:'special',x:69,y:86,scenarioIds:['ja-osaka-food-order'],optional:true}],
+  {id:'dotonbori-street',label:'Dotonbori street',kind:'landmark',x:24,y:41,nextHotspotId:'food-stall'},{id:'food-stall',label:'Food stall',kind:'discovery',x:69,y:46,scenarioIds:['ja-osaka-food-order'],nextHotspotId:'street-vendor'},{id:'street-vendor',label:'Street vendor',kind:'resident',x:52,y:62,scenarioIds:['ja-osaka-food-order'],nextHotspotId:'canal-walk'},{id:'canal-walk',label:'Canal walk',kind:'path',x:34,y:74},{id:'neon-view',label:'Neon view',kind:'locked',x:79,y:70},{id:'takoyaki-quiz',label:'Takoyaki Quiz House',kind:'quiz',x:13,y:57,scenarioIds:['ja-osaka-food-order'],optional:true},{id:'memory-lantern-room',label:'Memory Lantern Room',kind:'quest',x:87,y:57,scenarioIds:['ja-kanazawa-market-reading'],optional:true},{id:'neon-listening-booth',label:'Neon Listening Booth',kind:'challenge',x:14,y:86,scenarioIds:['ja-fukuoka-stall-listening'],optional:true},{id:'midnight-level',label:'Midnight Special',kind:'special',x:69,y:86,scenarioIds:['ja-osaka-food-order'],optional:true}],
  kanazawa:[
-  {id:'kanazawa-garden',label:'Kenroku-en',kind:'landmark',x:24,y:40,nextHotspotId:'craft-shop'},
-  {id:'craft-shop',label:'Craft shop',kind:'discovery',x:69,y:46,scenarioIds:['ja-kanazawa-market-reading'],nextHotspotId:'artisan'},
-  {id:'artisan',label:'Local artisan',kind:'resident',x:52,y:62,scenarioIds:['ja-kanazawa-market-reading'],nextHotspotId:'garden-path'},
-  {id:'garden-path',label:'Garden path',kind:'path',x:34,y:74},
-  {id:'hidden-workshop',label:'Hidden workshop',kind:'locked',x:79,y:70},
-  {id:'craft-quiz-room',label:'Craft Quiz Room',kind:'quiz',x:13,y:57,scenarioIds:['ja-kanazawa-market-reading'],optional:true},
-  {id:'memory-teahouse',label:'Memory Teahouse',kind:'quest',x:87,y:57,scenarioIds:['ja-kyoto-tea-order'],optional:true},
-  {id:'sign-challenge',label:'Sign Challenge',kind:'challenge',x:14,y:86,scenarioIds:['ja-kanazawa-market-reading'],optional:true},
-  {id:'hidden-masterclass',label:'Hidden Masterclass',kind:'special',x:69,y:86,scenarioIds:['ja-tokyo-station-listening'],optional:true}],
+  {id:'kanazawa-garden',label:'Kenroku-en',kind:'landmark',x:24,y:40,nextHotspotId:'craft-shop'},{id:'craft-shop',label:'Craft shop',kind:'discovery',x:69,y:46,scenarioIds:['ja-kanazawa-market-reading'],nextHotspotId:'artisan'},{id:'artisan',label:'Local artisan',kind:'resident',x:52,y:62,scenarioIds:['ja-kanazawa-market-reading'],nextHotspotId:'garden-path'},{id:'garden-path',label:'Garden path',kind:'path',x:34,y:74},{id:'hidden-workshop',label:'Hidden workshop',kind:'locked',x:79,y:70},{id:'craft-quiz-room',label:'Craft Quiz Room',kind:'quiz',x:13,y:57,scenarioIds:['ja-kanazawa-market-reading'],optional:true},{id:'memory-teahouse',label:'Memory Teahouse',kind:'quest',x:87,y:57,scenarioIds:['ja-kyoto-tea-order'],optional:true},{id:'sign-challenge',label:'Sign Challenge',kind:'challenge',x:14,y:86,scenarioIds:['ja-kanazawa-market-reading'],optional:true},{id:'hidden-masterclass',label:'Hidden Masterclass',kind:'special',x:69,y:86,scenarioIds:['ja-tokyo-station-listening'],optional:true}],
  'fukuoka-hakata':[
-  {id:'hakata-street',label:'Hakata street',kind:'landmark',x:24,y:40,nextHotspotId:'ramen-stall'},
-  {id:'ramen-stall',label:'Ramen stall',kind:'discovery',x:69,y:46,scenarioIds:['ja-fukuoka-stall-listening'],nextHotspotId:'stall-owner'},
-  {id:'stall-owner',label:'Stall owner',kind:'resident',x:52,y:62,scenarioIds:['ja-fukuoka-stall-listening'],nextHotspotId:'canal-path'},
-  {id:'canal-path',label:'Canal path',kind:'path',x:34,y:74},
-  {id:'night-market',label:'Night market',kind:'locked',x:79,y:70},
-  {id:'ramen-quiz-house',label:'Ramen Quiz House',kind:'quiz',x:13,y:57,scenarioIds:['ja-fukuoka-stall-listening'],optional:true},
-  {id:'memory-market',label:'Memory Market',kind:'quest',x:87,y:57,scenarioIds:['ja-kanazawa-market-reading'],optional:true},
-  {id:'station-echo',label:'Station Echo',kind:'challenge',x:14,y:86,scenarioIds:['ja-tokyo-station-listening'],optional:true},
-  {id:'night-special',label:'Night Special Level',kind:'special',x:69,y:86,scenarioIds:['ja-fukuoka-stall-listening'],optional:true}],
- default:[
-  {id:'landmark',label:'Local landmark',kind:'landmark',x:22,y:38},
-  {id:'market',label:'Market',kind:'discovery',x:70,y:46},
-  {id:'resident',label:'Someone nearby',kind:'resident',x:52,y:62},
-  {id:'path',label:'Wandering path',kind:'path',x:34,y:74},
-  {id:'hidden',label:'Hidden place',kind:'locked',x:79,y:70}]
+  {id:'hakata-street',label:'Hakata street',kind:'landmark',x:24,y:40,nextHotspotId:'ramen-stall'},{id:'ramen-stall',label:'Ramen stall',kind:'discovery',x:69,y:46,scenarioIds:['ja-fukuoka-stall-listening'],nextHotspotId:'stall-owner'},{id:'stall-owner',label:'Stall owner',kind:'resident',x:52,y:62,scenarioIds:['ja-fukuoka-stall-listening'],nextHotspotId:'canal-path'},{id:'canal-path',label:'Canal path',kind:'path',x:34,y:74},{id:'night-market',label:'Night market',kind:'locked',x:79,y:70},{id:'ramen-quiz-house',label:'Ramen Quiz House',kind:'quiz',x:13,y:57,scenarioIds:['ja-fukuoka-stall-listening'],optional:true},{id:'memory-market',label:'Memory Market',kind:'quest',x:87,y:57,scenarioIds:['ja-kanazawa-market-reading'],optional:true},{id:'station-echo',label:'Station Echo',kind:'challenge',x:14,y:86,scenarioIds:['ja-tokyo-station-listening'],optional:true},{id:'night-special',label:'Night Special Level',kind:'special',x:69,y:86,scenarioIds:['ja-fukuoka-stall-listening'],optional:true}],
+ default:[{id:'landmark',label:'Local landmark',kind:'landmark',x:22,y:38},{id:'market',label:'Market',kind:'discovery',x:70,y:46},{id:'resident',label:'Someone nearby',kind:'resident',x:52,y:62},{id:'path',label:'Wandering path',kind:'path',x:34,y:74},{id:'hidden',label:'Hidden place',kind:'locked',x:79,y:70}]
 };
 export function getWorldPlaceHotspots(placeId:string):WorldPlaceHotspot[]{return(catalog[placeId]??catalog.default).map(item=>({...item,placeId,enabled:item.enabled??item.kind!=='locked',scenarioIds:item.scenarioIds?[...item.scenarioIds]:undefined}));}
-export type WorldPlaceHotspotKind = WorldPlaceHotspot['kind'];
-export type WorldPlaceHotspotCatalog = Record<string,WorldPlaceHotspot[]>;
+export type WorldPlaceHotspotKind=WorldPlaceHotspot['kind'];export type WorldPlaceHotspotCatalog=Record<string,WorldPlaceHotspot[]>;
