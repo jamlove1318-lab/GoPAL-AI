@@ -7,13 +7,12 @@ import { WorldActionExecutor, type WorldActionResult } from './livingWorldAction
 import { createWorldEvent, WorldEventBus } from './livingWorldEvents';
 import { clampWorldPoint, resolveMovement } from '../geometry/livingWorldGeometry';
 import { LivingWorldSimulation, type LivingWorldSimulationSnapshot } from './livingWorldSimulation';
-
 export type WorldRuntimeSnapshot={locationId:string;player:{x:number;y:number};objects:WorldObjectDefinition[];nearby:WorldInteractionDefinition|null;simulation:LivingWorldSimulationSnapshot;running:boolean};
 export type WorldInteractionState={interaction:WorldInteractionDefinition|null;distance:number|null;object:WorldObjectDefinition|null};
 export class LivingWorldRuntime{
  readonly events=new WorldEventBus();readonly actions=new WorldActionExecutor(this.events);private location:WorldLocationDefinition;private player={x:50,y:62};private simulation:LivingWorldSimulation;private lastSimulationTime=Date.now();private running=true;
- constructor(locationId='emerald-village'){this.location=buildWorldLocation(locationId);this.simulation=new LivingWorldSimulation(locationId,1,this.location.objects);this.spawnPlayer();}
- loadLocation(locationId:string){this.stop();this.location=buildWorldLocation(locationId);this.simulation=new LivingWorldSimulation(locationId,1,this.location.objects);this.lastSimulationTime=Date.now();this.spawnPlayer();this.start();}
+ constructor(locationId='emerald-village'){this.location=buildWorldLocation(locationId);this.simulation=new LivingWorldSimulation(locationId,1,this.location.objects,this.events);this.spawnPlayer();}
+ loadLocation(locationId:string){this.stop();this.location=buildWorldLocation(locationId);this.simulation=new LivingWorldSimulation(locationId,1,this.location.objects,this.events);this.lastSimulationTime=Date.now();this.spawnPlayer();this.start();}
  start(now=Date.now()){this.running=true;this.lastSimulationTime=now;}
  stop(){this.running=false;}
  isRunning(){return this.running;}
