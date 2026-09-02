@@ -13,35 +13,75 @@ export function LivingVehicleLayer({ locationId = 'emerald-village' }: { locatio
 }
 
 function Vehicle({ vehicle, route }: { vehicle: WorldVehicleDefinition; route?: ReturnType<typeof getWorldVehicleRoutes>[number] }) {
-  const position = useRef(new Animated.ValueXY({ x: vehicle.x, y: vehicle.y })).current;
+  const initial = route?.waypoints?.[0] ?? { x: vehicle.x, y: vehicle.y };
+  const position = useRef(new Animated.ValueXY(initial)).current;
+  const angle = useRef(new Animated.Value(vehicle.rotation ?? 0)).current;
   const waypoints = useMemo(() => route?.waypoints ?? [], [route]);
 
   useEffect(() => {
     if (!vehicle.moving || waypoints.length < 2) return;
     let cancelled = false;
     let index = 0;
+
     const move = () => {
       if (cancelled) return;
-      const next = waypoints[(index + 1) % waypoints.length];
       const current = waypoints[index % waypoints.length];
+      const nextIndex = index + 1;
+      const next = waypoints[nextIndex % waypoints.length];
       const distance = Math.hypot(next.x - current.x, next.y - current.y);
       const duration = Math.max(900, Math.round(distance * 180 / Math.max(0.1, route?.speed ?? vehicle.speed ?? 0.3)));
-      position.setValue({ x: current.x, y: current.y });
-      Animated.timing(position, { toValue: { x: next.x, y: next.y }, duration, useNativeDriver: false }).start(({ finished }) => {
+      const direction = Math.atan2(next.y - current.y, next.x - current.x) * 180 / Math.PI;
+      position.setValue(current);
+      angle.setValue(direction);
+
+      Animated.timing(position, {
+        toValue: next,
+        duration,
+        useNativeDriver: false,
+      }).start(({ finished }) => {
         if (!finished || cancelled) return;
-        index += 1;
+        index = nextIndex;
+        const waitMs = Math.max(0, next.waitMs ?? 0);
         if (!route?.loop && index >= waypoints.length - 1) return;
-        move();
+        if (waitMs > 0) {
+          setTimeout(() => { if (!cancelled) move(); }, waitMs);
+        } else {
+          move();
+        }
       });
     };
+
     move();
-    return () => { cancelled = true; position.stopAnimation(); };
-  }, [position, route, vehicle.moving, vehicle.speed, waypoints]);
+    return () => {
+      cancelled = true;
+      position.stopAnimation();
+      angle.stopAnimation();
+    };
+  }, [angle, position, route, vehicle.moving, vehicle.speed, waypoints]);
 
   const translateX = position.x.interpolate({ inputRange: [0, 100], outputRange: [0, 1], extrapolate: 'extend' });
   const translateY = position.y.interpolate({ inputRange: [0, 100], outputRange: [0, 1], extrapolate: 'extend' });
   const size = 34 * (vehicle.scale ?? 1);
-  return <Animated.View style={[styles.vehicle, { width: size, height: size, marginLeft: -size / 2, marginTop: -size / 2, zIndex: worldDepth(vehicle.y, 70), left: '0%', top: '0%', transform: [{ translateX: Animated.multiply(translateX, 400) }, { translateY: Animated.multiply(translateY, 800) }, { rotate: `${vehicle.rotation ?? 0}deg` }] }]}>
+  const dynamicDepth = position.y.interpolate({
+    inputRange: [0, 100],
+    outputRange: [worldDepth(0, 70), worldDepth(100, 70)],
+    extrapolate: 'clamp',
+  });
+
+  return <Animated.View style={[styles.vehicle, {
+    width: size,
+    height: size,
+    marginLeft: -size / 2,
+    marginTop: -size / 2,
+    zIndex: dynamicDepth as unknown as number,
+    left: '0%',
+    top: '0%',
+    transform: [
+      { translateX: Animated.multiply(translateX, 400) },
+      { translateY: Animated.multiply(translateY, 800) },
+      { rotate: angle.interpolate({ inputRange: [-180, 180], outputRange: ['-180deg', '180deg'] }) },
+    ],
+  }]}>
     <VehicleArt kind={vehicle.kind} />
   </Animated.View>;
 }
