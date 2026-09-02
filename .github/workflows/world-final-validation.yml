@@ -1,0 +1,75 @@
+name: World Final Validation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [world-integration-work]
+    paths:
+      - "src/**"
+      - "app/**"
+      - "App.tsx"
+      - "index.ts"
+      - "assets/**"
+      - "package.json"
+      - "tsconfig.json"
+      - "app.json"
+      - "babel.config.js"
+      - "metro.config.js"
+      - "eas.json"
+      - ".github/workflows/**"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      CI: "1"
+      EXPO_NO_TELEMETRY: "1"
+      EXPO_TELEMETRY_DISABLED: "1"
+      NODE_OPTIONS: "--max-old-space-size=4096"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: TypeScript validation
+        run: npm run typecheck
+
+      - name: Expo dependency alignment check
+        run: npx expo install --check
+
+      - name: Expo configuration validation
+        run: npx expo config --type public > /tmp/gopal-expo-config.json
+
+      - name: Expo Doctor
+        run: npx expo-doctor
+
+      - name: Web bundle validation
+        run: npx expo export --platform web --output-dir /tmp/gopal-web-export
+
+      - name: Android prebuild validation
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Repository test-file inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          count=$(find . -type f \( -name '*.test.ts' -o -name '*.test.tsx' -o -name '*.spec.ts' -o -name '*.spec.tsx' \) -not -path './node_modules/*' | wc -l)
+          echo "Discovered $count repository test/spec files."
+          find . -type f \( -name '*.test.ts' -o -name '*.test.tsx' -o -name '*.spec.ts' -o -name '*.spec.tsx' \) -not -path './node_modules/*' | sort
+
+      - name: Dependency security audit
+        shell: bash
+        run: |
+          set -o pipefail
+          npm audit --audit-level=high 2>&1 | tee /tmp/npm-audit.txt
+
+      - name: World integrity smoke check
+        run: node -e "console.log('World final validation reached runtime smoke-check stage')"

@@ -6,6 +6,7 @@ export type ResidentConversationState={
  residentId?:string;
  learnedPhrase:string;
  nextPrompt:string;
+ hint?:string;
  canContinue:boolean;
  completed:boolean;
  targetLanguage:string;
@@ -16,13 +17,13 @@ export type ResidentConversationState={
 
 export function begin(scenario:WorldLearningScenario,residentId?:string):ResidentConversationState{
  const next=scenario.continuation;
- return {scenarioId:scenario.id,turn:1,residentId,learnedPhrase:scenario.targetLanguage,nextPrompt:scenario.followUp??'Notice what the person says next and try to respond using language you already know.',canContinue:Boolean(next),completed:false,targetLanguage:scenario.targetLanguage,translation:scenario.translation,vocabulary:scenario.vocabulary,responseOptions:scenario.responseOptions};
+ return {scenarioId:scenario.id,turn:1,residentId,learnedPhrase:scenario.targetLanguage,nextPrompt:scenario.followUp??'Notice what the person says next and try to respond using language you already know.',hint:scenario.goal,canContinue:Boolean(next),completed:false,targetLanguage:scenario.targetLanguage,translation:scenario.translation,vocabulary:scenario.vocabulary,responseOptions:scenario.responseOptions};
 }
 
 export function continueConversation(state:ResidentConversationState,scenario:WorldLearningScenario):ResidentConversationState{
  if(!state.canContinue||state.completed||!scenario.continuation)return {...state,canContinue:false,completed:true};
  const next=scenario.continuation;
- return {...state,turn:state.turn+1,nextPrompt:next.prompt,learnedPhrase:next.targetLanguage,canContinue:false,completed:false,targetLanguage:next.targetLanguage,translation:next.translation,vocabulary:next.vocabulary,responseOptions:next.responseOptions};
+ return {...state,turn:state.turn+1,nextPrompt:next.prompt,hint:scenario.goal,learnedPhrase:next.targetLanguage,canContinue:false,completed:false,targetLanguage:next.targetLanguage,translation:next.translation,vocabulary:next.vocabulary,responseOptions:next.responseOptions};
 }
 
 export function reset(state:ResidentConversationState,scenario:WorldLearningScenario):ResidentConversationState{return begin(scenario,state.residentId);}

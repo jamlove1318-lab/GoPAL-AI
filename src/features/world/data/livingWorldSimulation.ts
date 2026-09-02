@@ -1,63 +1,33 @@
-import type { WorldCharacterDefinition } from './livingWorldCharacters';
-import { getWorldCharacters, getWorldSpawnPoints } from './livingWorldCharacters';
+import { getWorldCharacters, getWorldSpawnPoints, type WorldCharacterDefinition } from './livingWorldCharacters';
 import { getWorldBehavior, getCharacterBehavior } from './livingWorldBehavior';
-import type { WorldVehicleDefinition, WorldVehicleRoute } from './livingWorldVehicles';
 import { getWorldVehicles, getWorldVehicleRoutes } from './livingWorldVehicles';
+import type { WorldVehicleRoute } from './livingWorldVehicles';
 import type { WorldObjectDefinition } from './livingWorldObjects';
-import { worldDepth } from '../geometry/livingWorldGeometry';
+import { clampWorldPoint, resolveMovement, worldDepth } from '../geometry/livingWorldGeometry';
+import { createLivingWorldNavigation, type NavigationPath } from './livingWorldNavigation';
+import { findActivityDestination, getActivitiesForCharacter, type WorldActivityDefinition } from './livingWorldActivities';
+import { createWorldEvent, WorldEventBus } from './livingWorldEvents';
 
-export type SimulatedActor = { id:string; role:string; x:number; y:number; rotation?:number; scale?:number; behaviorId?:string; targetIndex?:number; waitingUntil?:number; active:boolean };
-export type LivingWorldSimulationSnapshot = { time:number; hour:number; actors:SimulatedActor[] };
-
-type RouteState = { index:number; waitingUntil:number };
+export type SimulatedActor={id:string;role:string;x:number;y:number;rotation?:number;scale?:number;behaviorId?:string;targetIndex?:number;waitingUntil?:number;active:boolean;homeX?:number;homeY?:number;characterId?:string;name?:string;tags?:string[];activity?:string;activityId?:string;destinationId?:string;path?:NavigationPath['points'];spawnPointId?:string;respawnAt?:number};
+export type LivingWorldSimulationSnapshot={time:number;hour:number;actors:SimulatedActor[]};
+type RouteState={index:number;waitingUntil:number};
 const distance=(a:{x:number;y:number},b:{x:number;y:number})=>Math.hypot(a.x-b.x,(a.y-b.y)*.92);
-const moveToward=(actor:SimulatedActor,target:{x:number;y:number},amount:number)=>{const dx=target.x-actor.x,dy=target.y-actor.y,d=Math.hypot(dx,dy);if(d<=amount)return{...target};return{x:actor.x+dx/d*amount,y:actor.y+dy/d*amount};};
+const moveToward=(actor:SimulatedActor,target:{x:number;y:number},amount:number)=>{const dx=target.x-actor.x,dy=target.y-actor.y,d=Math.hypot(dx,dy);if(d<=amount)return{x:target.x,y:target.y};return{x:actor.x+dx/d*amount,y:actor.y+dy/d*amount};};
+const seededUnit=(key:string,step:number)=>{let n=2166136261;for(let i=0;i<key.length;i++)n=Math.imul(n^key.charCodeAt(i),16777619);n=(Math.imul(n^step,1664525)+1013904223)|0;return((n>>>0)%10000)/10000;};
+const obstacleList=(objects:WorldObjectDefinition[])=>objects.filter(o=>o.collision?.enabled&&o.collision.solid!==false).map(o=>({x:o.transform.x,y:o.transform.y,width:o.collision?.width??0,height:o.collision?.height??0,padding:o.collision?.padding??0}));
 
-/** UI-independent simulation for NPCs and vehicles. Rendering consumes snapshots; it never owns simulation state. */
-export class LivingWorldSimulation {
-  private actors:SimulatedActor[]=[];
-  private routes:Record<string,WorldVehicleRoute>={};
-  private routeStates:Record<string,RouteState>={};
-  private elapsed=0;
-  private readonly seed:number;
-  constructor(private readonly locationId:string,seed=1){this.seed=seed;this.reset();}
-  reset(){
-    this.elapsed=0;this.actors=[];this.routeStates={};
-    for(const vehicle of getWorldVehicles(this.locationId)) this.addVehicle(vehicle);
-    for(const point of getWorldSpawnPoints(this.locationId)) for(let i=0;i<(point.maxCount??1);i++){
-      const spread=((i*37+this.seed*13)%100)/100;
-      this.actors.push({id:`${point.id}:${i}`,role:point.role,x:point.x+(spread-.5)*10,y:point.y+(((i*17)%100)/100-.5)*7,behaviorId:'resident-wander',targetIndex:0,active:true});
-    }
-    for(const route of getWorldVehicleRoutes(this.locationId))this.routes[route.id]=route;
-  }
-  private addVehicle(vehicle:WorldVehicleDefinition){this.actors.push({id:vehicle.id,role:`vehicle:${vehicle.kind}`,x:vehicle.x,y:vehicle.y,rotation:vehicle.rotation,scale:vehicle.scale,behaviorId:vehicle.routeId?'vehicle-route':undefined,targetIndex:0,active:true});}
-  step(deltaMs:number,now=Date.now()):LivingWorldSimulationSnapshot{
-    const dt=Math.max(0,Math.min(deltaMs,250));this.elapsed+=dt;const hour=new Date(now).getHours()+new Date(now).getMinutes()/60;
-    this.actors=this.actors.map(actor=>this.updateActor({...actor},dt,now,hour));
-    return this.snapshot(now,hour);
-  }
-  private updateActor(actor:SimulatedActor,dt:number,now:number,hour:number){
-    const vehicle=actor.role.startsWith('vehicle:');
-    if(vehicle&&actor.behaviorId==='vehicle-route')return this.updateRouteActor(actor,dt,now);
-    const character=getWorldCharacters(this.locationId).find(item=>item.id===actor.id.split(':')[0]);
-    const behavior=character?.scheduleId?getCharacterBehavior(character,hour):getWorldBehavior(actor.behaviorId??'resident-wander');
-    if(!behavior||behavior.kind==='idle')return actor;
-    if(behavior.kind==='follow-route'&&behavior.routeId&&this.routes[behavior.routeId])return this.updateRouteActor(actor,dt,now);
-    const radius=behavior.radius??7;const phase=Math.floor(this.elapsed/4000);const angle=((phase+(actor.id.length*11))%32)/32*Math.PI*2;
-    const home=character?{x:character.x,y:character.y}:{x:actor.x,y:actor.y};const target={x:home.x+Math.cos(angle)*radius,y:home.y+Math.sin(angle)*radius*.7};
-    const next=moveToward(actor,target,(behavior.speed??.5)*dt/16);return{...actor,...next,rotation:Math.atan2(next.y-actor.y,next.x-actor.x)*180/Math.PI};
-  }
-  private updateRouteActor(actor:SimulatedActor,dt:number,now:number){
-    const routeId=actor.id.startsWith('vehicle:')?undefined:undefined;let route:WorldVehicleRoute|undefined;
-    for(const candidate of Object.values(this.routes))if(this.actors.some(a=>a.id===actor.id)&&candidate.waypoints.length>1){const vehicle=getWorldVehicles(this.locationId).find(v=>v.id===actor.id);if(vehicle?.routeId===candidate.id){route=candidate;break;}}
-    if(!route)return actor;const state=this.routeStates[route.id]??{index:0,waitingUntil:0};const target=route.waypoints[state.index];if(now<state.waitingUntil)return actor;
-    const amount=route.speed*dt/16;const next=moveToward(actor,target,amount);const reached=distance(next,target)<.25;
-    if(!reached)return{...actor,...next,rotation:Math.atan2(target.y-actor.y,target.x-actor.x)*180/Math.PI};
-    const wait=target.waitMs??0;state.waitingUntil=now+wait;state.index+=1;if(state.index>=route.waypoints.length)state.index=route.loop?0:route.waypoints.length-1;this.routeStates[route.id]=state;
-    return{...actor,x:target.x,y:target.y,targetIndex:state.index};
-  }
-  snapshot(now=Date.now(),hour=new Date(now).getHours()):LivingWorldSimulationSnapshot{return{time:now,hour,actors:this.actors.map(actor=>({...actor}))};}
-  getActor(id:string){return this.actors.find(actor=>actor.id===id)??null;}
-  getDepth(id:string){const actor=this.getActor(id);return actor?worldDepth(actor.y):0;}
+export class LivingWorldSimulation{
+ private actors:SimulatedActor[]=[];private routes:Record<string,WorldVehicleRoute>={};private routeStates:Record<string,RouteState>={};private elapsed=0;private readonly seed:number;private readonly obstacles;private readonly navigation;private readonly objects:WorldObjectDefinition[];private readonly events:WorldEventBus;
+ constructor(private readonly locationId:string,seed=1,objects:WorldObjectDefinition[]=[],events=new WorldEventBus()){this.seed=seed;this.objects=objects;this.events=events;this.obstacles=obstacleList(objects);this.navigation=createLivingWorldNavigation(locationId,this.obstacles);this.reset();}
+ reset(){this.elapsed=0;this.actors=[];this.routeStates={};this.routes={};for(const route of getWorldVehicleRoutes(this.locationId))this.routes[route.id]=route;for(const character of getWorldCharacters(this.locationId))this.addCharacter(character);for(const vehicle of getWorldVehicles(this.locationId))this.addVehicle(vehicle);for(const point of getWorldSpawnPoints(this.locationId))for(let i=0;i<(point.maxCount??1);i++)this.spawnFromPoint(point.id,point.role,point.x,point.y,point.tags,i,point.respawn??true);}
+ private spawnFromPoint(pointId:string,role:string,x:number,y:number,tags:string[]|undefined,index:number,respawn:boolean){const spread=seededUnit(`${pointId}:${this.seed}`,index);const actor={id:`${pointId}:${index}`,role,x:x+(spread-.5)*8,y:y+(seededUnit(`${pointId}:${this.seed}`,index+100)-.5)*6,homeX:x,homeY:y,behaviorId:'resident-wander',targetIndex:0,active:true,tags,spawnPointId:pointId,respawnAt:respawn?undefined:undefined,activity:'wandering'};this.actors.push(actor);this.events.emit(createWorldEvent({type:'actor-spawned',locationId:this.locationId,actorId:actor.id,payload:{role,spawnPointId:pointId}}));}
+ private addCharacter(character:WorldCharacterDefinition){this.actors.push({id:`character:${character.id}`,characterId:character.id,name:character.name,role:character.role,x:character.x,y:character.y,homeX:character.x,homeY:character.y,scale:character.scale,behaviorId:character.scheduleId,active:true,tags:character.tags,activity:'present in the world'});}
+ private addVehicle(vehicle:{id:string;kind:string;x:number;y:number;rotation?:number;scale?:number;routeId?:string}){this.actors.push({id:vehicle.id,role:`vehicle:${vehicle.kind}`,x:vehicle.x,y:vehicle.y,rotation:vehicle.rotation,scale:vehicle.scale,behaviorId:vehicle.routeId?'vehicle-route':undefined,targetIndex:0,active:true,activity:'travelling'});}
+ step(deltaMs:number,now=Date.now()){const dt=Math.max(0,Math.min(deltaMs,250));this.elapsed+=dt;const date=new Date(now);const hour=date.getHours()+date.getMinutes()/60;this.actors=this.actors.map(actor=>this.updateActor({...actor},dt,now,hour));return this.snapshot(now,hour);}
+ private updateActor(actor:SimulatedActor,dt:number,now:number,hour:number){if(!actor.active){if(actor.respawnAt&&now>=actor.respawnAt){const respawn={...actor,x:actor.homeX??actor.x,y:actor.homeY??actor.y,active:true,respawnAt:undefined,activity:'respawned'};this.events.emit(createWorldEvent({type:'actor-spawned',locationId:this.locationId,actorId:actor.id,payload:{respawn:true}}));return respawn;}return actor;}if(actor.role.startsWith('vehicle:')&&actor.behaviorId==='vehicle-route')return this.updateRouteActor(actor,dt,now);const character=actor.characterId?getWorldCharacters(this.locationId).find(item=>item.id===actor.characterId):undefined;const behavior=character?.scheduleId?getCharacterBehavior(character,hour):getWorldBehavior(actor.behaviorId??'resident-wander');if(!behavior||behavior.kind==='idle')return{...actor,activity:'resting'};if(behavior.kind==='follow-route'&&behavior.routeId&&this.routes[behavior.routeId])return this.updateRouteActor(actor,dt,now);
+  const home={x:actor.homeX??character?.x??actor.x,y:actor.homeY??character?.y??actor.y};let activity:WorldActivityDefinition|undefined;let destination:{x:number;y:number;objectId?:string}|undefined;if(character){const activities=getActivitiesForCharacter(character);activity=activities[Math.floor(this.elapsed/12000)%activities.length];destination=findActivityDestination(activity,this.objects,home);}const radius=behavior.radius??7;const phase=Math.floor(this.elapsed/4500);const angle=seededUnit(actor.id,this.seed+phase)*Math.PI*2;const wanderTarget=clampWorldPoint({x:home.x+Math.cos(angle)*radius,y:home.y+Math.sin(angle)*radius*.7});const target=destination??wanderTarget;const pathTarget=clampWorldPoint(target);const sameDestination=actor.destinationId===destination?.objectId;const planned=sameDestination&&actor.path&&actor.path.length>1?actor.path:this.navigation.findPath(actor,pathTarget).points;const waypoint=planned[1]??pathTarget;const desired=moveToward(actor,waypoint,(behavior.speed??.5)*dt/16);const resolved=this.obstacles.length?resolveMovement(actor,desired,this.obstacles):desired;const arrived=distance(resolved,waypoint)<.6;const finalPath=arrived?planned.slice(1):planned;const atDestination=destination&&distance(resolved,pathTarget)<1.2;return{...actor,...resolved,path:finalPath,destinationId:destination?.objectId,activityId:activity?.id,rotation:Math.atan2(resolved.y-actor.y,resolved.x-actor.x)*180/Math.PI,activity:atDestination?(activity?.kind??'social'):behavior.kind==='schedule'?'following daily routine':'wandering'};}
+ private updateRouteActor(actor:SimulatedActor,dt:number,now:number){const vehicle=getWorldVehicles(this.locationId).find(v=>v.id===actor.id);const route=vehicle?.routeId?this.routes[vehicle.routeId]:undefined;if(!route)return actor;const state=this.routeStates[route.id]??{index:0,waitingUntil:0};if(now<state.waitingUntil)return actor;const target=route.waypoints[state.index]??route.waypoints[0];const next=moveToward(actor,target,route.speed*dt/16);if(distance(next,target)>=.25)return{...actor,...next,rotation:Math.atan2(target.y-actor.y,target.x-actor.x)*180/Math.PI,activity:'travelling'};state.waitingUntil=now+(target.waitMs??0);state.index+=1;if(state.index>=route.waypoints.length)state.index=route.loop?0:route.waypoints.length-1;this.routeStates[route.id]=state;return{...actor,x:target.x,y:target.y,targetIndex:state.index,activity:'stopping'};}
+ snapshot(now=Date.now(),hour=new Date(now).getHours()){return{time:now,hour,actors:this.actors.map(actor=>({...actor,path:actor.path?[...actor.path]:undefined}))};}
+ getActor(id:string){return this.actors.find(actor=>actor.id===id)??null;}getDepth(id:string){const actor=this.getActor(id);return actor?worldDepth(actor.y):0;}
 }
-export function createLivingWorldSimulation(locationId:string,seed?:number){return new LivingWorldSimulation(locationId,seed);}
+export function createLivingWorldSimulation(locationId:string,seed?:number,objects:WorldObjectDefinition[]=[],events?:WorldEventBus){return new LivingWorldSimulation(locationId,seed,objects,events);}

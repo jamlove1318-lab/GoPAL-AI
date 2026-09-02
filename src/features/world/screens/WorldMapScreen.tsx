@@ -5,7 +5,6 @@ import { Compass, Eye, Heart, Sparkles, Sun, Moon, CloudRain, MapPin } from 'luc
 import { useWorldState } from '../../../hooks/useWorldState';
 import { LocalStore, CulturalArtifact, RevisitRecord } from '../../../lib/localStore';
 import { WaveStore, LivingObject } from '../../../lib/waveStore';
-import { worldRevisitStore } from '../../../engines/world/worldRevisitStore';
 import { eventBus } from '../../../engines/events/eventBus';
 import { WonderPromptModal } from '../../learning/components/WonderPromptModal';
 import { WorldThresholdModal } from '../components/WorldThresholdModal';
@@ -45,7 +44,7 @@ function useBreath(duration: number = 3600) {
 }
 
 export function WorldMapScreen({ onStartScenario }: WorldMapScreenProps) {
-  const { state, changeLocation, worldEngine, userId } = useWorldState();
+  const { state, changeLocation, worldEngine } = useWorldState();
   const [artifacts, setArtifacts] = useState<CulturalArtifact[]>([]);
   const [revisitStats, setRevisitStats] = useState<Record<string, RevisitRecord>>({});
   const [revisitNotes, setRevisitNotes] = useState<Record<string, string | null>>({});
@@ -65,9 +64,9 @@ export function WorldMapScreen({ onStartScenario }: WorldMapScreenProps) {
     for (const node of nodes) if (node.masteryLevel < 40) gated[node.locationKey] = (gated[node.locationKey] || 0) + 1;
     setGatedByLoc(gated);
     setArtifacts(await LocalStore.getCulturalArtifacts());
-    setRevisitStats(await worldRevisitStore.getStats(userId));
+    setRevisitStats(await LocalStore.getRevisitStats());
     const notes: Record<string, string | null> = {};
-    for (const place of PLACES) notes[place.key] = (await worldEngine.getRevisitDifference(place.key, userId)).note;
+    for (const place of PLACES) notes[place.key] = (await worldEngine.getRevisitDifference(place.key)).note;
     setRevisitNotes(notes);
     setLiving(await WaveStore.getLivingObjects());
   };
@@ -75,7 +74,7 @@ export function WorldMapScreen({ onStartScenario }: WorldMapScreenProps) {
   useEffect(() => {
     void loadData();
     return eventBus.on('world:returned', () => void loadData());
-  }, [userId]);
+  }, []);
 
   const growth = useMemo(() => Math.round(living.reduce((sum, object) => sum + object.growth, 0)), [living]);
   const currentPlace = PLACES.find(place => place.id === state?.location?.id) ?? PLACES[0];
@@ -91,7 +90,7 @@ export function WorldMapScreen({ onStartScenario }: WorldMapScreenProps) {
   const finishTravel = async () => {
     if (!pendingTarget) return;
     await changeLocation(pendingTarget.id);
-    await worldRevisitStore.recordVisit(userId, pendingTarget.key);
+    await LocalStore.recordLocationVisit(pendingTarget.key);
     setThresholdVisible(false);
     setSelectedPlace(null);
     setPendingTarget(null);
@@ -102,6 +101,7 @@ export function WorldMapScreen({ onStartScenario }: WorldMapScreenProps) {
     <SafeAreaView className="flex-1 bg-transparent">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 44 }} className="flex-1">
         <View className="relative min-h-[780px] overflow-hidden px-5 pt-4">
+          {/* Sky: deliberately environmental, not a panel. */}
           <View pointerEvents="none" className="absolute inset-0 bg-slate-950" />
           <Animated.View pointerEvents="none" style={{ opacity: breath.interpolate({ inputRange: [0, 1], outputRange: [0.5, 0.9] }) }} className="absolute -right-20 -top-28 h-80 w-80 rounded-full bg-indigo-500/15" />
           <Animated.View pointerEvents="none" style={{ opacity: slowBreath.interpolate({ inputRange: [0, 1], outputRange: [0.25, 0.55] }) }} className="absolute left-[-80px] top-36 h-72 w-72 rounded-full bg-emerald-400/10" />
@@ -124,13 +124,17 @@ export function WorldMapScreen({ onStartScenario }: WorldMapScreenProps) {
             </View>
           </View>
 
+          {/* Living landscape */}
           <View pointerEvents="none" className="absolute left-[-20%] right-[-20%] top-[280px] h-80 rounded-[50%] bg-emerald-950/70" />
           <View pointerEvents="none" className="absolute left-[-15%] right-[-15%] top-[370px] h-72 rounded-[50%] bg-slate-900/90" />
           <View pointerEvents="none" className="absolute left-[8%] top-[290px] h-28 w-36 rounded-[45%] bg-emerald-900/50" />
           <View pointerEvents="none" className="absolute right-[4%] top-[300px] h-32 w-44 rounded-[45%] bg-indigo-950/60" />
+
+          {/* Winding trail */}
           <View pointerEvents="none" className="absolute left-[48%] top-[390px] h-[320px] w-16 -rotate-[10deg] rounded-full border-l-[14px] border-r-[14px] border-slate-800/60" />
           <View pointerEvents="none" className="absolute left-[49%] top-[390px] h-[320px] w-10 -rotate-[10deg] rounded-full border-l-[2px] border-r-[2px] border-dashed border-emerald-400/20" />
 
+          {/* Places live in the landscape */}
           {PLACES.map((place) => {
             const selected = selectedPlace?.id === place.id;
             const current = currentPlace.id === place.id;
@@ -138,9 +142,16 @@ export function WorldMapScreen({ onStartScenario }: WorldMapScreenProps) {
             const visits = revisitStats[place.key]?.count || 0;
             const hidden = gatedByLoc[place.key] || 0;
             return (
-              <Pressable key={place.id} onPress={() => setSelectedPlace(place)} style={{ left: `${place.x}%`, top: `${place.y}%` }} className="absolute z-20 -ml-8 -mt-8 h-20 w-20 items-center justify-center">
+              <Pressable
+                key={place.id}
+                onPress={() => setSelectedPlace(place)}
+                style={{ left: `${place.x}%`, top: `${place.y}%` }}
+                className="absolute z-20 -ml-8 -mt-8 h-20 w-20 items-center justify-center"
+              >
                 <Animated.View style={{ transform: [{ scale: current ? breath.interpolate({ inputRange: [0, 1], outputRange: [1, 1.08] }) : 1 }] }} className={`absolute h-16 w-16 rounded-full ${palette.glow} ${selected || current ? 'opacity-100' : 'opacity-60'}`} />
-                <View className={`h-12 w-12 items-center justify-center rounded-full border bg-slate-950/75 ${palette.ring} ${current ? 'shadow-2xl' : ''}`}><Text className="text-2xl">{place.icon}</Text></View>
+                <View className={`h-12 w-12 items-center justify-center rounded-full border bg-slate-950/75 ${palette.ring} ${current ? 'shadow-2xl' : ''}`}>
+                  <Text className="text-2xl">{place.icon}</Text>
+                </View>
                 {current && <View className="absolute -top-1 h-2.5 w-2.5 rounded-full bg-emerald-300" />}
                 {visits > 0 && <Text className="absolute -bottom-1 rounded-full bg-slate-950/80 px-2 py-0.5 text-[8px] text-slate-400">{visits} visits</Text>}
                 <Text className={`absolute top-[66px] whitespace-nowrap text-[11px] font-bold ${palette.text}`}>{place.name}</Text>
@@ -150,11 +161,15 @@ export function WorldMapScreen({ onStartScenario }: WorldMapScreenProps) {
           })}
 
           <View className="absolute bottom-7 left-5 right-5 z-20 flex-row items-center justify-between">
-            <View className="flex-row items-center"><View className="h-9 w-9 items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-950/60"><Heart size={15} color="#6ee7b7" /></View><View className="ml-3"><Text className="text-[9px] uppercase tracking-[1.5px] text-slate-500">The valley remembers</Text><Text className="mt-0.5 text-xs text-slate-300">Living growth · {growth}</Text></View></View>
+            <View className="flex-row items-center">
+              <View className="h-9 w-9 items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-950/60"><Heart size={15} color="#6ee7b7" /></View>
+              <View className="ml-3"><Text className="text-[9px] uppercase tracking-[1.5px] text-slate-500">The valley remembers</Text><Text className="mt-0.5 text-xs text-slate-300">Living growth · {growth}</Text></View>
+            </View>
             <Pressable onPress={() => setShowEmaModal(true)} className="flex-row items-center rounded-full border border-amber-400/25 bg-amber-950/40 px-3 py-2 active:bg-amber-900/50"><Text className="mr-1.5 text-base">🎋</Text><Text className="text-[10px] font-bold text-amber-200">Make a wish</Text></Pressable>
           </View>
         </View>
 
+        {/* Selected place appears as a moment of interaction, not a permanent card. */}
         {selectedPlace && (() => {
           const place = selectedPlace;
           const palette = colorClasses[place.color];
