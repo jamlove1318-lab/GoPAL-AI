@@ -1,7 +1,8 @@
-import React, { ReactNode, useEffect, useMemo, useRef } from 'react';
+import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Ellipse, Path, Polygon, Rect } from 'react-native-svg';
 import { buildWorldLocation } from '../data/livingWorldLocationFactory';
+import type { LivingWorldRuntime } from '../data/livingWorldRuntime';
 import type { WorldObjectDefinition } from '../data/livingWorldObjects';
 import { LivingTerrainLayer } from './LivingTerrainLayer';
 import { LivingTransportLayer } from './LivingTransportLayer';
@@ -45,19 +46,29 @@ function canonicalBuilding(object: WorldObjectDefinition): GameWorldBuilding {
 
 function canonicalProp(object: WorldObjectDefinition): { id:string; type:'tree'|'rock'|'lamp'|'bench'|'fence'|'flower'|'sign'; x:number; y:number; scale?:number } | null {
   if (!['nature', 'prop'].includes(object.category)) return null;
+  if (object.state?.collected === true) return null;
   const type = String(object.type);
   if (!['tree','rock','lamp','bench','fence','flower','sign'].includes(type)) return null;
   return { id: object.id, type: type as 'tree'|'rock'|'lamp'|'bench'|'fence'|'flower'|'sign', x: object.transform.x, y: object.transform.y, scale: object.transform.scale };
 }
 
-export function LivingGameWorld({ children, buildings, time = 'afternoon', locationId = 'emerald-village' }: {
+export function LivingGameWorld({ children, buildings, time = 'afternoon', locationId = 'emerald-village', runtime }: {
   children?: ReactNode;
   buildings?: GameWorldBuilding[];
   time?: 'morning'|'afternoon'|'evening'|'night';
   locationId?: string;
+  runtime?: LivingWorldRuntime;
 }) {
   const motion = useRef(new Animated.Value(0)).current;
-  const location = useMemo(() => buildWorldLocation(locationId), [locationId]);
+  const [, setRuntimeRevision] = useState(0);
+  const fallbackLocation = useMemo(() => buildWorldLocation(locationId), [locationId]);
+  const location = runtime?.getLocation() ?? fallbackLocation;
+
+  useEffect(() => {
+    if (!runtime) return;
+    return runtime.events.subscribe(() => setRuntimeRevision(value => value + 1));
+  }, [runtime]);
+
   const canonicalBuildings = useMemo(() => location.objects.filter(object => object.category === 'building').map(canonicalBuilding), [location]);
   const canonicalProps = useMemo(() => location.objects.map(canonicalProp).filter((prop): prop is NonNullable<ReturnType<typeof canonicalProp>> => prop !== null), [location]);
   const renderBuildings = buildings ?? canonicalBuildings;
@@ -84,7 +95,7 @@ export function LivingGameWorld({ children, buildings, time = 'afternoon', locat
       <Path d="M0 0H400V800H0Z" fill={night ? '#081521' : evening ? '#473a52' : '#ffffff'} opacity={night ? '.20' : evening ? '.08' : '.015'} />
     </Svg>
 
-    {/* Static physical props now come from the canonical object stream. */}
+    {/* Static physical props now come from the canonical runtime object stream. */}
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       {canonicalProps.map(prop => <WorldProp key={prop.id} prop={prop} theme={location.theme} />)}
     </View>
