@@ -1,132 +1,23 @@
-import { useEffect, useState, useCallback } from 'react';
-import { LivingWorldRuntime, type WorldSnapshot } from '../engines/world/livingWorldRuntime';
-import type { ResolvedWorldState } from '../engines/world/worldEngine';
+import { useEffect,useState,useCallback } from 'react';
+import { LivingWorldRuntime,type WorldRuntimeSnapshot } from '../features/world/data/livingWorldRuntime';
 import { auth } from '../services/auth';
 import { eventBus } from '../engines/events/eventBus';
-import { worldPresenceEngine, type WorldPresence } from '../engines/world/worldPresenceEngine';
-import { worldContextEngine, type WorldContext } from '../engines/world/worldContextEngine';
+import { worldPresenceEngine,type WorldPresence } from '../engines/world/worldPresenceEngine';
+import { worldContextEngine,type WorldContext } from '../engines/world/worldContextEngine';
 import type { LanguageWorldId } from '../engines/world/languageWorldEngine';
 
-const livingWorld = new LivingWorldRuntime();
+type WorldStateView={location:{id:string};weather:{type:string}};
+const livingWorld=new LivingWorldRuntime();
+const toView=(snapshot:WorldRuntimeSnapshot):WorldStateView=>({location:{id:snapshot.locationId},weather:{type:'clear'}});
 
-export function useWorldState() {
-  const [state, setState] = useState<ResolvedWorldState | null>(null);
-  const [snapshot, setSnapshot] = useState<WorldSnapshot | null>(null);
-  const [presence, setPresence] = useState<WorldPresence>(worldPresenceEngine.current());
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [userId, setUserId] = useState('local-explorer-user');
-
-  const syncPresence = useCallback(() => {
-    const next = worldPresenceEngine.current();
-    setPresence(next);
-    return next;
-  }, []);
-
-  const load = useCallback(async (uid: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      await worldPresenceEngine.hydrate();
-      syncPresence();
-      const next = await livingWorld.load(uid);
-      setSnapshot(next);
-      setState(next?.resolved ?? null);
-    } catch (cause) {
-      const nextError = cause instanceof Error ? cause : new Error('Unable to enter your world.');
-      setError(nextError);
-    } finally {
-      setLoading(false);
-    }
-  }, [syncPresence]);
-
-  useEffect(() => {
-    let active = true;
-    const unsub = auth.onAuthStateChange(async (user) => {
-      const uid = user ? user.id : 'local-explorer-user';
-      if (!active) return;
-      setUserId(uid);
-      await load(uid);
-    });
-    return () => {
-      active = false;
-      unsub.data.subscription.unsubscribe();
-    };
-  }, [load]);
-
-  const changeLocation = useCallback(async (locationId: string) => {
-    if (!userId) return;
-    setLoading(true);
-    setError(null);
-    const previousLocationId = state?.location?.id;
-    try {
-      const next = await livingWorld.changeLocation(userId, locationId);
-      setSnapshot(next);
-      setState(next?.resolved ?? null);
-      eventBus.emit('world:locationChanged', { locationId, userId, previousLocationId }, 'world');
-    } catch (cause) {
-      const nextError = cause instanceof Error ? cause : new Error('Unable to travel to that place.');
-      setError(nextError);
-    } finally {
-      setLoading(false);
-    }
-  }, [state?.location?.id, userId]);
-
-  const travelToDestination = useCallback(async (worldId: LanguageWorldId, placeId?: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const next = await worldPresenceEngine.travel(worldId, placeId);
-      setPresence(next);
-      eventBus.emit('world:destinationEntered', next, 'world');
-      eventBus.emit('world:locationChanged', {
-        locationId: next.kind === 'journey' ? next.placeId : next.worldId,
-        userId,
-        previousLocationId: presence.kind === 'journey' ? presence.placeId : undefined,
-      }, 'world');
-      return next;
-    } catch (cause) {
-      const nextError = cause instanceof Error ? cause : new Error('Unable to begin that journey.');
-      setError(nextError);
-      throw nextError;
-    } finally {
-      setLoading(false);
-    }
-  }, [presence]);
-
-  const goHome = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const next = await worldPresenceEngine.goHome();
-      setPresence(next);
-      eventBus.emit('world:returnHome', next, 'world');
-      eventBus.emit('world:returned', { userId, lastActiveAt: new Date().toISOString() }, 'world');
-      return next;
-    } catch (cause) {
-      const nextError = cause instanceof Error ? cause : new Error('Unable to return home.');
-      setError(nextError);
-      throw nextError;
-    } finally {
-      setLoading(false);
-    }
-  }, [userId]);
-
-  const refresh = useCallback(() => load(userId), [load, userId]);
-  const context: WorldContext = worldContextEngine.resolve(presence);
-
-  return {
-    state,
-    snapshot,
-    presence,
-    context,
-    loading,
-    error,
-    continuity: snapshot?.continuity ?? null,
-    worldEngine: livingWorld,
-    changeLocation,
-    travelToDestination,
-    goHome,
-    refresh,
-  };
+export function useWorldState(){
+ const[state,setState]=useState<WorldStateView|null>(null);const[snapshot,setSnapshot]=useState<WorldRuntimeSnapshot|null>(null);const[presence,setPresence]=useState<WorldPresence>(worldPresenceEngine.current());const[loading,setLoading]=useState(true);const[error,setError]=useState<Error|null>(null);const[userId,setUserId]=useState('local-explorer-user');
+ const syncPresence=useCallback(()=>{const next=worldPresenceEngine.current();setPresence(next);return next},[]);
+ const load=useCallback(async(uid:string)=>{setLoading(true);setError(null);try{setUserId(uid);await worldPresenceEngine.hydrate();const nextPresence=syncPresence();const locationId=nextPresence.kind==='journey'?nextPresence.placeId:'emerald-village';livingWorld.loadLocation(locationId,nextPresence.kind==='journey'?nextPresence.worldId:undefined);const next=livingWorld.snapshot();setSnapshot(next);setState(toView(next));}catch(cause){setError(cause instanceof Error?cause:new Error('Unable to enter your world.'))}finally{setLoading(false)}},[syncPresence]);
+ useEffect(()=>{let active=true;const unsub=auth.onAuthStateChange(async user=>{const uid=user?.id??'local-explorer-user';if(!active)return;await load(uid)});return()=>{active=false;unsub.data.subscription.unsubscribe()}},[load]);
+ const changeLocation=useCallback(async(locationId:string)=>{setLoading(true);setError(null);try{livingWorld.loadLocation(locationId);const next=livingWorld.snapshot();setSnapshot(next);setState(toView(next));eventBus.emit('world:locationChanged',{locationId,userId,previousLocationId:state?.location.id},'world')}catch(cause){setError(cause instanceof Error?cause:new Error('Unable to travel to that place.'))}finally{setLoading(false)}},[state?.location.id,userId]);
+ const travelToDestination=useCallback(async(worldId:LanguageWorldId,placeId?:string)=>{setLoading(true);setError(null);try{const next=await worldPresenceEngine.travel(worldId,placeId);setPresence(next);const locationId=next.kind==='journey'?next.placeId:'emerald-village';livingWorld.loadLocation(locationId,next.kind==='journey'?next.worldId:undefined);const nextSnapshot=livingWorld.snapshot();setSnapshot(nextSnapshot);setState(toView(nextSnapshot));eventBus.emit('world:destinationEntered',next,'world');eventBus.emit('world:locationChanged',{locationId,userId,previousLocationId:presence.kind==='journey'?presence.placeId:undefined},'world');return next}catch(cause){const nextError=cause instanceof Error?cause:new Error('Unable to begin that journey.');setError(nextError);throw nextError}finally{setLoading(false)}},[presence,userId]);
+ const goHome=useCallback(async()=>{setLoading(true);setError(null);try{const next=await worldPresenceEngine.goHome();setPresence(next);livingWorld.loadLocation('emerald-village');const nextSnapshot=livingWorld.snapshot();setSnapshot(nextSnapshot);setState(toView(nextSnapshot));eventBus.emit('world:returnHome',next,'world');eventBus.emit('world:returned',{userId,lastActiveAt:new Date().toISOString()},'world');return next}catch(cause){const nextError=cause instanceof Error?cause:new Error('Unable to return home.');setError(nextError);throw nextError}finally{setLoading(false)}},[userId]);
+ const refresh=useCallback(()=>load(userId),[load,userId]);const context:WorldContext=worldContextEngine.resolve(presence);const worldEngine={getRevisitDifference:async(_locationKey:string)=>({note:null as string|null})};
+ return{state,snapshot,presence,context,loading,error,continuity:null,worldEngine,changeLocation,travelToDestination,goHome,refresh};
 }
