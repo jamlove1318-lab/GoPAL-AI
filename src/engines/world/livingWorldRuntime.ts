@@ -1,9 +1,12 @@
-import{LivingWorldRuntime as CanonicalLivingWorldRuntime,type WorldRuntimeSnapshot}from'../../features/world/data/livingWorldRuntime';
-export * from '../../features/world/data/livingWorldRuntime';
-export type WorldSnapshot=WorldRuntimeSnapshot;
-export class LivingWorldRuntime extends CanonicalLivingWorldRuntime{
- load(locationId:string){this.loadLocation(locationId);return this;}
- changeLocation(locationId:string){return this.loadLocation(locationId);}
- getRevisitDifference(){return null;}
+import { eventBus } from '../events/eventBus';
+import { WorldEngine, type ResolvedWorldState } from './worldEngine';
+import { livingWorldSimulation, type LivingWorldSnapshot } from './livingWorldSimulation';
+export interface WorldSnapshot { resolved: ResolvedWorldState; simulation: LivingWorldSnapshot; continuity: { note:string|null; visitCount:number }; }
+export class LivingWorldRuntime {
+ constructor(private readonly worldEngine=new WorldEngine(),private readonly simulation=livingWorldSimulation){}
+ async load(userId:string):Promise<WorldSnapshot>{const resolved=await this.worldEngine.ensureState(userId,'emerald-valley','loc-study-room');const elapsed=this.elapsedMinutes(resolved.lastActiveAt);const now=new Date().toISOString();const simulation=await this.simulation.advance(userId,resolved.world?.id??'emerald-valley',resolved.location?.id??null,elapsed);await this.worldEngine.saveState(userId,{lastActiveAt:now});const continuity=resolved.location?await this.worldEngine.getRevisitDifference(resolved.location.id):{note:null,visitCount:0};return{resolved:{...resolved,lastActiveAt:now},simulation,continuity};}
+ async changeLocation(userId:string,locationId:string):Promise<WorldSnapshot>{const previous=await this.worldEngine.loadState(userId);const worldId=previous?.world?.id??'emerald-valley';const locations=await this.worldEngine.listLocations(worldId);const destination=locations.find(location=>location.id===locationId);if(!destination)throw new Error(`Location ${locationId} does not belong to world ${worldId}.`);const elapsed=this.elapsedMinutes(previous?.lastActiveAt);await this.worldEngine.setLocation(userId,locationId);const now=new Date().toISOString();await this.worldEngine.saveState(userId,{lastActiveAt:now});const resolved=await this.worldEngine.loadState(userId);if(!resolved)throw new Error('World state was not readable after changing location.');const simulation=await this.simulation.advance(userId,resolved.world?.id??worldId,locationId,elapsed);const continuity=await this.worldEngine.getRevisitDifference(locationId);eventBus.emit('world:locationChanged',{locationId,userId,previousLocationId:previous?.location?.id??undefined},'world');return{resolved:{...resolved,lastActiveAt:now},simulation,continuity};}
+ async getRevisitDifference(locationKey:string,userId?:string){return this.worldEngine.getRevisitDifference(locationKey,userId);}
+ private elapsedMinutes(lastActiveAt?:string|null){if(!lastActiveAt)return 0;const timestamp=new Date(lastActiveAt).getTime();if(!Number.isFinite(timestamp))return 0;return Math.max(0,Math.floor((Date.now()-timestamp)/60000));}
 }
-export function createLivingWorldRuntime(locationId?:string){return new LivingWorldRuntime(locationId);}
+export const livingWorldRuntime=new LivingWorldRuntime();
