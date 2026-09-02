@@ -16,3 +16,7 @@ export function getLanguageWorldForLocation(location:WorldLocationDefinition){co
 export function registerLanguageWorld(world:LanguageWorldDefinition){const index=LANGUAGE_WORLDS.findIndex(item=>item.id===world.id);const normalized={...world,locationIds:[...world.locationIds],tags:world.tags?[...world.tags]:[]};if(index>=0)LANGUAGE_WORLDS[index]=normalized;else LANGUAGE_WORLDS.push(normalized);return normalized;}
 export function isLanguageWorld(world:LanguageWorldDefinition|null){return!!world&&!world.homeWorld;}
 export function attachLanguageWorldMetadata(location:WorldLocationDefinition,world:LanguageWorldDefinition):WorldLocationDefinition{return{...location,worldKind:world.homeWorld?'home':'language',languageWorldId:world.id,language:world.language,locale:world.locale,metadata:{...(location.metadata??{}),languageWorldId:world.id,language:world.language,locale:world.locale,worldDisplayName:world.name}};}
+
+// Compatibility exports: older runtime paths imported the location helpers from this registry module.
+// Keep them available so a stale JS bundle cannot turn a valid helper into an undefined function.
+export { getLanguageWorldLocations, getLanguageWorldLocation, isRealLanguageWorldLocation, isFictionalLanguageWorldLocation } from './livingLanguageWorldLocations';
