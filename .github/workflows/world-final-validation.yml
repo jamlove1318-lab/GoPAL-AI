@@ -3,7 +3,22 @@ name: World Final Validation
 on:
   workflow_dispatch:
   push:
-    branches: [world-integration-work]
+    branches: [main, world-integration-work, safe-main-world-integration]
+    paths:
+      - "src/**"
+      - "app/**"
+      - "App.tsx"
+      - "index.ts"
+      - "assets/**"
+      - "package.json"
+      - "tsconfig.json"
+      - "app.json"
+      - "babel.config.js"
+      - "metro.config.js"
+      - "eas.json"
+      - ".github/workflows/**"
+  pull_request:
+    branches: [main]
     paths:
       - "src/**"
       - "app/**"
