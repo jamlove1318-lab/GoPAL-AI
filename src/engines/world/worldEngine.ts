@@ -3,7 +3,8 @@ import { LocalStore, SEED_WORLD } from '../../lib/localStore';
 import { WaveStore, StoryLayerState } from '../../lib/waveStore';
 import type { LocationsRow, WorldStateRow, WorldsRow } from '../../types/database';
 import { resolveSeason, resolveTimeOfDay } from '../../lib/time';
-import { getLanguageWorld, getLanguageWorldLocations } from '../../features/world/data/livingLanguageWorlds';
+import { getLanguageWorld } from '../../features/world/data/livingLanguageWorlds';
+import { getLanguageWorldLocations } from '../../features/world/data/livingLanguageWorldLocations';
 
 /** Compatibility shape: weather remains a string at runtime while legacy views may probe a `.type` field. */
 type WorldWeatherString = string & { readonly type?: string };
