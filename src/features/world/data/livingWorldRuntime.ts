@@ -66,31 +66,28 @@ export class LivingWorldRuntime {
     const nearest = findNearestObjectInteraction(this.player, this.location.objects);
     if (!nearest) return { interaction: null, distance: null, object: null };
     const object = this.location.objects.find(item => item.id === nearest.interaction.targetId) ?? null;
-    return { interaction: nearest.interaction, distance: nearest.distance, object };
+    if (!object) return { interaction: null, distance: null, object: null };
+    const actions = getAvailableWorldActions({
+      object,
+      distance: nearest.distance,
+      unlocked: object.state?.unlocked !== false,
+    }).filter(action => !this.isActionConsumed(object, action.id));
+    return {
+      interaction: { ...nearest.interaction, actions: actions.map(action => action.id) },
+      distance: nearest.distance,
+      object,
+    };
   }
 
   getNearbyInteraction() { return this.getInteractionState().interaction; }
 
   getAvailableActions(): WorldActionId[] {
-    const state = this.getInteractionState();
-    if (!state.object || state.distance === null) return [];
-    return getAvailableWorldActions({
-      object: state.object,
-      distance: state.distance,
-      unlocked: state.object.state?.unlocked !== false,
-    }).map(action => action.id).filter(action => !this.isActionConsumed(state.object!, action));
+    return this.getInteractionState().interaction?.actions ?? [];
   }
 
   interact(action: WorldActionId, actorId = 'player'): WorldActionResult | null {
     const state = this.getInteractionState();
-    if (!state.object || state.distance === null) return null;
-
-    const available = getAvailableWorldActions({
-      object: state.object,
-      distance: state.distance,
-      unlocked: state.object.state?.unlocked !== false,
-    });
-    if (!available.some(item => item.id === action) || this.isActionConsumed(state.object, action)) return null;
+    if (!state.object || state.distance === null || !state.interaction?.actions.includes(action)) return null;
 
     const result = this.actions.execute(this.location.id, state.object, action, actorId);
     if (!result.handled) return result;
@@ -129,7 +126,13 @@ export class LivingWorldRuntime {
       objects: this.location.objects.map(object => ({
         ...object,
         transform: { ...object.transform },
+        visual: object.visual ? { ...object.visual } : undefined,
+        collision: object.collision ? { ...object.collision } : undefined,
+        interaction: object.interaction ? { ...object.interaction, actions: object.interaction.actions ? [...object.interaction.actions] : undefined } : undefined,
+        behavior: object.behavior ? { ...object.behavior } : undefined,
         state: object.state ? { ...object.state } : undefined,
+        tags: object.tags ? [...object.tags] : undefined,
+        metadata: object.metadata ? { ...object.metadata } : undefined,
       })),
       nearby: this.getNearbyInteraction(),
     };
