@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 import bpy
 
@@ -22,9 +23,59 @@ from characters.build_cassidy import main as build_cassidy
 from characters.cassidy_export import export_runtime_package
 
 
+def _json_safe(value: Any) -> Any:
+    """Convert Blender/runtime values into deterministic JSON-safe data.
+
+    Authoring helpers legitimately return bpy objects (for example review
+    cameras) because those objects are useful inside Blender. Reports are a
+    separate machine-readable boundary and must never contain live Blender
+    RNA objects. Keep names and stable scalar metadata rather than coercing
+    objects to opaque strings.
+    """
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+
+    if isinstance(value, dict):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+
+    if isinstance(value, (list, tuple, set, frozenset)):
+        return [_json_safe(item) for item in value]
+
+    if isinstance(value, bpy.types.Object):
+        data: dict[str, Any] = {
+            "name": value.name,
+            "type": value.type,
+        }
+        if value.data is not None:
+            data["data_name"] = getattr(value.data, "name", None)
+        return data
+
+    if isinstance(value, bpy.types.ID):
+        return {
+            "name": value.name,
+            "type": value.__class__.__name__,
+        }
+
+    # Blender math types expose a stable iterable representation.
+    if hasattr(value, "to_tuple"):
+        try:
+            return [_json_safe(item) for item in value.to_tuple()]
+        except Exception:
+            pass
+
+    try:
+        return [_json_safe(item) for item in value]
+    except (TypeError, ValueError):
+        return str(value)
+
+
 def _write_json(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    safe_payload = _json_safe(payload)
+    path.write_text(
+        json.dumps(safe_payload, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
 
 
 def run() -> int:
@@ -41,7 +92,7 @@ def run() -> int:
 
     if not report.get("ready"):
         print("[Cassidy-CI] PRODUCTION_BLOCKED")
-        print(json.dumps(report.get("quality", {}), indent=2, sort_keys=True))
+        print(json.dumps(_json_safe(report.get("quality", {})), indent=2, sort_keys=True))
         return 2
 
     print("[Cassidy-CI] Production gate passed; exporting runtime package")
