@@ -78,7 +78,11 @@ class CassidyProductionOrchestrator:
         )
         output = proc.stdout or ""
         log_path.write_text(output, encoding="utf-8")
-        return proc.returncode == 0, output
+        # Blender can return zero even when a Python script terminates with an
+        # exception under some PRoot/Linux combinations. Treat a traceback as a
+        # hard process failure so the control plane cannot certify broken runs.
+        traceback_failure = "Traceback (most recent call last)" in output
+        return proc.returncode == 0 and not traceback_failure, output
 
     def _record(self, stage: str, status: str, diagnostic: Optional[str] = None) -> None:
         self.state.mark_stage(stage, status)
@@ -100,7 +104,7 @@ class CassidyProductionOrchestrator:
         started = datetime.now(timezone.utc).isoformat()
         ok, output = self._run_blender(self.repo_dir / CI_ENTRY)
         report = {
-            "orchestrator_version": "3N.40-atomic",
+            "orchestrator_version": "3N.41-atomic",
             "character": self.job.get("character", "Cassidy"),
             "job_id": self.job.get("job_id"),
             "job_hash": self.job_hash(),
@@ -115,6 +119,7 @@ class CassidyProductionOrchestrator:
             json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
         if ok:
+            self._record("PRODUCTION", "COMPLETED")
             self._record("DONE", "COMPLETED")
             return True
         tail = "\n".join(output.splitlines()[-40:])
