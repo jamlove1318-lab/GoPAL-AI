@@ -1,9 +1,8 @@
 """Cassidy production orchestrator.
 
-The current production authoring pipeline is intentionally atomic: the existing
-Blender CI entrypoint owns the complete preparation/validation/export pass.
-This layer coordinates that real pipeline from Linux, tracks job state, and
-never pretends that an un-authored character passed production gates.
+The production authoring pipeline remains authoritative in the existing Blender
+entrypoints. This layer provides the Linux control plane: job loading, state,
+execution, validation, export, and safe resume semantics.
 """
 from __future__ import annotations
 
@@ -22,7 +21,7 @@ DEFAULT_STATE = Path("build/cassidy/orchestrator-state.json")
 ARTIFACTS = Path("artifacts/cassidy")
 CI_ENTRY = Path("tools/blender/characters/cassidy_ci_entry.py")
 CI_VALIDATE = Path("tools/blender/characters/cassidy_ci_validate.py")
-CI_EXPORT = Path("tools/blender/characters/cassidy_export.py")
+CI_EXPORT = Path("tools/blender/characters/cassidy_ci_export.py")
 
 
 class CassidyProductionOrchestrator:
@@ -64,15 +63,19 @@ class CassidyProductionOrchestrator:
         self.artifacts_dir.mkdir(parents=True, exist_ok=True)
         log_path = self.artifacts_dir / "orchestrator-blender.log"
         env = os.environ.copy()
-        env["PYTHONPATH"] = os.pathsep.join((str(self.repo_dir / "tools/blender"), str(self.repo_dir), env.get("PYTHONPATH", "")))
+        env["PYTHONPATH"] = os.pathsep.join(
+            (str(self.repo_dir / "tools/blender"), str(self.repo_dir), env.get("PYTHONPATH", ""))
+        )
         cmd = ["blender", "--background"]
         if blend:
             cmd.append(str(blend))
         else:
             cmd.append("--factory-startup")
         cmd += ["--python", str(script)]
-        proc = subprocess.run(cmd, cwd=str(self.repo_dir), env=env, stdout=subprocess.PIPE,
-                              stderr=subprocess.STDOUT, text=True)
+        proc = subprocess.run(
+            cmd, cwd=str(self.repo_dir), env=env,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+        )
         output = proc.stdout or ""
         log_path.write_text(output, encoding="utf-8")
         return proc.returncode == 0, output
@@ -105,10 +108,12 @@ class CassidyProductionOrchestrator:
             "completed_at": datetime.now(timezone.utc).isoformat(),
             "status": "COMPLETED" if ok else "BLOCKED",
             "blender_exit_code": 0 if ok else 1,
-            "pipeline": "tools/blender/characters/cassidy_ci_entry.py",
-            "note": "Production stages are currently executed by the existing atomic Blender pipeline; no stage is marked complete independently of its real gate.",
+            "pipeline": str(CI_ENTRY),
+            "note": "The existing fail-closed Blender production pipeline owns authoring and quality gates; the orchestrator does not fabricate character geometry.",
         }
-        (self.artifacts_dir / "orchestrator-report.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        (self.artifacts_dir / "orchestrator-report.json").write_text(
+            json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
         if ok:
             self._record("DONE", "COMPLETED")
             return True
@@ -117,13 +122,14 @@ class CassidyProductionOrchestrator:
         return False
 
     def resume(self) -> bool:
-        # The current authoring implementation is atomic, so resume safely
-        # re-enters the real pipeline instead of claiming a partial checkpoint.
         return self.build(from_scratch=False)
 
     def repair(self, stage: Optional[str] = None) -> bool:
         requested = (stage or "PRODUCTION").upper()
-        self.state.add_diagnostic(f"Repair requested for {requested}; rerunning atomic production pipeline.")
+        self.state.add_diagnostic(
+            f"Repair requested for {requested}; rerunning the authoritative atomic production pipeline."
+        )
+        self.state.save(self.state_file)
         return self.build(from_scratch=False)
 
     def validate(self) -> bool:
