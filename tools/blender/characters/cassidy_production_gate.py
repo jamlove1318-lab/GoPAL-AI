@@ -13,6 +13,7 @@ from characters.cassidy_animation_authoring import validate_animation_authoring
 from characters.cassidy_mesh_quality import validate_authored_meshes
 from characters.cassidy_modeling_tools import validate_modeling_readiness
 from characters.cassidy_face_authoring import validate_face_nodes, validate_expression_shapes, validate_gaze_controls
+from characters.cassidy_facial_rig_authoring import validate_facial_rig
 from characters.cassidy_hair_charm import validate_hair_and_charm
 from characters.cassidy_outfit_authoring import validate_outfit_contract, validate_material_slot_bindings
 from characters.cassidy_review import validate_review_record, is_review_complete, REVIEW_VERSION
@@ -50,6 +51,7 @@ def evaluate_production_readiness() -> dict:
     face_nodes = validate_face_nodes()
     expressions = validate_expression_shapes()
     gaze = validate_gaze_controls()
+    facial_rig = validate_facial_rig()
     hair_charm = validate_hair_and_charm()
     outfit = validate_outfit_contract()
     materials = validate_material_slot_bindings()
@@ -68,6 +70,7 @@ def evaluate_production_readiness() -> dict:
         (face_nodes["valid"], "required face/eye/eyelid nodes are missing"),
         (expressions["valid"], "required authored expression shapes are missing"),
         (gaze["valid"], "required authored gaze controls are missing"),
+        (facial_rig["valid"], "facial rig contract has not passed"),
         (hair_charm["valid"], "hair or signature charm authoring gate has not passed"),
         (outfit["valid"], "outfit authoring contract has not passed"),
         (materials["valid"], "canonical material-slot binding gate has not passed"),
@@ -78,5 +81,6 @@ def evaluate_production_readiness() -> dict:
             "mesh": mesh, "modeling": modeling, "rig": rig, "lod": lod,
             "mobile_lod": mobile_lod, "animation": animation,
             "animation_authoring": animation_authoring, "face_nodes": face_nodes,
-            "expressions": expressions, "gaze": gaze, "hair_charm": hair_charm,
-            "outfit": outfit, "materials": materials, "review": review}
+            "expressions": expressions, "gaze": gaze, "facial_rig": facial_rig,
+            "hair_charm": hair_charm, "outfit": outfit, "materials": materials,
+            "review": review}
