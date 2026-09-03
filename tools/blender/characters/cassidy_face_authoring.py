@@ -1,19 +1,11 @@
-"""Facial, eyelid, eye-gaze and expression authoring helpers.
-
-This module describes and validates authored controls. It intentionally does
-not synthesize a face, eyes, or expressions from primitives.
-"""
+"""Facial, eyelid, eye-gaze and expression authoring helpers."""
 
 import bpy
 
 FACE_AUTHORING_VERSION = "3N.20"
-EXPRESSION_CONTROLS = (
-    "neutral", "happy", "curious", "surprised", "thoughtful", "excited", "concerned", "playful",
-)
+EXPRESSION_CONTROLS = ("neutral", "happy", "curious", "surprised", "thoughtful", "excited", "concerned", "playful")
 GAZE_CONTROLS = ("gaze_x", "gaze_y", "blink_l", "blink_r", "squint_l", "squint_r")
-REQUIRED_FACE_NODES = (
-    "Cassidy_Face", "Cassidy_Eye_L", "Cassidy_Eye_R", "Cassidy_Eyelid_L", "Cassidy_Eyelid_R",
-)
+REQUIRED_FACE_NODES = ("Cassidy_Face", "Cassidy_Eye_L", "Cassidy_Eye_R", "Cassidy_Eyelid_L", "Cassidy_Eyelid_R")
 
 
 def _find(name):
@@ -53,32 +45,31 @@ def ensure_expression_contract(mesh_obj):
     names = set(shape_keys.key_blocks.keys()) if shape_keys else set()
     required = {f"expression_{name}" for name in EXPRESSION_CONTROLS}
     missing = sorted(required - names)
-    mesh_obj["gopal_expression_controls"] = list(EXPRESSION_CONTROLS)
     return {"valid": not missing, "missing": missing, "found": sorted(required & names)}
 
 
+def _actual_gaze_controls(armature):
+    if armature is None or armature.type != "ARMATURE":
+        return set()
+    controls = set(armature.get("gopal_gaze_controls", []))
+    if armature.pose:
+        controls.update(pbone.name for pbone in armature.pose.bones if pbone.name in GAZE_CONTROLS)
+    return controls & set(GAZE_CONTROLS)
+
+
 def ensure_gaze_contract(armature=None):
-    declared = set()
-    if armature is not None:
-        declared.update(armature.get("gopal_gaze_controls", []))
-        if armature.pose:
-            declared.update(pbone.name for pbone in armature.pose.bones if pbone.name in GAZE_CONTROLS)
-    scene_declared = bpy.context.scene.get("gopal_cassidy_gaze_controls", [])
-    declared.update(scene_declared)
-    missing = sorted(set(GAZE_CONTROLS) - declared)
+    actual = _actual_gaze_controls(armature)
+    missing = sorted(set(GAZE_CONTROLS) - actual)
     bpy.context.scene["gopal_cassidy_gaze_controls"] = list(GAZE_CONTROLS)
-    return {"valid": not missing, "missing": missing, "found": sorted(set(GAZE_CONTROLS) & declared)}
+    return {"valid": not missing, "missing": missing, "found": sorted(actual)}
 
 
 def prepare_face_authoring(face_mesh=None, armature=None):
-    node_report = validate_face_nodes()
-    expression_report = ensure_expression_contract(face_mesh) if face_mesh else {"valid": False, "missing": list(EXPRESSION_CONTROLS), "found": []}
-    gaze_report = ensure_gaze_contract(armature)
     return {
         "version": FACE_AUTHORING_VERSION,
-        "nodes": node_report,
-        "expressions": expression_report,
-        "gaze": gaze_report,
+        "nodes": validate_face_nodes(),
+        "expressions": ensure_expression_contract(face_mesh) if face_mesh else {"valid": False, "missing": [f"expression_{x}" for x in EXPRESSION_CONTROLS], "found": []},
+        "gaze": ensure_gaze_contract(armature),
         "policy": "authored-only",
         "note": "No facial geometry or expression shapes are synthesized by this helper.",
     }
