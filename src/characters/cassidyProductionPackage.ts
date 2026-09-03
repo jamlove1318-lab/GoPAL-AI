@@ -5,6 +5,10 @@ import {
   CASSIDY_RUNTIME_NODES,
   validateCassidyRuntimeModel,
 } from './cassidyRuntimeModelContract';
+import {
+  validateCassidyBlenderPackageManifest,
+  type CassidyBlenderPackageManifest,
+} from './cassidyBlenderPackageManifest';
 
 export interface CassidyRuntimeProductionPackage {
   characterId: 'cassidy';
@@ -50,6 +54,44 @@ export function validateCassidyRuntimeProductionPackage(
   if (!animation) errors.push('Manifest animation asset record is missing.');
 
   return { valid: errors.length === 0, errors };
+}
+
+/**
+ * Converts the exact JSON emitted by Blender into the existing runtime package
+ * contract. The model and manifest URIs are supplied by the application layer;
+ * Blender remains responsible only for authoring and validation metadata.
+ */
+export function createCassidyRuntimePackageFromBlenderManifest(
+  manifest: CassidyBlenderPackageManifest,
+  modelUri: string,
+  manifestUri: string,
+): { package?: CassidyRuntimeProductionPackage; errors: string[] } {
+  const validation = validateCassidyBlenderPackageManifest(manifest);
+  const errors = [...validation.errors];
+
+  if (!modelUri.trim()) errors.push('Runtime model URI is required.');
+  if (!manifestUri.trim()) errors.push('Runtime manifest URI is required.');
+  if (!manifest.model_version?.trim()) errors.push('Blender model version is required.');
+  if (!manifest.rig_version?.trim()) errors.push('Blender rig version is required.');
+  if (!manifest.animation_version?.trim()) errors.push('Blender animation version is required.');
+  if (!manifest.texture_version?.trim()) errors.push('Blender texture version is required.');
+
+  if (errors.length > 0) return { errors };
+
+  return {
+    errors: [],
+    package: {
+      characterId: 'cassidy',
+      packageVersion: manifest.package_version,
+      modelUri,
+      manifestUri,
+      modelSha256: manifest.model.sha256,
+      modelVersion: manifest.model_version,
+      rigVersion: manifest.rig_version,
+      animationVersion: manifest.animation_version,
+      textureVersion: manifest.texture_version,
+    },
+  };
 }
 
 /** Stable runtime contract snapshot for diagnostics and tests. */
