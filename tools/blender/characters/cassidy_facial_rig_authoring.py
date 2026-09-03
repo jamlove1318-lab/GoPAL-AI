@@ -1,15 +1,9 @@
-"""Authored facial rig validation for Cassidy.
-
-This layer connects existing face shape-key and gaze contracts without
-creating facial geometry or automatically inventing expression shapes.
-"""
+"""Authored facial rig validation for Cassidy."""
 
 import bpy
 
 FACIAL_RIG_VERSION = "3N.24"
-EXPRESSIONS = (
-    "neutral", "happy", "curious", "surprised", "thoughtful", "excited", "concerned", "playful",
-)
+EXPRESSIONS = ("neutral", "happy", "curious", "surprised", "thoughtful", "excited", "concerned", "playful")
 GAZE = ("gaze_x", "gaze_y", "blink_l", "blink_r", "squint_l", "squint_r")
 FACE_NODE = "Cassidy_Face"
 EYE_NODES = ("Cassidy_Eye_L", "Cassidy_Eye_R")
@@ -49,15 +43,19 @@ def validate_expression_shapes(face_mesh=None):
     return {"valid": not (required - names), "missing": sorted(required - names), "found": sorted(required & names)}
 
 
+def _actual_gaze_controls(rig):
+    if rig is None or rig.type != "ARMATURE":
+        return set()
+    controls = set(rig.get("gopal_gaze_controls", []))
+    if rig.pose:
+        controls.update(b.name for b in rig.pose.bones if b.name in GAZE)
+    return controls & set(GAZE)
+
+
 def validate_gaze_controls(rig=None):
-    rig = rig or find_rig()
-    declared = set(bpy.context.scene.get("gopal_cassidy_gaze_controls", []))
-    if rig:
-        declared.update(rig.get("gopal_gaze_controls", []))
-        if rig.pose:
-            declared.update(b.name for b in rig.pose.bones if b.name in GAZE)
-    missing = sorted(set(GAZE) - declared)
-    return {"valid": not missing, "missing": missing, "found": sorted(set(GAZE) & declared)}
+    actual = _actual_gaze_controls(rig or find_rig())
+    missing = sorted(set(GAZE) - actual)
+    return {"valid": not missing, "missing": missing, "found": sorted(actual)}
 
 
 def validate_driver_bindings(face_mesh=None):
@@ -67,18 +65,11 @@ def validate_driver_bindings(face_mesh=None):
     keys = face_mesh.data.shape_keys
     if not keys:
         return {"valid": False, "driver_count": 0, "expression_drivers": [], "note": "No authored shape-key datablock"}
-    names = {f"expression_{x}" for x in EXPRESSIONS}
-    driven = []
-    for key in keys.key_blocks:
-        if key.name in names and key.driver_add("value") if False else False:
-            driven.append(key.name)
-    # Driver APIs are intentionally not mutated here; inspect existing drivers only.
     driver_names = []
     if keys.animation_data and keys.animation_data.drivers:
         for fc in keys.animation_data.drivers:
-            target = getattr(fc, "data_path", "")
-            if "key_blocks" in target:
-                driver_names.append(target)
+            if "key_blocks" in getattr(fc, "data_path", ""):
+                driver_names.append(fc.data_path)
     return {"valid": True, "driver_count": len(driver_names), "expression_drivers": driver_names}
 
 
@@ -97,13 +88,4 @@ def validate_facial_rig():
     expressions = validate_expression_shapes()
     gaze = validate_gaze_controls()
     drivers = validate_driver_bindings()
-    return {
-        "version": FACIAL_RIG_VERSION,
-        "valid": nodes["valid"] and expressions["valid"] and gaze["valid"],
-        "nodes": nodes,
-        "expressions": expressions,
-        "gaze": gaze,
-        "drivers": drivers,
-        "policy": "authored-only",
-        "note": "Facial geometry, expression shapes, and driver design remain artist-authored.",
-    }
+    return {"version": FACIAL_RIG_VERSION, "valid": nodes["valid"] and expressions["valid"] and gaze["valid"], "nodes": nodes, "expressions": expressions, "gaze": gaze, "drivers": drivers, "policy": "authored-only"}
