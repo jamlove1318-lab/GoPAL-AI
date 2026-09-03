@@ -4,6 +4,8 @@ The checklist records what must be reviewed by a human or art-validation
 process. It does not mark an asset as approved by itself.
 """
 
+import bpy
+
 REVIEW_VERSION = "3N.12"
 
 REVIEW_GATES = (
@@ -33,7 +35,16 @@ def create_review_record(status="pending"):
     }
 
 
+def ensure_scene_review_record():
+    """Create a pending review record without approving any visual gate."""
+    record = create_review_record()
+    bpy.context.scene["gopal_cassidy_review"] = record
+    return record
+
+
 def validate_review_record(record):
+    if not isinstance(record, dict):
+        return {"valid": False, "errors": ["Review record is missing."]}
     if record.get("version") != REVIEW_VERSION:
         return {"valid": False, "errors": ["Review version mismatch."]}
     gates = record.get("gates")
@@ -56,4 +67,4 @@ def is_review_complete(record):
     validation = validate_review_record(record)
     if not validation["valid"]:
         return False
-    return all(value == "pass" for value in record["gates"].values())
+    return all(record["gates"].get(gate) == "pass" for gate in REVIEW_GATES)
