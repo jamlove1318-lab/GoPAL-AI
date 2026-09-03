@@ -11,6 +11,9 @@ import { CASSIDY_PRODUCTION_SPEC, validateCassidyProductionSpec } from './cassid
  */
 export type CassidyProductionAssetStatus = 'reference-approved' | 'pending-production' | 'in-production' | 'validated' | 'integrated';
 
+/** The exact canonical PNG currently committed at the repository root. */
+export const CASSIDY_CANONICAL_REFERENCE_URI = 'file_00000000642c821198cbd141ddc7e8d7.png' as const;
+
 export interface CassidyProductionAssetRecord {
   id: string;
   version: string;
@@ -35,7 +38,7 @@ export const CASSIDY_PRODUCTION_ASSET_MANIFEST: CassidyProductionAssetManifest =
   canonicalReferenceVersion: 'phase-1-approved-v1',
   identityLocked: true,
   assets: [
-    { id: 'cassidy-canonical-concept-v1', version: 'v1', status: 'reference-approved', canonicalReference: 'docs/cassidy/assets/cassidy-canonical-concept-v1.png', notes: 'Approved Phase 1 visual identity reference. Binary asset is pending repository binary transfer.' },
+    { id: 'cassidy-canonical-concept-v1', version: 'v1', status: 'reference-approved', canonicalReference: CASSIDY_CANONICAL_REFERENCE_URI, sourceUri: CASSIDY_CANONICAL_REFERENCE_URI, notes: 'Approved Phase 1 visual identity reference. Exact repository binary is now present at the canonical source URI.' },
     { id: 'cassidy-turnaround-v1', version: 'v1', status: 'pending-production', canonicalReference: 'cassidy-turnaround-v1', notes: 'Production front/three-quarter/side/rear reference.' },
     { id: 'cassidy-face-v1', version: 'v1', status: 'pending-production', canonicalReference: 'cassidy-face-v1', notes: 'Canonical face and eye construction reference.' },
     { id: 'cassidy-hair-v1', version: 'v1', status: 'pending-production', canonicalReference: 'cassidy-hair-v1', notes: 'Canonical dark-brown hair silhouette and motion reference.' },
@@ -57,8 +60,8 @@ export function getCassidyRuntimeAssetSet(): CassidyCharacterAssetSet {
   const animation = CASSIDY_PRODUCTION_ASSET_MANIFEST.assets.find(asset => asset.id === 'cassidy-animation-v1');
   return {
     model3dUri: model?.runtimeUri,
-    previewUri: 'docs/cassidy/assets/cassidy-canonical-concept-v1.png',
-    thumbnailUri: 'docs/cassidy/assets/cassidy-canonical-concept-v1.png',
+    previewUri: CASSIDY_CANONICAL_REFERENCE_URI,
+    thumbnailUri: CASSIDY_CANONICAL_REFERENCE_URI,
     rigVersion: rig?.version ?? 'pending',
     textureVersion: 'v1-pending',
     animationVersion: animation?.version ?? 'pending',
