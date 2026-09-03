@@ -47,8 +47,32 @@ function normalizeOutfit(state: CassidyCharacterState): CassidyVisualOutfit {
   return 'base';
 }
 
+/**
+ * Low-level manifest check used by the renderer path.
+ *
+ * This intentionally does not import the integration gate. The integration gate
+ * is allowed to depend on this primitive, while the resolver remains free of a
+ * circular dependency. A production model is eligible only when its model,
+ * rig, and animation records are explicitly integrated and the model has a
+ * runtime URI.
+ */
+export function isCassidyProductionRuntimeReady(): boolean {
+  const model = CASSIDY_PRODUCTION_ASSET_MANIFEST.assets.find(asset => asset.id === 'cassidy-model-v1');
+  const rig = CASSIDY_PRODUCTION_ASSET_MANIFEST.assets.find(asset => asset.id === 'cassidy-rig-v1');
+  const animation = CASSIDY_PRODUCTION_ASSET_MANIFEST.assets.find(asset => asset.id === 'cassidy-animation-v1');
+  return model?.status === 'integrated'
+    && Boolean(model.runtimeUri)
+    && rig?.status === 'integrated'
+    && animation?.status === 'integrated';
+}
+
 function hasProductionModel(assetSet: CassidyCharacterAssetSet): boolean {
-  return Boolean(assetSet.model3dUri && assetSet.rigVersion !== 'pending' && assetSet.animationVersion !== 'pending');
+  return Boolean(
+    assetSet.model3dUri
+      && assetSet.rigVersion !== 'pending'
+      && assetSet.animationVersion !== 'pending'
+      && isCassidyProductionRuntimeReady(),
+  );
 }
 
 export function resolveCassidyVisual(
@@ -83,11 +107,4 @@ export function resolveCassidyVisual(
       accessory: productionReady,
     },
   };
-}
-
-export function isCassidyProductionRuntimeReady(): boolean {
-  const model = CASSIDY_PRODUCTION_ASSET_MANIFEST.assets.find(asset => asset.id === 'cassidy-model-v1');
-  const rig = CASSIDY_PRODUCTION_ASSET_MANIFEST.assets.find(asset => asset.id === 'cassidy-rig-v1');
-  const animation = CASSIDY_PRODUCTION_ASSET_MANIFEST.assets.find(asset => asset.id === 'cassidy-animation-v1');
-  return model?.status === 'integrated' && Boolean(model.runtimeUri) && rig?.status === 'integrated' && animation?.status === 'integrated';
 }
