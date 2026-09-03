@@ -40,3 +40,10 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Cassidy local production outputs (reports are explicitly force-added by the agent)
+/artifacts/cassidy/*.blend
+/artifacts/cassidy/*.glb
+/artifacts/cassidy/*.gltf
+/artifacts/cassidy/*.bin
+/build/cassidy/
