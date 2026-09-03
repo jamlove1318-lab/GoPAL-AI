@@ -1,17 +1,16 @@
 """Reusable Cassidy animation contract.
 
-Animation clips are authored on the real rig. This module only validates and
+Animation clips are authored on the real rig. This module validates and
 annotates authored actions; it never fabricates finished character motion.
 """
 
 import bpy
 
 from .cassidy import REQUIRED_ANIMATIONS
+from .cassidy_rig import BODY_BONES, find_cassidy_armature
 
-ANIMATION_VERSION = "3N.7"
+ANIMATION_VERSION = "3N.14"
 
-# Conservative defaults for production review. They describe expected timing,
-# not generated motion quality.
 CLIP_FRAME_RANGES = {
     "idle": (1, 72),
     "walk": (1, 48),
@@ -31,19 +30,61 @@ def collect_animation_names():
     return {action.name for action in bpy.data.actions}
 
 
-def validate_animation_contract() -> dict:
+def _action_bone_names(action) -> set[str]:
+    """Return bone names targeted by pose-bone F-curves in an action."""
+    names = set()
+    for fcurve in action.fcurves:
+        path = fcurve.data_path
+        if not path.startswith('pose.bones['):
+            continue
+        marker = 'pose.bones["'
+        if marker not in path:
+            continue
+        remainder = path.split(marker, 1)[1]
+        bone_name = remainder.split('"]', 1)[0]
+        if bone_name:
+            names.add(bone_name)
+    return names
+
+
+def _is_meaningful_action(action, armature) -> bool:
+    """Require authored motion to target Cassidy's actual rig bones."""
+    if action is None or len(action.fcurves) == 0 or armature is None:
+        return False
+    targeted = _action_bone_names(action)
+    if not targeted:
+        return False
+    rig_bones = {bone.name for bone in armature.data.bones}
+    return bool(targeted & rig_bones)
+
+
+def validate_animation_contract(armature=None) -> dict:
+    armature = armature or find_cassidy_armature()
     names = collect_animation_names()
     missing = sorted(set(REQUIRED_ANIMATIONS) - names)
     empty = sorted(
         name for name in REQUIRED_ANIMATIONS
         if name in names and len(bpy.data.actions[name].fcurves) == 0
     )
+    unbound = sorted(
+        name for name in REQUIRED_ANIMATIONS
+        if name in names and not _is_meaningful_action(bpy.data.actions[name], armature)
+    )
     return {
-        "valid": not missing and not empty,
+        "valid": not missing and not empty and not unbound,
         "missing_animations": missing,
         "empty_animations": empty,
+        "unbound_animations": unbound,
         "coverage": len(REQUIRED_ANIMATIONS) - len(missing),
         "required": len(REQUIRED_ANIMATIONS),
+        "rig_found": armature is not None,
+        "rig_bone_targets": sorted(
+            set().union(*(
+                _action_bone_names(bpy.data.actions[name])
+                for name in REQUIRED_ANIMATIONS
+                if name in names
+            ))
+        ) if any(name in names for name in REQUIRED_ANIMATIONS) else [],
     }
 
 
