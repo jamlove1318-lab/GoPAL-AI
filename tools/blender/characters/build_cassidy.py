@@ -2,7 +2,8 @@
 
 This intentionally does not generate a fake finished humanoid. It prepares a
 clean, deterministic production scene, installs canonical material definitions,
-and validates that a real authored asset has been supplied before export.
+sets up review staging, and validates that a real authored asset has been
+supplied before export.
 """
 
 import bpy
@@ -13,6 +14,7 @@ from characters.cassidy import validate_cassidy_scene
 from characters.cassidy_manifest import production_manifest
 from characters.cassidy_authoring import prepare_authoring_environment
 from characters.cassidy_quality import production_gate_report
+from characters.cassidy_staging import prepare_staging_scene
 
 
 def prepare_scene() -> dict:
@@ -26,7 +28,8 @@ def prepare_scene() -> dict:
     scene["gopal_manifest_version"] = manifest["version"]
     scene["gopal_canonical_reference"] = manifest["canonical_reference"]
     authoring = prepare_authoring_environment()
-    return {**info, "authoring": authoring}
+    staging = prepare_staging_scene()
+    return {**info, "authoring": authoring, "staging": staging}
 
 
 def validate_before_export() -> dict:
