@@ -14,6 +14,7 @@ from characters.cassidy import validate_cassidy_scene
 from characters.cassidy_manifest import production_manifest
 from characters.cassidy_authoring import prepare_authoring_environment
 from characters.cassidy_authoring_workflow import prepare_cassidy_authoring_workspace
+from characters.cassidy_authoring_checklist import authoring_handoff_checklist, validate_checklist
 from characters.cassidy_production_gate import evaluate_production_readiness
 from characters.cassidy_staging import prepare_staging_scene
 from characters.cassidy_review import ensure_scene_review_record
@@ -33,12 +34,16 @@ def prepare_scene() -> dict:
     workspace = prepare_cassidy_authoring_workspace()
     staging = prepare_staging_scene()
     review = ensure_scene_review_record()
+    checklist = authoring_handoff_checklist()
+    checklist_validation = validate_checklist(checklist)
     return {
         **info,
         "authoring": authoring,
         "workspace": workspace,
         "staging": staging,
         "review": review,
+        "authoring_checklist": checklist,
+        "authoring_checklist_validation": checklist_validation,
     }
 
 
