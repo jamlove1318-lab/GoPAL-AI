@@ -10,14 +10,19 @@ from pathlib import Path
 
 from .cassidy import REQUIRED_EXPRESSIONS, REQUIRED_ANIMATIONS
 from .cassidy_animation import ANIMATION_VERSION, validate_animation_contract
+from .cassidy_animation_authoring import validate_animation_authoring
 from .cassidy_lod import validate_lods
+from .cassidy_mobile_lod import validate_mobile_lod
 from .cassidy_rig import validate_rig_contract
+from .cassidy_facial_rig_authoring import validate_facial_rig
+from .cassidy_mesh_quality import validate_authored_meshes
+from .cassidy_outfit_authoring import validate_outfit_material_readiness
 from .cassidy_review import REVIEW_VERSION, validate_review_record
 
-PACKAGE_VERSION = "3N.15"
-MODEL_VERSION = "3N.15"
-RIG_VERSION = "3N.6"
-TEXTURE_VERSION = "3N.5"
+PACKAGE_VERSION = "3N.30"
+MODEL_VERSION = "3N.30"
+RIG_VERSION = "3N.23"
+TEXTURE_VERSION = "3N.22"
 
 
 def sha256_file(path):
@@ -47,14 +52,24 @@ def build_package_manifest(model_path, source_path=None):
     if not model.is_file():
         raise FileNotFoundError(model)
     animation = validate_animation_contract()
+    animation_authoring = validate_animation_authoring()
     rig = validate_rig_contract()
+    facial_rig = validate_facial_rig()
     lod = validate_lods()
+    mobile_lod = validate_mobile_lod()
+    mesh = validate_authored_meshes()
+    outfit = validate_outfit_material_readiness()
     review = _review_validation()
     ready = (
         animation["valid"]
+        and animation_authoring["valid"]
         and rig["body_rig_valid"]
         and rig["gaze_controls_valid"]
+        and facial_rig["valid"]
         and lod["valid"]
+        and mobile_lod["valid"]
+        and mesh["valid"]
+        and outfit["valid"]
         and review["valid"]
         and review["complete"]
     )
@@ -78,8 +93,13 @@ def build_package_manifest(model_path, source_path=None):
         "validation": {
             "ready": ready,
             "animation": animation,
+            "animation_authoring": animation_authoring,
             "rig": rig,
+            "facial_rig": facial_rig,
             "lod": lod,
+            "mobile_lod": mobile_lod,
+            "mesh": mesh,
+            "outfit": outfit,
             "review": review,
         },
     }
