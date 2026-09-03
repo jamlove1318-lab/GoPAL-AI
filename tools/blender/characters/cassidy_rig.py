@@ -1,7 +1,7 @@
 """Reusable Cassidy rig, facial, and gaze authoring contract.
 
-The module creates controls only when an authored armature is available. It
-never creates a fake humanoid rig or silently claims facial animation support.
+The module validates controls on a real authored armature. It never creates a
+fake humanoid rig or silently claims facial animation support.
 """
 
 import bpy
@@ -42,24 +42,40 @@ def collect_bone_names(armature=None):
     return {bone.name for bone in armature.data.bones}
 
 
+def _declared_controls(armature) -> set[str]:
+    if armature is None:
+        return set()
+    declared = armature.get("gopal_gaze_controls", ())
+    if isinstance(declared, (list, tuple)):
+        return {str(name) for name in declared}
+    return set()
+
+
+def _pose_control_names(armature) -> set[str]:
+    if armature is None:
+        return set()
+    return {
+        name for name in armature.pose.bones.keys()
+        if name in GAZE_CONTROLS
+    }
+
+
 def validate_rig_contract(armature=None) -> dict:
     armature = armature or find_cassidy_armature()
     bones = collect_bone_names(armature)
     missing_body_bones = sorted(set(BODY_BONES) - bones)
 
-    control_names = set()
-    if armature is not None:
-        control_names.update(
-            name for name in armature.pose.bones.keys()
-            if name.startswith("Cassidy_")
-        )
+    declared_controls = _declared_controls(armature)
+    pose_controls = _pose_control_names(armature)
+    available_controls = declared_controls | pose_controls
+    missing_gaze_controls = sorted(set(GAZE_CONTROLS) - available_controls)
 
-    missing_gaze_controls = sorted(set(GAZE_CONTROLS) - control_names)
     return {
         "armature_found": armature is not None,
         "armature": armature.name if armature else None,
         "missing_body_bones": missing_body_bones,
         "missing_gaze_controls": missing_gaze_controls,
+        "gaze_controls": sorted(available_controls & set(GAZE_CONTROLS)),
         "body_rig_valid": not missing_body_bones,
         "gaze_controls_valid": not missing_gaze_controls,
     }
