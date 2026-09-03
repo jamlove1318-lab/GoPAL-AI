@@ -1,0 +1,1 @@
+The Cassidy factory is not production-certified until strict scene, package, LOD, deformation, and GLB round-trip checks pass.
