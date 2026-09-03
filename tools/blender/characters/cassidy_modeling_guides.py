@@ -1,21 +1,17 @@
 """Reference-driven Cassidy modeling guides.
 
-The guide system is intentionally non-destructive. It creates only empties,
-curves, and metadata used to align artist-authored geometry to the canonical
-reference. It never generates a humanoid mesh or claims visual approval.
+Guides contain no character geometry. Normalized checkpoints are measurement
+aids only; they must never override the canonical character design.
 """
 
 import bpy
-from mathutils import Vector
 
 from factory.bootstrap import ensure_collection
 from factory.naming import require_name
 
-GUIDE_VERSION = "3N.18"
+GUIDE_VERSION = "3N.34"
 GUIDE_COLLECTION = "CASSIDY_GUIDES"
 
-# Proportional checkpoints are expressed as normalized body-space heights.
-# They are measurement aids, not forced geometry dimensions.
 PROPORTION_CHECKPOINTS = {
     "ground": 0.0,
     "foot": 0.035,
@@ -27,17 +23,8 @@ PROPORTION_CHECKPOINTS = {
 }
 
 FACE_LANDMARKS = (
-    "face_center",
-    "brow_l",
-    "brow_r",
-    "eye_l",
-    "eye_r",
-    "nose_bridge",
-    "nose_tip",
-    "mouth_center",
-    "chin",
-    "jaw_l",
-    "jaw_r",
+    "face_center", "brow_l", "brow_r", "eye_l", "eye_r", "nose_bridge",
+    "nose_tip", "mouth_center", "chin", "jaw_l", "jaw_r",
 )
 
 VIEW_ANGLES = {
@@ -125,4 +112,5 @@ def prepare_modeling_guides():
         "proportion_checkpoints": list(proportions),
         "facial_landmarks": list(face),
         "reference_views": list(views),
+        "canonical_reference_required": True,
     }
