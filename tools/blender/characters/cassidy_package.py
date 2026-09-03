@@ -9,11 +9,15 @@ import json
 from pathlib import Path
 
 from .cassidy import REQUIRED_EXPRESSIONS, REQUIRED_ANIMATIONS
-from .cassidy_animation import validate_animation_contract
+from .cassidy_animation import ANIMATION_VERSION, validate_animation_contract
 from .cassidy_lod import validate_lods
 from .cassidy_rig import validate_rig_contract
+from .cassidy_review import REVIEW_VERSION, validate_review_record
 
-PACKAGE_VERSION = "3N.8"
+PACKAGE_VERSION = "3N.15"
+MODEL_VERSION = "3N.15"
+RIG_VERSION = "3N.6"
+TEXTURE_VERSION = "3N.5"
 
 
 def sha256_file(path):
@@ -24,6 +28,20 @@ def sha256_file(path):
     return digest.hexdigest()
 
 
+def _review_validation():
+    import bpy
+    record = bpy.context.scene.get("gopal_cassidy_review")
+    if not isinstance(record, dict):
+        return {"valid": False, "complete": False, "version": REVIEW_VERSION, "errors": ["Cassidy visual review record is missing."]}
+    validation = validate_review_record(dict(record))
+    return {
+        "valid": validation["valid"],
+        "complete": validation["valid"] and record.get("status") == "passed",
+        "version": record.get("version"),
+        "errors": validation["errors"],
+    }
+
+
 def build_package_manifest(model_path, source_path=None):
     model = Path(model_path)
     if not model.is_file():
@@ -31,10 +49,22 @@ def build_package_manifest(model_path, source_path=None):
     animation = validate_animation_contract()
     rig = validate_rig_contract()
     lod = validate_lods()
-    ready = animation["valid"] and rig["body_rig_valid"] and rig["gaze_controls_valid"] and lod["valid"]
+    review = _review_validation()
+    ready = (
+        animation["valid"]
+        and rig["body_rig_valid"]
+        and rig["gaze_controls_valid"]
+        and lod["valid"]
+        and review["valid"]
+        and review["complete"]
+    )
     return {
         "package_version": PACKAGE_VERSION,
         "character": "Cassidy",
+        "model_version": MODEL_VERSION,
+        "rig_version": RIG_VERSION,
+        "animation_version": ANIMATION_VERSION,
+        "texture_version": TEXTURE_VERSION,
         "model": {
             "path": model.name,
             "format": model.suffix.lower().lstrip("."),
@@ -44,7 +74,14 @@ def build_package_manifest(model_path, source_path=None):
         "source": Path(source_path).name if source_path else None,
         "required_expressions": list(REQUIRED_EXPRESSIONS),
         "required_animations": list(REQUIRED_ANIMATIONS),
-        "validation": {"ready": ready, "animation": animation, "rig": rig, "lod": lod},
+        "required_lods": ["LOD0", "LOD1", "LOD2"],
+        "validation": {
+            "ready": ready,
+            "animation": animation,
+            "rig": rig,
+            "lod": lod,
+            "review": review,
+        },
     }
 
 
