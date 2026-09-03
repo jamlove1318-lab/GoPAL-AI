@@ -1,7 +1,8 @@
 """Unified Cassidy production gate.
 
 Structural validation and visual/art review are both required before export.
-Neither gate is allowed to silently substitute for the other.
+Validation must report every missing authored dependency instead of throwing on
+an absent optional-in-progress asset, so the production report is actionable.
 """
 
 from characters.cassidy_quality import validate_authoring_environment
@@ -16,6 +17,7 @@ from characters.cassidy_face_authoring import (
     validate_face_nodes,
     ensure_expression_contract,
     ensure_gaze_contract,
+    EXPRESSION_CONTROLS,
 )
 from characters.cassidy_facial_rig_authoring import validate_facial_rig
 from characters.cassidy_hair_charm import validate_hair_and_charm
@@ -44,14 +46,21 @@ def validate_visual_review() -> dict:
 
 
 def _face_expression_result() -> dict:
-    """Validate the authored face shape-key contract without inventing geometry."""
+    """Return a deterministic missing-face result instead of raising."""
     import bpy
     face = bpy.data.objects.get("Cassidy_Face")
+    if face is None or face.type != "MESH":
+        return {
+            "valid": False,
+            "missing": [f"expression_{name}" for name in EXPRESSION_CONTROLS],
+            "found": [],
+            "error": "Expression contract requires the authored face mesh",
+        }
     return ensure_expression_contract(face)
 
 
 def _face_gaze_result() -> dict:
-    """Validate the authored gaze-control contract without creating controls."""
+    """Return a deterministic missing-armature result instead of raising."""
     import bpy
     armature = next((obj for obj in bpy.data.objects if obj.type == "ARMATURE"), None)
     return ensure_gaze_contract(armature)
@@ -75,22 +84,22 @@ def evaluate_production_readiness() -> dict:
     review = validate_visual_review()
 
     checks = (
-        (quality["valid"], "authoring environment or Cassidy semantic contract is incomplete"),
-        (mesh["valid"], "authored Cassidy mesh quality gate has not passed"),
-        (modeling["valid"], "modeling readiness gate has not passed"),
-        (rig["body_rig_valid"], "required body rig bones are missing"),
-        (rig["gaze_controls_valid"], "required eye/gaze controls are missing"),
-        (lod["valid"], "required mobile LOD coverage is missing"),
-        (mobile_lod["valid"], "mobile LOD budgets or identity preservation gate has not passed"),
-        (animation["valid"], "required animation coverage is missing or empty"),
-        (animation_authoring["valid"], "animation authoring quality gate has not passed"),
-        (face_nodes["valid"], "required face/eye/eyelid nodes are missing"),
-        (expressions["valid"], "required authored expression shapes are missing"),
-        (gaze["valid"], "required authored gaze controls are missing"),
-        (facial_rig["valid"], "facial rig contract has not passed"),
-        (hair_charm["valid"], "hair or signature charm authoring gate has not passed"),
-        (outfit["valid"], "outfit/material authoring gate has not passed"),
-        (review["complete"], "visual review has not passed all Cassidy review gates"),
+        (quality.get("valid", False), "authoring environment or Cassidy semantic contract is incomplete"),
+        (mesh.get("valid", False), "authored Cassidy mesh quality gate has not passed"),
+        (modeling.get("valid", False), "modeling readiness gate has not passed"),
+        (rig.get("body_rig_valid", False), "required body rig bones are missing"),
+        (rig.get("gaze_controls_valid", False), "required eye/gaze controls are missing"),
+        (lod.get("valid", False), "required mobile LOD coverage is missing"),
+        (mobile_lod.get("valid", False), "mobile LOD budgets or identity preservation gate has not passed"),
+        (animation.get("valid", False), "required animation coverage is missing or empty"),
+        (animation_authoring.get("valid", False), "animation authoring quality gate has not passed"),
+        (face_nodes.get("valid", False), "required face/eye/eyelid nodes are missing"),
+        (expressions.get("valid", False), "required authored expression shapes are missing"),
+        (gaze.get("valid", False), "required authored gaze controls are missing"),
+        (facial_rig.get("valid", False), "facial rig contract has not passed"),
+        (hair_charm.get("valid", False), "hair or signature charm authoring gate has not passed"),
+        (outfit.get("valid", False), "outfit/material authoring gate has not passed"),
+        (review.get("complete", False), "visual review has not passed all Cassidy review gates"),
     )
     reasons = [reason for passed, reason in checks if not passed]
     return {
