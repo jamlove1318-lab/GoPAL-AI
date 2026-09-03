@@ -17,7 +17,58 @@ if str(TOOLS_ROOT) not in sys.path: sys.path.insert(0, str(TOOLS_ROOT))
 from characters.build_cassidy import main as build_cassidy
 from characters.cassidy_export import export_runtime_package
 from characters.import_cassidy_source import import_source
-from characters.cassidy_source_upgrade import upgrade_imported_cassidy_source
+from characters import cassidy_source_upgrade as _source_upgrade
+
+
+def _iter_action_fcurves(action):
+    """Yield F-curves across Blender 3.x/4.x/5.x Action APIs."""
+    direct = getattr(action, "fcurves", None)
+    if direct is not None:
+        yield from direct
+        return
+
+    layers = getattr(action, "layers", None)
+    if layers is None:
+        return
+    for layer in layers:
+        strips = getattr(layer, "strips", None)
+        if strips is None:
+            continue
+        for strip in strips:
+            # Blender 4.4+/5.x stores F-curves in strip channel bags.
+            bags = getattr(strip, "channelbags", None)
+            if bags is not None:
+                for bag in bags:
+                    yield from getattr(bag, "fcurves", [])
+                continue
+            bag = getattr(strip, "channelbag", None)
+            if callable(bag):
+                try:
+                    bag = bag()
+                except TypeError:
+                    bag = None
+            if bag is not None:
+                yield from getattr(bag, "fcurves", [])
+
+
+def _patch_blender5_action_migration() -> None:
+    """Patch only the legacy F-curve migration helper for layered Actions."""
+    def _migrate_action_paths_compat(old: str, new: str) -> int:
+        changed = 0
+        needle = f'pose.bones["{old}"]'
+        replacement = f'pose.bones["{new}"]'
+        for action in bpy.data.actions:
+            for fcurve in _iter_action_fcurves(action):
+                if needle in fcurve.data_path:
+                    fcurve.data_path = fcurve.data_path.replace(needle, replacement)
+                    changed += 1
+        return changed
+
+    _source_upgrade._migrate_action_paths = _migrate_action_paths_compat
+
+
+_patch_blender5_action_migration()
+upgrade_imported_cassidy_source = _source_upgrade.upgrade_imported_cassidy_source
 
 
 def _json_safe(value: Any) -> Any:
