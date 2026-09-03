@@ -1,0 +1,280 @@
+{
+  "timestamp": "2026-09-03T13:49:51.142438+00:00",
+  "total_objects": 17,
+  "total_vertices": 747,
+  "total_triangles": 684,
+  "nodes": [
+    "Camera_Front",
+    "Camera_Portrait",
+    "Cassidy_Armature",
+    "Cassidy_Body",
+    "Cassidy_Charm",
+    "Cassidy_Eye_L",
+    "Cassidy_Eye_R",
+    "Cassidy_Eyelid_L",
+    "Cassidy_Eyelid_R",
+    "Cassidy_Face",
+    "Cassidy_Hair_Root",
+    "Cassidy_Hand_L",
+    "Cassidy_Hand_R",
+    "Cassidy_Head",
+    "Cassidy_Root",
+    "Gaze_Target",
+    "Light_Key"
+  ],
+  "mesh_objects": [
+    {
+      "name": "Cassidy_Body",
+      "vertices": 96,
+      "polygons": 62,
+      "shape_keys": [],
+      "materials": [
+        "M_Cassidy_Outfit_Emerald",
+        "M_Cassidy_Outfit_Pants",
+        "M_Cassidy_Shoes"
+      ]
+    },
+    {
+      "name": "Cassidy_Charm",
+      "vertices": 28,
+      "polygons": 18,
+      "shape_keys": [],
+      "materials": [
+        "M_Cassidy_Charm_Emerald",
+        "M_Cassidy_Charm_Gold"
+      ]
+    },
+    {
+      "name": "Cassidy_Eye_L",
+      "vertices": 86,
+      "polygons": 96,
+      "shape_keys": [],
+      "materials": [
+        "M_Cassidy_Eye_Sclera",
+        "M_Cassidy_Eye_Iris"
+      ]
+    },
+    {
+      "name": "Cassidy_Eye_R",
+      "vertices": 86,
+      "polygons": 96,
+      "shape_keys": [],
+      "materials": [
+        "M_Cassidy_Eye_Sclera",
+        "M_Cassidy_Eye_Iris"
+      ]
+    },
+    {
+      "name": "Cassidy_Eyelid_L",
+      "vertices": 16,
+      "polygons": 10,
+      "shape_keys": [],
+      "materials": [
+        "M_Cassidy_Skin"
+      ]
+    },
+    {
+      "name": "Cassidy_Eyelid_R",
+      "vertices": 16,
+      "polygons": 10,
+      "shape_keys": [],
+      "materials": [
+        "M_Cassidy_Skin"
+      ]
+    },
+    {
+      "name": "Cassidy_Face",
+      "vertices": 49,
+      "polygons": 36,
+      "shape_keys": [
+        "expression_neutral",
+        "expression_happy",
+        "expression_curious",
+        "expression_surprised",
+        "expression_thoughtful",
+        "expression_excited",
+        "expression_concerned",
+        "expression_playful"
+      ],
+      "materials": [
+        "M_Cassidy_Skin"
+      ]
+    },
+    {
+      "name": "Cassidy_Hair_Root",
+      "vertices": 152,
+      "polygons": 136,
+      "shape_keys": [],
+      "materials": [
+        "M_Cassidy_Hair",
+        "M_Cassidy_Hair_Highlight"
+      ]
+    },
+    {
+      "name": "Cassidy_Hand_L",
+      "vertices": 20,
+      "polygons": 14,
+      "shape_keys": [],
+      "materials": [
+        "M_Cassidy_Skin"
+      ]
+    },
+    {
+      "name": "Cassidy_Hand_R",
+      "vertices": 20,
+      "polygons": 14,
+      "shape_keys": [],
+      "materials": [
+        "M_Cassidy_Skin"
+      ]
+    },
+    {
+      "name": "Cassidy_Head",
+      "vertices": 178,
+      "polygons": 192,
+      "shape_keys": [],
+      "materials": [
+        "M_Cassidy_Skin"
+      ]
+    }
+  ],
+  "materials": [
+    "M_Cassidy_Outfit_Emerald",
+    "M_Cassidy_Outfit_Pants",
+    "M_Cassidy_Shoes",
+    "M_Cassidy_Charm_Emerald",
+    "M_Cassidy_Charm_Gold",
+    "M_Cassidy_Eye_Sclera",
+    "M_Cassidy_Eye_Iris",
+    "M_Cassidy_Skin",
+    "M_Cassidy_Hair",
+    "M_Cassidy_Hair_Highlight"
+  ],
+  "shape_keys": {
+    "Cassidy_Face": [
+      "expression_neutral",
+      "expression_happy",
+      "expression_curious",
+      "expression_surprised",
+      "expression_thoughtful",
+      "expression_excited",
+      "expression_concerned",
+      "expression_playful"
+    ]
+  },
+  "actions": [
+    {
+      "name": "celebrate",
+      "frame_range": [
+        1.0,
+        48.0
+      ],
+      "duration_frames": 47.0
+    },
+    {
+      "name": "gesture",
+      "frame_range": [
+        1.0,
+        40.0
+      ],
+      "duration_frames": 39.0
+    },
+    {
+      "name": "idle",
+      "frame_range": [
+        1.0,
+        60.0
+      ],
+      "duration_frames": 59.0
+    },
+    {
+      "name": "point",
+      "frame_range": [
+        1.0,
+        40.0
+      ],
+      "duration_frames": 39.0
+    },
+    {
+      "name": "react",
+      "frame_range": [
+        1.0,
+        40.0
+      ],
+      "duration_frames": 39.0
+    },
+    {
+      "name": "run",
+      "frame_range": [
+        1.0,
+        24.0
+      ],
+      "duration_frames": 23.0
+    },
+    {
+      "name": "sit",
+      "frame_range": [
+        1.0,
+        40.0
+      ],
+      "duration_frames": 39.0
+    },
+    {
+      "name": "talk",
+      "frame_range": [
+        1.0,
+        49.0
+      ],
+      "duration_frames": 48.0
+    },
+    {
+      "name": "think",
+      "frame_range": [
+        1.0,
+        40.0
+      ],
+      "duration_frames": 39.0
+    },
+    {
+      "name": "turn",
+      "frame_range": [
+        1.0,
+        40.0
+      ],
+      "duration_frames": 39.0
+    },
+    {
+      "name": "walk",
+      "frame_range": [
+        1.0,
+        32.0
+      ],
+      "duration_frames": 31.0
+    }
+  ],
+  "bones": [
+    "Root",
+    "Hips",
+    "Spine",
+    "Chest",
+    "Neck",
+    "Head",
+    "Jaw",
+    "Brow.L",
+    "Brow.R",
+    "Shoulder.L",
+    "UpperArm.L",
+    "LowerArm.L",
+    "Hand.L",
+    "Shoulder.R",
+    "UpperArm.R",
+    "LowerArm.R",
+    "Hand.R",
+    "UpperLeg.L",
+    "LowerLeg.L",
+    "Foot.L",
+    "UpperLeg.R",
+    "LowerLeg.R",
+    "Foot.R"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "job_id": "job-cassidy-prod-001",
+  "character": "Cassidy",
+  "start_time": "2026-09-03T13:49:35.350389+00:00",
+  "start_stage": "VALIDATION",
+  "stages_executed": [
+    {
+      "stage": "VALIDATION",
+      "duration_seconds": 2.7,
+      "status": "SUCCESS"
+    },
+    {
+      "stage": "EXPORT",
+      "duration_seconds": 8.67,
+      "status": "SUCCESS"
+    },
+    {
+      "stage": "PACKAGE",
+      "duration_seconds": 4.68,
+      "status": "SUCCESS"
+    },
+    {
+      "stage": "ACCEPTANCE",
+      "duration_seconds": 2.43,
+      "status": "SUCCESS"
+    },
+    {
+      "stage": "DONE",
+      "duration_seconds": 2.51,
+      "status": "SUCCESS"
+    }
+  ],
+  "status": "COMPLETED",
+  "total_duration_seconds": 21.03,
+  "completed_at": "2026-09-03T13:49:56.377450+00:00"
+}

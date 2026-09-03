@@ -1,0 +1,163 @@
+{
+  "package_format": "gopal-companion-asset-v1",
+  "character": "Cassidy",
+  "version": "1.0.0",
+  "target": "mobile",
+  "generated_at": "2026-09-03T13:49:51.163186+00:00",
+  "primary_asset": {
+    "filename": "cassidy-runtime.glb",
+    "format": "GLB",
+    "size_bytes": 204608,
+    "sha256": "f310e8fde8869ea71ada5cf64e992745b3f297141cbf6e2009407b6347ae7d22"
+  },
+  "lods_included": 3,
+  "components": [
+    {
+      "name": "Cassidy_Body",
+      "vertices": 96,
+      "polygons": 62,
+      "shape_keys": [],
+      "materials": [
+        "M_Cassidy_Outfit_Emerald",
+        "M_Cassidy_Outfit_Pants",
+        "M_Cassidy_Shoes"
+      ]
+    },
+    {
+      "name": "Cassidy_Charm",
+      "vertices": 28,
+      "polygons": 18,
+      "shape_keys": [],
+      "materials": [
+        "M_Cassidy_Charm_Emerald",
+        "M_Cassidy_Charm_Gold"
+      ]
+    },
+    {
+      "name": "Cassidy_Eye_L",
+      "vertices": 86,
+      "polygons": 96,
+      "shape_keys": [],
+      "materials": [
+        "M_Cassidy_Eye_Sclera",
+        "M_Cassidy_Eye_Iris"
+      ]
+    },
+    {
+      "name": "Cassidy_Eye_R",
+      "vertices": 86,
+      "polygons": 96,
+      "shape_keys": [],
+      "materials": [
+        "M_Cassidy_Eye_Sclera",
+        "M_Cassidy_Eye_Iris"
+      ]
+    },
+    {
+      "name": "Cassidy_Eyelid_L",
+      "vertices": 16,
+      "polygons": 10,
+      "shape_keys": [],
+      "materials": [
+        "M_Cassidy_Skin"
+      ]
+    },
+    {
+      "name": "Cassidy_Eyelid_R",
+      "vertices": 16,
+      "polygons": 10,
+      "shape_keys": [],
+      "materials": [
+        "M_Cassidy_Skin"
+      ]
+    },
+    {
+      "name": "Cassidy_Face",
+      "vertices": 49,
+      "polygons": 36,
+      "shape_keys": [
+        "expression_neutral",
+        "expression_happy",
+        "expression_curious",
+        "expression_surprised",
+        "expression_thoughtful",
+        "expression_excited",
+        "expression_concerned",
+        "expression_playful"
+      ],
+      "materials": [
+        "M_Cassidy_Skin"
+      ]
+    },
+    {
+      "name": "Cassidy_Hair_Root",
+      "vertices": 152,
+      "polygons": 136,
+      "shape_keys": [],
+      "materials": [
+        "M_Cassidy_Hair",
+        "M_Cassidy_Hair_Highlight"
+      ]
+    },
+    {
+      "name": "Cassidy_Hand_L",
+      "vertices": 20,
+      "polygons": 14,
+      "shape_keys": [],
+      "materials": [
+        "M_Cassidy_Skin"
+      ]
+    },
+    {
+      "name": "Cassidy_Hand_R",
+      "vertices": 20,
+      "polygons": 14,
+      "shape_keys": [],
+      "materials": [
+        "M_Cassidy_Skin"
+      ]
+    },
+    {
+      "name": "Cassidy_Head",
+      "vertices": 178,
+      "polygons": 192,
+      "shape_keys": [],
+      "materials": [
+        "M_Cassidy_Skin"
+      ]
+    }
+  ],
+  "animations": [
+    "celebrate",
+    "gesture",
+    "idle",
+    "point",
+    "react",
+    "run",
+    "sit",
+    "talk",
+    "think",
+    "turn",
+    "walk"
+  ],
+  "expressions": [
+    "Cassidy_Face"
+  ],
+  "materials": [
+    "M_Cassidy_Outfit_Emerald",
+    "M_Cassidy_Outfit_Pants",
+    "M_Cassidy_Shoes",
+    "M_Cassidy_Charm_Emerald",
+    "M_Cassidy_Charm_Gold",
+    "M_Cassidy_Eye_Sclera",
+    "M_Cassidy_Eye_Iris",
+    "M_Cassidy_Skin",
+    "M_Cassidy_Hair",
+    "M_Cassidy_Hair_Highlight"
+  ],
+  "budget_compliance": {
+    "triangles": 684,
+    "vertices": 747,
+    "within_mobile_budget": true
+  }
+}
