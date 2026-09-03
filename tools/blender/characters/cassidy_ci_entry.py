@@ -1,7 +1,8 @@
 """GitHub/Linux entrypoint for Cassidy production.
 
-The pipeline prepares the deterministic workspace, optionally imports a genuine
-source asset, validates it, and exports only when all production gates pass.
+The pipeline prepares the deterministic workspace, imports a genuine source,
+applies only objective source-derived technical upgrades, validates it, and
+exports only when all production gates pass.
 """
 from __future__ import annotations
 import json, os, sys
@@ -16,6 +17,7 @@ if str(TOOLS_ROOT) not in sys.path: sys.path.insert(0, str(TOOLS_ROOT))
 from characters.build_cassidy import main as build_cassidy
 from characters.cassidy_export import export_runtime_package
 from characters.import_cassidy_source import import_source
+from characters.cassidy_source_upgrade import upgrade_imported_cassidy_source
 
 
 def _json_safe(value: Any) -> Any:
@@ -44,24 +46,39 @@ def _source_from_environment() -> Path | None:
     return path
 
 
+def _print_blockers(report: dict) -> None:
+    quality = report.get("quality") or {}
+    reasons = quality.get("reasons") or []
+    if reasons:
+        print("[Cassidy-CI] Remaining production blockers:")
+        for reason in reasons:
+            print(f"  - {reason}")
+    review = quality.get("review") or {}
+    errors = review.get("errors") or []
+    if errors:
+        print("[Cassidy-CI] Visual-review status:")
+        for error in errors:
+            print(f"  - {error}")
+
+
 def run() -> int:
     output = REPO_ROOT / "artifacts" / "cassidy"
     output.mkdir(parents=True, exist_ok=True)
     print("[Cassidy-CI] Starting deterministic production preparation")
 
-    # build_cassidy initializes the clean production scene first. Only then do
-    # we append a genuine external source so the source cannot be destroyed by
-    # the factory reset.
     report = build_cassidy()
     source = _source_from_environment()
     if source:
         print(f"[Cassidy-CI] Importing genuine source: {source}")
         report["source_intake"] = import_source(source)
-        # Re-evaluate after source intake; preparation and validation APIs are
-        # deliberately kept separate so imported data is included in the gate.
+        print("[Cassidy-CI] Applying source-derived technical upgrade")
+        report["source_upgrade"] = upgrade_imported_cassidy_source()
         from characters.build_cassidy import validate_before_export
         report.update(validate_before_export())
+    else:
+        print("[Cassidy-CI] No genuine Cassidy source supplied; production remains blocked")
 
+    _print_blockers(report)
     _write_json(output / "production-report.json", report)
     blend_path = output / "cassidy-production.blend"
     bpy.ops.wm.save_as_mainfile(filepath=str(blend_path))
