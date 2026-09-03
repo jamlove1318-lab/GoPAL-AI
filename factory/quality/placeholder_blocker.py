@@ -6,6 +6,8 @@ import json
 REQUIRED_NODES={"Cassidy_Root","Cassidy_Body","Cassidy_Head","Cassidy_Face","Cassidy_Eye_L","Cassidy_Eye_R","Cassidy_Eyelid_L","Cassidy_Eyelid_R","Cassidy_Hand_L","Cassidy_Hand_R","Cassidy_Charm","Cassidy_Hair_Root"}
 REQUIRED_ANIMATIONS={"idle","walk","run","turn","sit","talk","gesture","point","celebrate","think","react"}
 REQUIRED_EXPRESSIONS={"expression_neutral","expression_happy","expression_curious","expression_surprised","expression_thoughtful","expression_excited","expression_concerned","expression_playful"}
+REQUIRED_DEFORM_BONES={"Cassidy_Hips","Cassidy_Spine","Cassidy_Chest","Cassidy_Neck","Cassidy_Head","Cassidy_UpperArm_L","Cassidy_Forearm_L","Cassidy_Hand_L","Cassidy_UpperArm_R","Cassidy_Forearm_R","Cassidy_Hand_R","Cassidy_Thigh_L","Cassidy_Shin_L","Cassidy_Foot_L","Cassidy_Thigh_R","Cassidy_Shin_R","Cassidy_Foot_R"}
+LEGACY_DEFORM_BONES={"Hips","Spine","Chest","Neck","Head","UpperArm.L","LowerArm.L","Hand.L","UpperArm.R","LowerArm.R","Hand.R","UpperLeg.L","LowerLeg.L","Foot.L","UpperLeg.R","LowerLeg.R","Foot.R"}
 
 def true_triangle_count(mesh)->int:
     import bmesh
@@ -36,8 +38,8 @@ def inspect_scene()->Dict[str,Any]:
     if not REQUIRED_EXPRESSIONS.issubset(expressions): errors.append(f"missing expressions: {sorted(REQUIRED_EXPRESSIONS-expressions)}")
     if not arm: errors.append("Cassidy_Armature missing")
     else:
-        required={"Hips","Spine","Chest","Neck","Head","UpperArm.L","LowerArm.L","Hand.L","UpperArm.R","LowerArm.R","Hand.R","UpperLeg.L","LowerLeg.L","Foot.L","UpperLeg.R","LowerLeg.R","Foot.R"}
-        if not required.issubset(bones): errors.append(f"missing deform bones: {sorted(required-bones)}")
+        if not (REQUIRED_DEFORM_BONES.issubset(bones) or LEGACY_DEFORM_BONES.issubset(bones)):
+            errors.append(f"missing deform bones: {sorted(REQUIRED_DEFORM_BONES-bones)}")
     if "TRACK_TO" not in gaze: errors.append("eye gaze TRACK_TO constraints missing")
     for level,budget in (("LOD0",25000),("LOD1",12000),("LOD2",5000)):
         if lod_triangles[level]==0: errors.append(f"{level} has no actual geometry")
