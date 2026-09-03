@@ -41,9 +41,18 @@ yarn-error.*
 /ios
 /android
 
-# Cassidy local production outputs (reports are explicitly force-added by the agent)
+# Cassidy / local build outputs
+/artifacts/*
+!/artifacts/cassidy/
+!/artifacts/cassidy/*.json
 /artifacts/cassidy/*.blend
 /artifacts/cassidy/*.glb
 /artifacts/cassidy/*.gltf
 /artifacts/cassidy/*.bin
-/build/cassidy/
+/build/
+
+# Python runtime caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
