@@ -1,8 +1,8 @@
 """Cassidy production build entrypoint.
 
 This intentionally does not generate a fake finished humanoid. It prepares a
-clean, deterministic production scene and validates that a real authored asset
-has been supplied before export.
+clean, deterministic production scene, installs canonical material definitions,
+and validates that a real authored asset has been supplied before export.
 """
 
 import bpy
@@ -11,6 +11,8 @@ from factory.bootstrap import initialize
 from factory.validation import validate_production_scene
 from characters.cassidy import validate_cassidy_scene
 from characters.cassidy_manifest import production_manifest
+from characters.cassidy_authoring import prepare_authoring_environment
+from characters.cassidy_quality import production_gate_report
 
 
 def prepare_scene() -> dict:
@@ -19,29 +21,34 @@ def prepare_scene() -> dict:
     if character_collection is None:
         raise RuntimeError("CHARACTERS collection was not created")
     scene = bpy.context.scene
+    manifest = production_manifest()
     scene["gopal_asset"] = "Cassidy"
-    scene["gopal_manifest_version"] = production_manifest()["version"]
-    scene["gopal_canonical_reference"] = production_manifest()["canonical_reference"]
-    return info
+    scene["gopal_manifest_version"] = manifest["version"]
+    scene["gopal_canonical_reference"] = manifest["canonical_reference"]
+    authoring = prepare_authoring_environment()
+    return {**info, "authoring": authoring}
 
 
 def validate_before_export() -> dict:
     generic_errors = validate_production_scene()
     cassidy = validate_cassidy_scene()
+    quality = production_gate_report()
     return {
         "generic_errors": generic_errors,
         "cassidy": cassidy,
-        "ready": not generic_errors and cassidy["valid"],
+        "quality": quality,
+        "ready": not generic_errors and quality["production_ready"],
     }
 
 
 def main() -> dict:
-    prepare_scene()
+    info = prepare_scene()
     report = validate_before_export()
+    report["factory"] = info
     if not report["ready"]:
         print("[Cassidy] Production asset not yet ready; export blocked.")
     else:
-        print("[Cassidy] Production asset passed structural validation.")
+        print("[Cassidy] Production asset passed all structural quality gates.")
     return report
 
 
