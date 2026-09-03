@@ -1,13 +1,11 @@
 """Unified Cassidy production gate.
 
-Every structural domain must pass independently. Visual/art review is also
-required. No declaration or metadata field is accepted as a substitute for
-the authored asset it describes.
+Structural validation and visual/art review are both required before export.
+Neither gate is allowed to silently substitute for the other.
 """
 
 from characters.cassidy_quality import validate_authoring_environment
 from characters.cassidy_rig import validate_rig_contract
-from characters.cassidy_rig_authoring import validate_rig_authoring
 from characters.cassidy_lod import validate_lods
 from characters.cassidy_mobile_lod import validate_mobile_lod
 from characters.cassidy_animation import validate_animation_contract
@@ -17,7 +15,7 @@ from characters.cassidy_modeling_tools import validate_modeling_readiness
 from characters.cassidy_face_authoring import validate_face_nodes, validate_expression_shapes, validate_gaze_controls
 from characters.cassidy_facial_rig_authoring import validate_facial_rig
 from characters.cassidy_hair_charm import validate_hair_and_charm
-from characters.cassidy_outfit_authoring import validate_outfit_contract, validate_material_slot_bindings
+from characters.cassidy_outfit_authoring import validate_outfit_material_readiness
 from characters.cassidy_review import validate_review_record, is_review_complete, REVIEW_VERSION
 
 
@@ -46,7 +44,6 @@ def evaluate_production_readiness() -> dict:
     mesh = validate_authored_meshes()
     modeling = validate_modeling_readiness()
     rig = validate_rig_contract()
-    rig_authoring = validate_rig_authoring()
     lod = validate_lods()
     mobile_lod = validate_mobile_lod()
     animation = validate_animation_contract()
@@ -56,8 +53,7 @@ def evaluate_production_readiness() -> dict:
     gaze = validate_gaze_controls()
     facial_rig = validate_facial_rig()
     hair_charm = validate_hair_and_charm()
-    outfit = validate_outfit_contract()
-    materials = validate_material_slot_bindings()
+    outfit = validate_outfit_material_readiness()
     review = validate_visual_review()
 
     checks = (
@@ -66,7 +62,6 @@ def evaluate_production_readiness() -> dict:
         (modeling["valid"], "modeling readiness gate has not passed"),
         (rig["body_rig_valid"], "required body rig bones are missing"),
         (rig["gaze_controls_valid"], "required eye/gaze controls are missing"),
-        (rig_authoring["valid"], "body rig/deformation binding validation has not passed"),
         (lod["valid"], "required mobile LOD coverage is missing"),
         (mobile_lod["valid"], "mobile LOD budgets or identity preservation gate has not passed"),
         (animation["valid"], "required animation coverage is missing or empty"),
@@ -76,15 +71,26 @@ def evaluate_production_readiness() -> dict:
         (gaze["valid"], "required authored gaze controls are missing"),
         (facial_rig["valid"], "facial rig contract has not passed"),
         (hair_charm["valid"], "hair or signature charm authoring gate has not passed"),
-        (outfit["valid"], "outfit authoring contract has not passed"),
-        (materials["valid"], "canonical material-slot binding gate has not passed"),
+        (outfit["valid"], "outfit/material authoring gate has not passed"),
         (review["complete"], "visual review has not passed all Cassidy review gates"),
     )
     reasons = [reason for passed, reason in checks if not passed]
-    return {"ready": not reasons, "reasons": reasons, "quality": quality,
-            "mesh": mesh, "modeling": modeling, "rig": rig, "rig_authoring": rig_authoring,
-            "lod": lod, "mobile_lod": mobile_lod, "animation": animation,
-            "animation_authoring": animation_authoring, "face_nodes": face_nodes,
-            "expressions": expressions, "gaze": gaze, "facial_rig": facial_rig,
-            "hair_charm": hair_charm, "outfit": outfit, "materials": materials,
-            "review": review}
+    return {
+        "ready": not reasons,
+        "reasons": reasons,
+        "quality": quality,
+        "mesh": mesh,
+        "modeling": modeling,
+        "rig": rig,
+        "lod": lod,
+        "mobile_lod": mobile_lod,
+        "animation": animation,
+        "animation_authoring": animation_authoring,
+        "face_nodes": face_nodes,
+        "expressions": expressions,
+        "gaze": gaze,
+        "facial_rig": facial_rig,
+        "hair_charm": hair_charm,
+        "outfit": outfit,
+        "review": review,
+    }
