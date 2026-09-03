@@ -24,9 +24,9 @@ export interface CassidyRuntimeProductionPackageValidation {
 }
 
 /**
- * Validates the metadata boundary before the runtime registry is allowed to
- * consume an authored Cassidy package. Binary/model validation remains the
- * responsibility of validateCassidyRuntimeModel at GLB load time.
+ * Validates the metadata boundary before runtime consumption. Rig, facial
+ * controls, and animations are normally embedded in the same GLB, so they do
+ * not require separate runtime URIs. Binary validation happens at GLB load.
  */
 export function validateCassidyRuntimeProductionPackage(
   pkg: CassidyRuntimeProductionPackage,
@@ -46,8 +46,8 @@ export function validateCassidyRuntimeProductionPackage(
   const rig = manifest.assets.find(asset => asset.id === 'cassidy-rig-v1');
   const animation = manifest.assets.find(asset => asset.id === 'cassidy-animation-v1');
   if (!model?.runtimeUri) errors.push('Manifest model runtime URI is not integrated.');
-  if (!rig?.runtimeUri) errors.push('Manifest rig runtime URI is not integrated.');
-  if (!animation?.runtimeUri) errors.push('Manifest animation runtime URI is not integrated.');
+  if (!rig) errors.push('Manifest rig asset record is missing.');
+  if (!animation) errors.push('Manifest animation asset record is missing.');
 
   return { valid: errors.length === 0, errors };
 }
