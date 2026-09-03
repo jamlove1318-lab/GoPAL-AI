@@ -6,6 +6,14 @@ Phase 3G turns Cassidy's approved visual direction into a controlled reference-i
 
 The runtime must never guess Cassidy's appearance. Art production may create derivative references and production assets, but every one of them must trace back to the canonical concept and remain identity-locked.
 
+## Canonical binary status
+
+The exact canonical concept image is now present in the repository root on `main`:
+
+`file_00000000642c821198cbd141ddc7e8d7.png`
+
+The production registry and reference package point to this exact binary. Pixel-level observations are **not** claimed here because the current repository connector can verify the binary's presence but cannot perform image inspection. Phase 3H provides the explicit visual-inspection intake boundary.
+
 ## Reference set
 
 The package contains exactly these 14 reference kinds:
@@ -55,15 +63,11 @@ No derivative reference is allowed to redefine Cassidy's face, eyes, hair silhou
 
 The intended order is:
 
-`canonical concept → reference package → approval → 3D production → validation → runtime integration`
+`canonical concept → visual inspection → reference package → approval → 3D production → validation → runtime integration`
 
 ## External art handoff
 
 The authored assets themselves are produced outside the TypeScript runtime. The repository contracts are the intake boundary for Blender/DCC work. A generic avatar, placeholder mesh, or unrelated generated character must never be promoted into the Cassidy production package merely to satisfy a missing asset slot.
-
-## Future binary intake
-
-When the real reference image and later production files are available, they should be added to the documented asset paths and registered by version/checksum as appropriate. The code is intentionally ready for that intake without pretending that artwork already exists.
 
 ## Definition of done for Phase 3G
 
@@ -76,4 +80,5 @@ When the real reference image and later production files are available, they sho
 - Missing required references are rejected.
 - Production cannot begin until all references are approved.
 - Existing production asset registry remains the single asset metadata owner.
-- No visual placeholder is introduced.
+- The exact canonical PNG is registered rather than fabricated.
+- Pixel-level analysis is delegated to the Phase 3H inspection gate.
