@@ -14,7 +14,12 @@ def get_git_head_commit(repo_dir:Path)->Optional[str]:
     except Exception:return None
 
 def _dirty_paths(repo_dir:Path)->list[str]:
-    output=_run(repo_dir,"git","status","--porcelain").stdout
+    # `git status --porcelain` may collapse an entirely untracked directory to
+    # a single `?? artifacts/` entry. That hides the actual generated paths and
+    # makes the safety classifier reject a directory that contains only allowed
+    # generated Cassidy output. `-uall` expands untracked directories to files,
+    # allowing the generated-prefix check to remain strict and path-specific.
+    output=_run(repo_dir,"git","status","--porcelain","-uall").stdout
     paths=[]
     for line in output.splitlines():
         if len(line)>=4:
