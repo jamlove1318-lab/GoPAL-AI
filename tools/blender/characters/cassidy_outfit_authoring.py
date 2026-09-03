@@ -1,22 +1,14 @@
-"""Reusable authored-outfit and material-variant contract for Cassidy.
-
-Outfits are authored assets. This module only tags, binds, and validates them;
-it never creates replacement clothing geometry.
-"""
+"""Reusable authored-outfit and material-variant contract for Cassidy."""
 
 import bpy
 
-OUTFIT_VERSION = "3N.22"
+OUTFIT_VERSION = "3N.30"
 OUTFITS = (
     "base", "spring", "summer", "autumn", "winter",
     "emerald-valley", "japanese-world", "french-world", "festival", "adventure",
 )
 MATERIAL_SLOTS = ("skin", "hair", "eyes", "brows", "outfit", "shoes", "accessory")
-WORLD_VARIANTS = {
-    "emerald-valley": "emerald-valley",
-    "japanese-world": "japanese-world",
-    "french-world": "french-world",
-}
+WORLD_VARIANTS = {"emerald-valley": "emerald-valley", "japanese-world": "japanese-world", "french-world": "french-world"}
 
 
 def cassidy_meshes():
@@ -38,6 +30,8 @@ def tag_outfit(obj, outfit: str, world_variant=None):
         raise ValueError("tag_outfit requires an authored mesh")
     if outfit not in OUTFITS:
         raise ValueError(f"Unknown Cassidy outfit: {outfit}")
+    if world_variant is not None and world_variant not in WORLD_VARIANTS:
+        raise ValueError(f"Unknown Cassidy world variant: {world_variant}")
     obj["gopal_character"] = "Cassidy"
     obj["gopal_geometry_role"] = "outfit"
     obj["gopal_outfit_id"] = outfit
@@ -66,12 +60,20 @@ def validate_outfit_material_readiness():
     outfits = find_outfit_objects()
     missing_materials = [o.name for o in outfits if len(o.material_slots) == 0]
     invalid_outfits = [o.name for o in outfits if o.get("gopal_outfit_id") not in OUTFITS]
+    unbound_slots = [o.name for o in outfits if o.get("gopal_material_slot") not in MATERIAL_SLOTS]
+    invalid_materials = []
+    for obj in outfits:
+        for index, slot in enumerate(obj.material_slots):
+            if slot.material is None:
+                invalid_materials.append(f"{obj.name}:slot-{index}:empty")
     return {
         "version": OUTFIT_VERSION,
-        "valid": bool(outfits) and not missing_materials and not invalid_outfits,
+        "valid": bool(outfits) and not missing_materials and not invalid_outfits and not unbound_slots and not invalid_materials,
         "outfit_count": len(outfits),
         "missing_materials": missing_materials,
         "invalid_outfits": invalid_outfits,
+        "unbound_material_slots": unbound_slots,
+        "invalid_materials": invalid_materials,
         "required_material_slots": list(MATERIAL_SLOTS),
         "world_variants": dict(WORLD_VARIANTS),
         "identity_policy": "world variants may change clothing/material accents, never core face, hair, proportions, eyes, or charm identity",
