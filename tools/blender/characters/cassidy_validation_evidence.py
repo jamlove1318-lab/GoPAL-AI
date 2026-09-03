@@ -1,51 +1,55 @@
-"""Deterministic evidence model for Cassidy production validation.
+"""Auditable evidence normalization for Cassidy production validation.
 
-This module does not decide whether a character is visually beautiful. It
-normalizes validator output into an auditable report so every production gate
-has explicit evidence, reasons, and provenance.
+This module never invents successful evidence and never performs visual
+approval. It maps the unified production gate to stable, machine-readable
+validation domains. The output is deterministic for a given gate result.
 """
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any, Mapping
 
 EVIDENCE_VERSION = "3N.35"
-DOMAINS = (
-    "authoring",
-    "mesh",
-    "body_rig",
-    "deformation",
-    "face",
-    "facial_rig",
-    "hair_charm",
-    "outfit_materials",
-    "lod",
-    "mobile_lod",
-    "animation",
-    "animation_authoring",
-    "visual_review",
-)
+
+DOMAIN_KEYS = {
+    "authoring": "quality",
+    "mesh": "mesh",
+    "modeling": "modeling",
+    "body_rig": "rig",
+    "deformation": "rig",
+    "face": "face_nodes",
+    "facial_rig": "facial_rig",
+    "hair_charm": "hair_charm",
+    "outfit_materials": "outfit",
+    "lod": "lod",
+    "mobile_lod": "mobile_lod",
+    "animation": "animation",
+    "animation_authoring": "animation_authoring",
+    "visual_review": "review",
+}
 
 
 def _bool(value: Any) -> bool:
     return value is True
 
 
-def _domain_evidence(domain: str, result: Mapping[str, Any] | None) -> dict[str, Any]:
-    result = result or {}
-    valid = _bool(result.get("valid"))
-    reasons = result.get("reasons", result.get("issues", []))
+def _valid_for_domain(domain: str, result: Mapping[str, Any]) -> bool:
+    if domain == "body_rig":
+        return _bool(result.get("body_rig_valid"))
+    if domain == "deformation":
+        return _bool(result.get("deformation_valid"))
+    if domain == "visual_review":
+        return _bool(result.get("complete"))
+    return _bool(result.get("valid"))
+
+
+def _reasons(result: Mapping[str, Any]) -> list[str]:
+    reasons = result.get("errors", result.get("reasons", result.get("issues", [])))
     if isinstance(reasons, str):
-        reasons = [reasons]
-    if not isinstance(reasons, list):
-        reasons = list(reasons) if reasons else []
-    return {
-        "domain": domain,
-        "valid": valid,
-        "status": "pass" if valid else "block",
-        "reasons": [str(item) for item in reasons],
-    }
+        return [reasons]
+    if not reasons:
+        return []
+    return [str(item) for item in reasons]
 
 
 def build_validation_evidence(
@@ -54,26 +58,27 @@ def build_validation_evidence(
     source_path: str | None = None,
     model_path: str | None = None,
 ) -> dict[str, Any]:
-    """Normalize a production-gate result into deterministic evidence.
+    """Create fail-closed evidence from one unified gate result."""
+    domains = []
+    for public_name, internal_name in DOMAIN_KEYS.items():
+        raw = gate_result.get(internal_name)
+        result = raw if isinstance(raw, Mapping) else {}
+        valid = _valid_for_domain(public_name, result)
+        domains.append({
+            "domain": public_name,
+            "valid": valid,
+            "status": "pass" if valid else "block",
+            "reasons": _reasons(result),
+        })
 
-    Unknown/missing domains remain visible instead of being silently treated as
-    successful. This is intentionally fail-closed.
-    """
-    evidence = []
-    for domain in DOMAINS:
-        raw = gate_result.get(domain)
-        evidence.append(_domain_evidence(domain, raw if isinstance(raw, Mapping) else None))
-
-    gate_ready = _bool(gate_result.get("ready"))
-    missing = [item["domain"] for item in evidence if not item["valid"]]
+    blocking = [item["domain"] for item in domains if not item["valid"]]
     return {
         "evidence_version": EVIDENCE_VERSION,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "production_ready": gate_ready and not missing,
+        "production_ready": _bool(gate_result.get("ready")) and not blocking,
         "source_path": source_path,
         "model_path": model_path,
-        "domains": evidence,
-        "blocking_domains": missing,
+        "domains": domains,
+        "blocking_domains": blocking,
         "gate_reasons": [str(item) for item in gate_result.get("reasons", [])],
     }
 
@@ -81,11 +86,10 @@ def build_validation_evidence(
 def summarize_evidence(evidence: Mapping[str, Any]) -> dict[str, Any]:
     domains = evidence.get("domains", [])
     passed = sum(1 for item in domains if item.get("valid") is True)
-    total = len(domains)
     return {
         "evidence_version": evidence.get("evidence_version", EVIDENCE_VERSION),
         "production_ready": evidence.get("production_ready") is True,
         "passed_domains": passed,
-        "total_domains": total,
+        "total_domains": len(domains),
         "blocking_domains": list(evidence.get("blocking_domains", [])),
     }
