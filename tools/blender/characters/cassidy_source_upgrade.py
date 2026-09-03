@@ -19,7 +19,7 @@ from .cassidy_modeling_tools import AUTHORED_COLLECTION, tag_authored_mesh
 from .cassidy_outfit_authoring import MATERIAL_SLOTS, tag_outfit
 from .cassidy_rig import BODY_BONES, GAZE_CONTROLS, mark_rig_as_authored
 
-UPGRADE_VERSION = "3N.50-source-derived"
+UPGRADE_VERSION = "3N.51-source-derived"
 
 # The legacy source uses the shorter bone names. Canonical names are adopted
 # while action F-curves are migrated in the same transaction.
@@ -295,6 +295,45 @@ def _ensure_gaze(armature) -> dict[str, Any]:
     return {"target": target.name, "track_to_eyes": [side for side in ("L", "R") if bpy.data.objects.get(f"Cassidy_Eye_{side}")]}
 
 
+def _apply_lod_decimation(obj, ratio: float) -> dict[str, Any]:
+    """Create real reduced geometry without destroying source expression keys.
+
+    Blender refuses to *apply* Decimate on meshes carrying shape keys. For
+    expression-bearing source meshes we therefore evaluate the modifier on a
+    temporary dependency-graph copy and replace the generated LOD mesh with
+    that evaluated geometry. The source mesh and its authored shape keys remain
+    untouched; LOD1/LOD2 are intentionally static geometry representations.
+    """
+    has_shape_keys = obj.data.shape_keys is not None
+    modifier = obj.modifiers.new(f"Cassidy_{obj.get('gopal_lod', 'LOD')}_Decimate", "DECIMATE")
+    modifier.ratio = ratio
+    modifier.use_collapse_triangulate = True
+    bpy.context.view_layer.objects.active = obj
+    obj.select_set(True)
+    try:
+        if not has_shape_keys:
+            bpy.ops.object.modifier_apply(modifier=modifier.name)
+            return {"method": "operator-apply", "shape_keys_preserved": True}
+
+        depsgraph = bpy.context.evaluated_depsgraph_get()
+        evaluated = obj.evaluated_get(depsgraph)
+        evaluated_mesh = bpy.data.meshes.new_from_object(
+            evaluated,
+            depsgraph=depsgraph,
+            preserve_all_data_layers=True,
+        )
+        if evaluated_mesh is None:
+            raise RuntimeError(f"Unable to evaluate reduced geometry for {obj.name}")
+        old_mesh = obj.data
+        obj.data = evaluated_mesh
+        if old_mesh.users == 0:
+            bpy.data.meshes.remove(old_mesh)
+        obj["gopal_lod_shape_keys"] = "static-evaluated-from-source"
+        return {"method": "depsgraph-evaluated", "shape_keys_preserved": False}
+    finally:
+        obj.select_set(False)
+
+
 def _create_lods() -> dict[str, Any]:
     # Remove only previous generated LODs from this upgrade family.
     for obj in list(bpy.data.objects):
@@ -314,17 +353,15 @@ def _create_lods() -> dict[str, Any]:
             copy["gopal_identity_part"] = source.name
             copy["gopal_source_derived"] = True
             authored.objects.link(copy)
+            lod_method = "identity-copy"
+            shape_keys_preserved = copy.data.shape_keys is not None
             if lod != "LOD0":
-                modifier = copy.modifiers.new(f"Cassidy_{lod}_Decimate", "DECIMATE")
-                modifier.ratio = ratio
-                modifier.use_collapse_triangulate = True
-                bpy.context.view_layer.objects.active = copy
-                copy.select_set(True)
-                try:
-                    bpy.ops.object.modifier_apply(modifier=modifier.name)
-                finally:
-                    copy.select_set(False)
-            records.append({"lod": lod, "source": source.name, "name": copy.name, "triangles": _triangle_count(copy.data)})
+                lod_result = _apply_lod_decimation(copy, ratio)
+                lod_method = lod_result["method"]
+                shape_keys_preserved = lod_result["shape_keys_preserved"]
+            copy["gopal_lod_generation"] = lod_method
+            copy["gopal_lod_shape_keys_preserved"] = shape_keys_preserved
+            records.append({"lod": lod, "source": source.name, "name": copy.name, "triangles": _triangle_count(copy.data), "method": lod_method, "shape_keys_preserved": shape_keys_preserved})
     return {"count": len(records), "records": records}
 
 
