@@ -1,14 +1,20 @@
 """Headless CI entry point for the Cassidy Blender production gate.
 
-This command is intentionally fail-closed: without a real authored Cassidy
-scene the process exits non-zero and reports exactly which production gates
-remain incomplete.
+This file is executable directly by Blender after the repository's
+``tools/blender`` directory is on ``sys.path``. It intentionally fails closed:
+without a real authored Cassidy scene the process exits non-zero.
 """
 
 import json
 import sys
+from pathlib import Path
 
-from .cassidy_production_gate import evaluate_production_readiness
+# Support both ``blender --python`` execution and package/module execution.
+TOOLS_ROOT = Path(__file__).resolve().parents[1]
+if str(TOOLS_ROOT) not in sys.path:
+    sys.path.insert(0, str(TOOLS_ROOT))
+
+from characters.cassidy_production_gate import evaluate_production_readiness
 
 
 def main() -> int:
