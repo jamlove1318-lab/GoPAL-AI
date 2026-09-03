@@ -4,7 +4,10 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as THREE from 'three';
 import type { StyleProp, ViewStyle } from 'react-native';
 import type { CassidyVisualCommand } from './cassidyVisualResolver';
-import { CASSIDY_RUNTIME_MORPHS } from './cassidyRuntimeModelContract';
+import {
+  CASSIDY_RUNTIME_MORPHS,
+  validateCassidyRuntimeModel,
+} from './cassidyRuntimeModelContract';
 
 interface Cassidy3DModelProps {
   command: CassidyVisualCommand;
@@ -12,7 +15,6 @@ interface Cassidy3DModelProps {
 
 function Cassidy3DModel({ command }: Cassidy3DModelProps) {
   if (!command.model3dUri) return null;
-
   return <LoadedCassidyModel command={command} />;
 }
 
@@ -27,6 +29,24 @@ function LoadedCassidyModel({ command }: Cassidy3DModelProps) {
     [gltf.animations],
   );
 
+  const runtimeValidation = useMemo(() => {
+    const nodeNames: string[] = [];
+    const morphNames: string[] = [];
+
+    root.traverse(object => {
+      nodeNames.push(object.name);
+      const mesh = object as THREE.Mesh;
+      if (!mesh.morphTargetDictionary) return;
+      morphNames.push(...Object.keys(mesh.morphTargetDictionary));
+    });
+
+    return validateCassidyRuntimeModel({
+      animationNames: gltf.animations.map(clip => clip.name),
+      morphNames,
+      nodeNames,
+    });
+  }, [gltf.animations, root]);
+
   useEffect(() => {
     mixerRef.current = new THREE.AnimationMixer(root);
 
@@ -34,10 +54,13 @@ function LoadedCassidyModel({ command }: Cassidy3DModelProps) {
       mixerRef.current?.stopAllAction();
       mixerRef.current?.uncacheRoot(root);
       mixerRef.current = null;
+      actionRef.current = null;
     };
   }, [root]);
 
   useEffect(() => {
+    if (!runtimeValidation.valid) return;
+
     const mixer = mixerRef.current;
     if (!mixer) return;
 
@@ -52,9 +75,11 @@ function LoadedCassidyModel({ command }: Cassidy3DModelProps) {
     return () => {
       nextAction.fadeOut(0.12);
     };
-  }, [clipsByName, command.animation]);
+  }, [clipsByName, command.animation, runtimeValidation.valid]);
 
   useEffect(() => {
+    if (!runtimeValidation.valid) return;
+
     root.traverse(object => {
       if (!(object instanceof THREE.Mesh) || !object.morphTargetDictionary || !object.morphTargetInfluences) {
         return;
@@ -65,11 +90,14 @@ function LoadedCassidyModel({ command }: Cassidy3DModelProps) {
         object.morphTargetInfluences[index] = name === activeMorph ? 1 : 0;
       }
     });
-  }, [command.expression, root]);
+  }, [command.expression, root, runtimeValidation.valid]);
 
   useFrame((_, delta) => {
-    mixerRef.current?.update(delta);
+    if (runtimeValidation.valid) mixerRef.current?.update(delta);
   });
+
+  // Fail closed: a malformed production GLB never becomes visible as Cassidy.
+  if (!runtimeValidation.valid) return null;
 
   return <primitive object={root} />;
 }
@@ -84,10 +112,11 @@ export interface Cassidy3DSceneProps {
 /**
  * Reusable presentation surface for a production Cassidy GLB.
  *
- * This host renders only a production model supplied by the visual command.
- * When the registry is still pending, it intentionally renders no fake 3D
- * character; the existing 2D/fallback presentation remains responsible for
- * that state.
+ * The resolver decides whether production rendering is allowed. Once a real
+ * model is supplied, the loaded GLB is independently checked against the
+ * stable runtime contract before any geometry, animation, or expressions are
+ * presented. Invalid production assets fail closed and leave the fallback
+ * presentation responsible for the character.
  */
 export function Cassidy3DScene({
   command,
@@ -95,7 +124,10 @@ export function Cassidy3DScene({
   cameraPosition = [0, 1.45, 3.2],
   cameraFov = 32,
 }: Cassidy3DSceneProps) {
-  const canRenderProduction = command.assetTier !== 'fallback' && Boolean(command.model3dUri);
+  const canRenderProduction =
+    command.assetTier !== 'fallback' &&
+    Boolean(command.model3dUri) &&
+    command.visible;
 
   return (
     <Canvas
