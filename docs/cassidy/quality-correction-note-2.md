@@ -1,0 +1,1 @@
+Production acceptance is strict and fail-closed. Existing Cassidy automation remains the builder; quality gates remain the judge.
