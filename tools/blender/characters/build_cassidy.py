@@ -13,7 +13,7 @@ from factory.validation import validate_production_scene
 from characters.cassidy import validate_cassidy_scene
 from characters.cassidy_manifest import production_manifest
 from characters.cassidy_authoring import prepare_authoring_environment
-from characters.cassidy_quality import production_gate_report
+from characters.cassidy_production_gate import evaluate_production_readiness
 from characters.cassidy_staging import prepare_staging_scene
 from characters.cassidy_review import ensure_scene_review_record
 
@@ -37,12 +37,12 @@ def prepare_scene() -> dict:
 def validate_before_export() -> dict:
     generic_errors = validate_production_scene()
     cassidy = validate_cassidy_scene()
-    quality = production_gate_report()
+    quality = evaluate_production_readiness()
     return {
         "generic_errors": generic_errors,
         "cassidy": cassidy,
         "quality": quality,
-        "ready": not generic_errors and quality["production_ready"],
+        "ready": not generic_errors and quality["ready"],
     }
 
 
@@ -53,7 +53,7 @@ def main() -> dict:
     if not report["ready"]:
         print("[Cassidy] Production asset not yet ready; export blocked.")
     else:
-        print("[Cassidy] Production asset passed all structural quality gates.")
+        print("[Cassidy] Production asset passed all unified production gates.")
     return report
 
 
