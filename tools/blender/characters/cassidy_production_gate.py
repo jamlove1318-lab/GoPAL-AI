@@ -12,7 +12,11 @@ from characters.cassidy_animation import validate_animation_contract
 from characters.cassidy_animation_authoring import validate_animation_authoring
 from characters.cassidy_mesh_quality import validate_authored_meshes
 from characters.cassidy_modeling_tools import validate_modeling_readiness
-from characters.cassidy_face_authoring import validate_face_nodes, validate_expression_shapes, validate_gaze_controls
+from characters.cassidy_face_authoring import (
+    validate_face_nodes,
+    ensure_expression_contract,
+    ensure_gaze_contract,
+)
 from characters.cassidy_facial_rig_authoring import validate_facial_rig
 from characters.cassidy_hair_charm import validate_hair_and_charm
 from characters.cassidy_outfit_authoring import validate_outfit_material_readiness
@@ -39,6 +43,20 @@ def validate_visual_review() -> dict:
             "version": record.get("version"), "errors": errors}
 
 
+def _face_expression_result() -> dict:
+    """Validate the authored face shape-key contract without inventing geometry."""
+    import bpy
+    face = bpy.data.objects.get("Cassidy_Face")
+    return ensure_expression_contract(face)
+
+
+def _face_gaze_result() -> dict:
+    """Validate the authored gaze-control contract without creating controls."""
+    import bpy
+    armature = next((obj for obj in bpy.data.objects if obj.type == "ARMATURE"), None)
+    return ensure_gaze_contract(armature)
+
+
 def evaluate_production_readiness() -> dict:
     quality = validate_authoring_environment()
     mesh = validate_authored_meshes()
@@ -49,8 +67,8 @@ def evaluate_production_readiness() -> dict:
     animation = validate_animation_contract()
     animation_authoring = validate_animation_authoring()
     face_nodes = validate_face_nodes()
-    expressions = validate_expression_shapes()
-    gaze = validate_gaze_controls()
+    expressions = _face_expression_result()
+    gaze = _face_gaze_result()
     facial_rig = validate_facial_rig()
     hair_charm = validate_hair_and_charm()
     outfit = validate_outfit_material_readiness()
