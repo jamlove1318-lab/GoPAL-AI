@@ -61,3 +61,6 @@ class CassidyFactoryAgent:
             try:print(f"[GOPAL-AGENT] {self.run_once()}",flush=True)
             except Exception as exc:print(f"[GOPAL-AGENT] cycle error: {exc}",flush=True)
             if self.running:time.sleep(self.poll_interval)
+
+if __name__ == "__main__":
+    CassidyFactoryAgent().watch()
