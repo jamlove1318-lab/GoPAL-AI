@@ -71,6 +71,146 @@ export interface CassidyOutfitIdentityContract {
   construction: 'practical-adventure-learning-clothing';
 }
 
+/**
+ * Visual review gates are intentionally renderer/art-tool agnostic. They make
+ * the acceptance process explicit before an external asset is allowed into
+ * the production registry.
+ */
+export type CassidyVisualReviewArea =
+  | 'face'
+  | 'eyes'
+  | 'hair'
+  | 'body'
+  | 'clothing'
+  | 'accessory'
+  | 'expressions'
+  | 'gaze'
+  | 'animation'
+  | 'world-consistency'
+  | 'mobile-readability';
+
+export type CassidyVisualReviewStatus = 'not-reviewed' | 'needs-revision' | 'approved';
+
+export interface CassidyVisualReviewGate {
+  area: CassidyVisualReviewArea;
+  status: CassidyVisualReviewStatus;
+  required: true;
+  acceptanceCriteria: readonly string[];
+}
+
+export const CASSIDY_VISUAL_REVIEW_GATES: readonly CassidyVisualReviewGate[] = [
+  {
+    area: 'face',
+    status: 'not-reviewed',
+    required: true,
+    acceptanceCriteria: [
+      'Identity landmarks remain consistent across all canonical views.',
+      'Cassidy remains recognizable in neutral expression before stylization effects.',
+      'No generic source-character facial proportions were retained merely for convenience.',
+    ],
+  },
+  {
+    area: 'eyes',
+    status: 'not-reviewed',
+    required: true,
+    acceptanceCriteria: [
+      'Near-black eye family remains visually coherent with the canonical design.',
+      'Iris, pupil, sclera and corneal response remain readable at game-camera distance.',
+      'Gaze and eyelids can move independently without breaking the face.',
+    ],
+  },
+  {
+    area: 'hair',
+    status: 'not-reviewed',
+    required: true,
+    acceptanceCriteria: [
+      'Dark chocolate-brown identity and silhouette are preserved.',
+      'Hair is authored as controlled groups suitable for secondary motion.',
+      'World lighting does not turn the hairstyle into a different character design.',
+    ],
+  },
+  {
+    area: 'body',
+    status: 'not-reviewed',
+    required: true,
+    acceptanceCriteria: [
+      'Natural balanced proportions are preserved.',
+      'Hands and feet are complete and readable.',
+      'Pose and deformation preserve natural weight and grounding.',
+    ],
+  },
+  {
+    area: 'clothing',
+    status: 'not-reviewed',
+    required: true,
+    acceptanceCriteria: [
+      'Clothing reads as practical adventure/learning clothing.',
+      'Layered construction remains stable during movement.',
+      'World variants modify clothing rather than Cassidy identity.',
+    ],
+  },
+  {
+    area: 'accessory',
+    status: 'not-reviewed',
+    required: true,
+    acceptanceCriteria: [
+      'Leaf-star-compass silhouette is recognizable.',
+      'Glow is restrained and state-driven.',
+      'The charm never competes with Cassidy\'s face.',
+    ],
+  },
+  {
+    area: 'expressions',
+    status: 'not-reviewed',
+    required: true,
+    acceptanceCriteria: [
+      'All eight canonical expressions are distinct and recognizable.',
+      'Expression deformation preserves Cassidy\'s underlying facial identity.',
+      'Expressions can transition without visible mesh or rig failure.',
+    ],
+  },
+  {
+    area: 'gaze',
+    status: 'not-reviewed',
+    required: true,
+    acceptanceCriteria: [
+      'Eyes can target attention independently of head rotation.',
+      'Eyelids follow gaze naturally.',
+      'Eye motion does not produce an artificial or disconnected appearance.',
+    ],
+  },
+  {
+    area: 'animation',
+    status: 'not-reviewed',
+    required: true,
+    acceptanceCriteria: [
+      'All eleven canonical animation intents have production-ready clips.',
+      'Movement has believable weight, timing and continuity.',
+      'Animation communicates attention and personality without inventing engine decisions.',
+    ],
+  },
+  {
+    area: 'world-consistency',
+    status: 'not-reviewed',
+    required: true,
+    acceptanceCriteria: [
+      'Emerald Valley, Japanese World and French World variants remain unmistakably Cassidy.',
+      'Face, eyes, hair identity, proportions and core silhouette remain stable.',
+      'Only approved world-specific clothing/material accents change.',
+    ],
+  },
+  {
+    area: 'mobile-readability',
+    status: 'not-reviewed',
+    required: true,
+    acceptanceCriteria: [
+      'Face, eyes and hair silhouette remain readable at target gameplay distance.',
+      'LOD transitions do not visibly redefine Cassidy.',
+      'Performance measurements are captured before final registry integration.',
+    ],
+  },
+];
+
 export interface CassidyCharacterMasterContract {
   contractVersion: 'phase-3c-v1';
   characterId: 'cassidy';
@@ -167,5 +307,6 @@ export function validateCassidyCharacterMaster(
   if (master.animations.length !== 11) errors.push('Cassidy must retain all 11 canonical animations.');
   if (master.hair.baseColor !== '#3B2419') errors.push('Canonical dark chocolate-brown hair color changed unexpectedly.');
   if (master.eyes.baseColor !== '#17110E') errors.push('Canonical near-black eye color changed unexpectedly.');
+  if (CASSIDY_VISUAL_REVIEW_GATES.length !== 11) errors.push('Cassidy visual review gate coverage is incomplete.');
   return errors;
 }
