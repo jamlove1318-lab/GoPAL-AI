@@ -24,9 +24,10 @@ export interface CassidyProductionIntegrationGateResult {
 /**
  * Final safety gate between authored Cassidy production data and runtime.
  *
- * This is deliberately a gate, not another registry. It composes the existing
- * canonical-reference, reference-package, production-package, and runtime
- * readiness contracts. Nothing is generated or substituted when a gate fails.
+ * The runtime readiness predicate is deliberately kept low-level in the
+ * visual resolver. This gate composes it with the canonical reference,
+ * reference package, and production package contracts without creating a
+ * second readiness authority or an import cycle.
  */
 export function validateCassidyProductionIntegrationGate(
   productionPackage: CassidyProductionPackage,
@@ -51,9 +52,13 @@ export function validateCassidyProductionIntegrationGate(
     if (!requiredRoles.has(role)) errors.push(`Production package is missing ${role}.`);
   }
 
-  const runtimeReady = isCassidyProductionRuntimeReady(assetManifest);
+  const runtimeReady = isCassidyProductionRuntimeReady();
   if (!runtimeReady) {
-    errors.push('Cassidy model, rig, and animation assets are not all explicitly integrated.');
+    errors.push(
+      assetManifest === CASSIDY_PRODUCTION_ASSET_MANIFEST
+        ? 'Cassidy model, rig, and animation assets are not all explicitly integrated.'
+        : 'The supplied Cassidy asset manifest is not the active runtime manifest; runtime integration cannot be proven for it.',
+    );
   }
 
   return {
