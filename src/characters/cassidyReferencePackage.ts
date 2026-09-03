@@ -1,28 +1,13 @@
 import { CASSIDY_REFERENCE_PACKAGE } from './cassidyCharacterProductionPipeline';
-import { CASSIDY_PRODUCTION_ASSET_MANIFEST } from './cassidyProductionAssetRegistry';
+import { CASSIDY_CANONICAL_REFERENCE_URI, CASSIDY_PRODUCTION_ASSET_MANIFEST } from './cassidyProductionAssetRegistry';
 
 /** Phase 3G: controlled reference intake and approval without creating a second asset registry. */
-export type CassidyReferenceApprovalStatus =
-  | 'pending'
-  | 'approved'
-  | 'revision-required'
-  | 'rejected';
+export type CassidyReferenceApprovalStatus = 'pending' | 'approved' | 'revision-required' | 'rejected';
 
 export type CassidyReferenceKind =
-  | 'hero-full-body'
-  | 'front'
-  | 'three-quarter-front'
-  | 'side'
-  | 'three-quarter-back'
-  | 'back'
-  | 'face-closeup'
-  | 'eye-closeup'
-  | 'hair'
-  | 'base-outfit'
-  | 'expression-sheet'
-  | 'pose-sheet'
-  | 'accessory'
-  | 'material-sheet';
+  | 'hero-full-body' | 'front' | 'three-quarter-front' | 'side' | 'three-quarter-back' | 'back'
+  | 'face-closeup' | 'eye-closeup' | 'hair' | 'base-outfit' | 'expression-sheet' | 'pose-sheet'
+  | 'accessory' | 'material-sheet';
 
 export interface CassidyReferenceApproval {
   referenceId: string;
@@ -32,6 +17,7 @@ export interface CassidyReferenceApproval {
   status: CassidyReferenceApprovalStatus;
   identityLocked: true;
   canonicalSource: 'cassidy-canonical-concept-v1';
+  sourceUri?: string;
   evidence?: readonly string[];
   notes?: string;
   approvedAt?: string;
@@ -44,7 +30,7 @@ export interface CassidyReferencePackage {
   packageVersion: 'phase-3g-v1';
   identityLocked: true;
   canonicalSource: 'cassidy-canonical-concept-v1';
-  canonicalPath: 'docs/cassidy/assets/cassidy-canonical-concept-v1.png';
+  canonicalPath: typeof CASSIDY_CANONICAL_REFERENCE_URI;
   references: readonly CassidyReferenceApproval[];
 }
 
@@ -52,47 +38,27 @@ export const CASSIDY_REQUIRED_REFERENCE_KINDS: readonly CassidyReferenceKind[] =
   CASSIDY_REFERENCE_PACKAGE.requiredReferences as readonly CassidyReferenceKind[];
 
 const REFERENCE_ASSET_IDS: Readonly<Record<CassidyReferenceKind, string>> = {
-  'hero-full-body': 'cassidy-canonical-concept-v1',
-  front: 'cassidy-turnaround-v1',
-  'three-quarter-front': 'cassidy-turnaround-v1',
-  side: 'cassidy-turnaround-v1',
-  'three-quarter-back': 'cassidy-turnaround-v1',
-  back: 'cassidy-turnaround-v1',
-  'face-closeup': 'cassidy-face-v1',
-  'eye-closeup': 'cassidy-face-v1',
-  hair: 'cassidy-hair-v1',
-  'base-outfit': 'cassidy-outfit-base-v1',
-  'expression-sheet': 'cassidy-expression-sheet-v1',
-  'pose-sheet': 'cassidy-pose-sheet-v1',
-  accessory: 'cassidy-accessory-v1',
-  'material-sheet': 'cassidy-material-sheet-v1',
+  'hero-full-body': 'cassidy-canonical-concept-v1', front: 'cassidy-turnaround-v1', 'three-quarter-front': 'cassidy-turnaround-v1',
+  side: 'cassidy-turnaround-v1', 'three-quarter-back': 'cassidy-turnaround-v1', back: 'cassidy-turnaround-v1',
+  'face-closeup': 'cassidy-face-v1', 'eye-closeup': 'cassidy-face-v1', hair: 'cassidy-hair-v1',
+  'base-outfit': 'cassidy-outfit-base-v1', 'expression-sheet': 'cassidy-expression-sheet-v1',
+  'pose-sheet': 'cassidy-pose-sheet-v1', accessory: 'cassidy-accessory-v1', 'material-sheet': 'cassidy-material-sheet-v1',
 };
 
 export const CASSIDY_REFERENCE_PACKAGE_V1: CassidyReferencePackage = {
-  packageId: 'cassidy-reference-package-v1',
-  characterId: 'cassidy',
-  packageVersion: 'phase-3g-v1',
-  identityLocked: true,
-  canonicalSource: 'cassidy-canonical-concept-v1',
-  canonicalPath: 'docs/cassidy/assets/cassidy-canonical-concept-v1.png',
+  packageId: 'cassidy-reference-package-v1', characterId: 'cassidy', packageVersion: 'phase-3g-v1', identityLocked: true,
+  canonicalSource: 'cassidy-canonical-concept-v1', canonicalPath: CASSIDY_CANONICAL_REFERENCE_URI,
   references: CASSIDY_REQUIRED_REFERENCE_KINDS.map(kind => ({
-    referenceId: `cassidy-reference-${kind}-v1`,
-    kind,
-    sourceAssetId: REFERENCE_ASSET_IDS[kind],
-    version: 'v1',
-    status: kind === 'hero-full-body' ? 'approved' : 'pending',
-    identityLocked: true,
-    canonicalSource: 'cassidy-canonical-concept-v1',
+    referenceId: `cassidy-reference-${kind}-v1`, kind, sourceAssetId: REFERENCE_ASSET_IDS[kind], version: 'v1',
+    status: kind === 'hero-full-body' ? 'approved' : 'pending', identityLocked: true,
+    canonicalSource: 'cassidy-canonical-concept-v1', sourceUri: kind === 'hero-full-body' ? CASSIDY_CANONICAL_REFERENCE_URI : undefined,
     notes: kind === 'hero-full-body'
-      ? 'The canonical concept is the visual source of truth; no derivative reference may redefine identity.'
-      : 'Awaiting the authored reference asset. Do not substitute a generic avatar or generated placeholder.',
+      ? 'Exact uploaded repository image. It is the canonical visual source of truth.'
+      : 'Awaiting the authored derivative reference asset. Never substitute a generic avatar or placeholder.',
   })),
 };
 
-export interface CassidyReferenceValidationOptions {
-  /** Production cannot unlock until every required reference is approved. */
-  requireAllApproved?: boolean;
-}
+export interface CassidyReferenceValidationOptions { requireAllApproved?: boolean; }
 
 export function validateCassidyReferencePackage(
   packageData: CassidyReferencePackage = CASSIDY_REFERENCE_PACKAGE_V1,
@@ -105,12 +71,8 @@ export function validateCassidyReferencePackage(
 
   if (packageData.characterId !== 'cassidy') errors.push('Reference package character id must remain cassidy.');
   if (!packageData.identityLocked) errors.push('Reference package cannot unlock Cassidy identity.');
-  if (packageData.canonicalSource !== 'cassidy-canonical-concept-v1') {
-    errors.push('Every reference must trace to the canonical Cassidy concept.');
-  }
-  if (packageData.canonicalPath !== 'docs/cassidy/assets/cassidy-canonical-concept-v1.png') {
-    errors.push('Canonical reference path is invalid.');
-  }
+  if (packageData.canonicalPath !== CASSIDY_CANONICAL_REFERENCE_URI) errors.push('Canonical reference path does not point to the uploaded repository image.');
+  if (packageData.canonicalSource !== 'cassidy-canonical-concept-v1') errors.push('Every reference must trace to the canonical Cassidy concept.');
 
   for (const reference of packageData.references) {
     if (seenIds.has(reference.referenceId)) errors.push(`Duplicate reference id: ${reference.referenceId}.`);
@@ -118,35 +80,21 @@ export function validateCassidyReferencePackage(
     if (seenKinds.has(reference.kind)) errors.push(`Duplicate reference kind: ${reference.kind}.`);
     seenKinds.add(reference.kind);
     if (!reference.identityLocked) errors.push(`Reference ${reference.referenceId} cannot unlock identity.`);
-    if (reference.canonicalSource !== packageData.canonicalSource) {
-      errors.push(`Reference ${reference.referenceId} has an invalid canonical source.`);
-    }
+    if (reference.canonicalSource !== packageData.canonicalSource) errors.push(`Reference ${reference.referenceId} has an invalid canonical source.`);
     if (!reference.sourceAssetId) errors.push(`Reference ${reference.referenceId} is missing its source asset id.`);
-    if (requireAllApproved && reference.status !== 'approved') {
-      errors.push(`Reference ${reference.referenceId} is not approved.`);
-    }
+    if (requireAllApproved && reference.status !== 'approved') errors.push(`Reference ${reference.referenceId} is not approved.`);
   }
 
-  for (const kind of CASSIDY_REQUIRED_REFERENCE_KINDS) {
-    if (!seenKinds.has(kind)) errors.push(`Required reference is missing: ${kind}.`);
-  }
+  for (const kind of CASSIDY_REQUIRED_REFERENCE_KINDS) if (!seenKinds.has(kind)) errors.push(`Required reference is missing: ${kind}.`);
+  if (packageData.references.length !== CASSIDY_REQUIRED_REFERENCE_KINDS.length) errors.push(`Reference package must contain exactly ${CASSIDY_REQUIRED_REFERENCE_KINDS.length} required references.`);
 
-  if (packageData.references.length !== CASSIDY_REQUIRED_REFERENCE_KINDS.length) {
-    errors.push(`Reference package must contain exactly ${CASSIDY_REQUIRED_REFERENCE_KINDS.length} required references.`);
+  const canonicalAsset = CASSIDY_PRODUCTION_ASSET_MANIFEST.assets.find(asset => asset.id === 'cassidy-canonical-concept-v1');
+  if (!canonicalAsset || canonicalAsset.status !== 'reference-approved' || canonicalAsset.sourceUri !== CASSIDY_CANONICAL_REFERENCE_URI) {
+    errors.push('The production asset registry does not point to the uploaded canonical concept.');
   }
-
-  const canonicalAsset = CASSIDY_PRODUCTION_ASSET_MANIFEST.assets.find(
-    asset => asset.id === 'cassidy-canonical-concept-v1',
-  );
-  if (!canonicalAsset || canonicalAsset.status !== 'reference-approved') {
-    errors.push('The production asset registry does not contain the approved canonical concept.');
-  }
-
   return errors;
 }
 
-export function canCassidyProductionBegin(
-  packageData: CassidyReferencePackage = CASSIDY_REFERENCE_PACKAGE_V1,
-): boolean {
+export function canCassidyProductionBegin(packageData: CassidyReferencePackage = CASSIDY_REFERENCE_PACKAGE_V1): boolean {
   return validateCassidyReferencePackage(packageData, { requireAllApproved: true }).length === 0;
 }
