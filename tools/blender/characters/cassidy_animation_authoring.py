@@ -1,15 +1,11 @@
-"""Production animation quality checks for authored Cassidy actions.
-
-The module validates timing, rig targeting, and clip metadata without creating
-or altering animation curves. Visual motion quality remains a review gate.
-"""
+"""Production animation quality checks for authored Cassidy actions."""
 
 import bpy
 
-from .cassidy_animation import CLIP_FRAME_RANGES, validate_animation_contract, _action_bone_names
+from .cassidy_animation import CLIP_FRAME_RANGES, validate_animation_contract
 from .cassidy import REQUIRED_ANIMATIONS
 
-ANIMATION_AUTHORING_VERSION = "3N.25"
+ANIMATION_AUTHORING_VERSION = "3N.29"
 
 
 def _frame_range(action):
@@ -34,14 +30,9 @@ def validate_clip_timing():
 
 def validate_animation_targets(armature=None):
     contract = validate_animation_contract(armature)
-    allowed = set(contract.get("rig_bone_targets", []))
-    return {
-        "valid": contract["valid"],
-        "coverage": contract["coverage"],
-        "required": contract["required"],
-        "unbound": contract["unbound_animations"],
-        "target_count": len(allowed),
-    }
+    return {"valid": contract["valid"], "coverage": contract["coverage"],
+            "required": contract["required"], "unbound": contract["unbound_animations"],
+            "target_count": len(contract.get("rig_bone_targets", []))}
 
 
 def validate_action_metadata():
@@ -52,12 +43,12 @@ def validate_action_metadata():
         if action is None:
             continue
         expected = CLIP_FRAME_RANGES[name]
-        fields = {
-            "gopal_character": action.get("gopal_character"),
-            "gopal_animation": action.get("gopal_animation"),
-            "gopal_animation_version": action.get("gopal_animation_version"),
-        }
-        ok = fields["gopal_character"] == "Cassidy" and fields["gopal_animation"] == name
+        fields = {"gopal_character": action.get("gopal_character"),
+                  "gopal_animation": action.get("gopal_animation"),
+                  "gopal_animation_version": action.get("gopal_animation_version")}
+        ok = (fields["gopal_character"] == "Cassidy" and
+              fields["gopal_animation"] == name and
+              fields["gopal_animation_version"] == ANIMATION_AUTHORING_VERSION)
         if not ok:
             missing.append(name)
         records.append({"name": name, "metadata": fields, "valid": ok, "expected_range": expected})
@@ -68,12 +59,7 @@ def validate_animation_authoring(armature=None):
     contract = validate_animation_contract(armature)
     timing = validate_clip_timing()
     metadata = validate_action_metadata()
-    return {
-        "version": ANIMATION_AUTHORING_VERSION,
-        "valid": contract["valid"] and timing["valid"],
-        "contract": contract,
-        "timing": timing,
-        "metadata": metadata,
-        "visual_quality": "requires-human-review",
-        "policy": "authored-only",
-    }
+    return {"version": ANIMATION_AUTHORING_VERSION,
+            "valid": contract["valid"] and timing["valid"] and metadata["valid"],
+            "contract": contract, "timing": timing, "metadata": metadata,
+            "visual_quality": "requires-human-review", "policy": "authored-only"}
