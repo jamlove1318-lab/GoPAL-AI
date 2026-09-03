@@ -15,6 +15,7 @@ from characters.cassidy_manifest import production_manifest
 from characters.cassidy_authoring import prepare_authoring_environment
 from characters.cassidy_quality import production_gate_report
 from characters.cassidy_staging import prepare_staging_scene
+from characters.cassidy_review import ensure_scene_review_record
 
 
 def prepare_scene() -> dict:
@@ -29,7 +30,8 @@ def prepare_scene() -> dict:
     scene["gopal_canonical_reference"] = manifest["canonical_reference"]
     authoring = prepare_authoring_environment()
     staging = prepare_staging_scene()
-    return {**info, "authoring": authoring, "staging": staging}
+    review = ensure_scene_review_record()
+    return {**info, "authoring": authoring, "staging": staging, "review": review}
 
 
 def validate_before_export() -> dict:
