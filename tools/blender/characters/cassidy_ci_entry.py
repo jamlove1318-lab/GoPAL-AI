@@ -35,7 +35,6 @@ def _iter_action_fcurves(action):
         if strips is None:
             continue
         for strip in strips:
-            # Blender 4.4+/5.x stores F-curves in strip channel bags.
             bags = getattr(strip, "channelbags", None)
             if bags is not None:
                 for bag in bags:
@@ -104,6 +103,37 @@ def _print_blockers(report: dict) -> None:
         print("[Cassidy-CI] Remaining production blockers:")
         for reason in reasons:
             print(f"  - {reason}")
+
+    # Print actionable evidence for every failed gate. This is diagnostic-only;
+    # it never changes a gate result or substitutes metadata for real assets.
+    detail_keys = (
+        "quality", "mesh", "modeling", "rig", "lod", "mobile_lod",
+        "animation", "animation_authoring", "face_nodes", "expressions",
+        "gaze", "facial_rig", "hair_charm", "outfit", "review",
+    )
+    print("[Cassidy-CI] Gate evidence:")
+    for key in detail_keys:
+        value = report.get(key)
+        if not isinstance(value, dict):
+            continue
+        if value.get("valid", True) is True and value.get("complete", True) is True:
+            continue
+        print(f"  [{key}]")
+        for field in (
+            "missing", "missing_nodes", "missing_animations", "missing_expressions",
+            "empty_animations", "unbound_animations", "missing_materials",
+            "invalid_outfits", "unbound_material_slots", "invalid_materials",
+            "geometry_issues", "topology_issues", "issues", "loose_geometry",
+            "missing_uv", "errors", "reasons",
+        ):
+            items = value.get(field)
+            if items:
+                print(f"    {field}: {items}")
+        for nested_key in ("budgets", "identity", "hierarchy", "contract", "timing", "metadata"):
+            nested = value.get(nested_key)
+            if isinstance(nested, dict) and nested.get("valid") is False:
+                print(f"    {nested_key}: {nested}")
+
     review = quality.get("review") or {}
     errors = review.get("errors") or []
     if errors:
