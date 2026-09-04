@@ -1,9 +1,8 @@
 """Reusable authored-outfit and material-variant contract for Cassidy."""
 
-from collections.abc import Mapping
 import bpy
 
-OUTFIT_VERSION = "3N.59"
+OUTFIT_VERSION = "3N.60"
 OUTFITS = (
     "base", "spring", "summer", "autumn", "winter",
     "emerald-valley", "japanese-world", "french-world", "festival", "adventure",
@@ -59,7 +58,7 @@ def bind_material_slot(obj, slot: str, material_name=None):
         slots.append(slot)
     obj["gopal_material_slots"] = slots
     obj["gopal_material_slot"] = slot if len(slots) == 1 else "multi"
-    bindings = dict(obj.get("gopal_material_bindings", {}))
+    bindings = _mapping_or_empty(obj.get("gopal_material_bindings", {}))
     bindings[slot] = material_name or bindings.get(slot)
     obj["gopal_material_bindings"] = bindings
     obj["gopal_material_authoring_version"] = OUTFIT_VERSION
@@ -67,8 +66,21 @@ def bind_material_slot(obj, slot: str, material_name=None):
 
 
 def _mapping_or_empty(value):
-    """Normalize dict and Blender IDPropertyGroup mapping values."""
-    return dict(value) if isinstance(value, Mapping) else {}
+    """Normalize Python dicts and Blender IDPropertyGroup mappings structurally."""
+    if value is None:
+        return {}
+    if isinstance(value, dict):
+        return dict(value)
+    items = getattr(value, "items", None)
+    if callable(items):
+        try:
+            return {k: v for k, v in items()}
+        except Exception:
+            pass
+    try:
+        return dict(value)
+    except Exception:
+        return {}
 
 
 def validate_outfit_material_readiness():
