@@ -18,9 +18,10 @@ from typing import Any
 import bpy
 
 
-VERSION = "3N.1-base-candidate-inspector"
+VERSION = "3N.2-base-candidate-inspector"
 MIN_VERTICES = 1500
 MIN_POLYGONS = 1000
+MIN_DIMENSION = 0.5
 
 
 def _sha256(path: Path) -> str:
@@ -60,14 +61,11 @@ def _component_count(mesh: Any) -> int:
 
 def _mesh_metrics(obj: Any) -> dict[str, Any]:
     mesh = obj.data
-    boundary = 0
-    non_manifold = 0
-    for edge in mesh.edges:
-        users = int(edge.total_face_sel) if False else 0
-        # Blender does not expose face-user count uniformly across versions;
-        # use polygon edge membership for deterministic compatibility.
     edge_users = [0] * len(mesh.edges)
-    edge_index = {tuple(sorted((int(e.vertices[0]), int(e.vertices[1])))): i for i, e in enumerate(mesh.edges)}
+    edge_index = {
+        tuple(sorted((int(e.vertices[0]), int(e.vertices[1])))): i
+        for i, e in enumerate(mesh.edges)
+    }
     for poly in mesh.polygons:
         verts = list(poly.vertices)
         for i, a in enumerate(verts):
@@ -78,6 +76,7 @@ def _mesh_metrics(obj: Any) -> dict[str, Any]:
     boundary = sum(1 for count in edge_users if count == 1)
     non_manifold = sum(1 for count in edge_users if count > 2)
     loose_vertices = sum(1 for v in mesh.vertices if not v.link_edges)
+    dimensions = [round(float(v), 5) for v in obj.dimensions]
     return {
         "object": obj.name,
         "vertices": len(mesh.vertices),
@@ -91,21 +90,43 @@ def _mesh_metrics(obj: Any) -> dict[str, Any]:
         "non_manifold_edges": non_manifold,
         "loose_vertices": loose_vertices,
         "materials": [slot.material.name if slot.material else None for slot in obj.material_slots],
-        "dimensions": [round(float(v), 5) for v in obj.dimensions],
+        "dimensions": dimensions,
+        "height": max(dimensions) if dimensions else 0.0,
     }
 
 
-def _score(metrics: dict[str, Any], filename: str) -> tuple[int, list[str]]:
+def _collection_names(obj: Any) -> list[str]:
+    names: list[str] = []
+    for collection in getattr(obj, "users_collection", []):
+        names.append(collection.name)
+    return names
+
+
+def _semantic_hints(obj: Any) -> list[str]:
+    text = " ".join([obj.name, *_collection_names(obj)]).lower()
+    hints: list[str] = []
+    if any(token in text for token in ("female", "woman", "girl")):
+        hints.append("female")
+    if any(token in text for token in ("body", "wholebody", "full body", "human")):
+        hints.append("body")
+    if "stylized" in text:
+        hints.append("stylized")
+    if any(token in text for token in ("head", "eye", "hand", "foot", "skeleton")):
+        hints.append("body-part")
+    return hints
+
+
+def _score(metrics: dict[str, Any], filename: str, semantic_hints: list[str]) -> tuple[int, list[str]]:
     score = 0
     reasons: list[str] = []
     if metrics["vertices"] >= MIN_VERTICES:
         score += 30
     else:
-        reasons.append(f"body candidate below {MIN_VERTICES} vertices")
+        reasons.append(f"candidate below {MIN_VERTICES} vertices")
     if metrics["polygons"] >= MIN_POLYGONS:
         score += 20
     else:
-        reasons.append(f"body candidate below {MIN_POLYGONS} polygons")
+        reasons.append(f"candidate below {MIN_POLYGONS} polygons")
     if metrics["uv_layers"] > 0:
         score += 10
     else:
@@ -126,9 +147,23 @@ def _score(metrics: dict[str, Any], filename: str) -> tuple[int, list[str]]:
         score += 10
     else:
         reasons.append("too many disconnected components")
+    if "female" in semantic_hints:
+        score += 12
+    if "body" in semantic_hints:
+        score += 12
+    if "stylized" in semantic_hints:
+        score += 8
+    if "body-part" in semantic_hints and "body" not in semantic_hints:
+        score -= 20
+        reasons.append("appears to be a body-part asset rather than a full body")
+    if metrics["height"] < MIN_DIMENSION:
+        score -= 15
+        reasons.append("dimensions are too small to be a full-body candidate")
     lower = filename.lower()
-    if any(token in lower for token in ("female", "woman", "human")):
+    if "female" in lower:
         score += 5
+    if "body female" in lower or "wholebody" in lower:
+        score += 8
     return score, reasons
 
 
@@ -139,8 +174,15 @@ def inspect_blend(path: Path) -> dict[str, Any]:
     candidates = []
     for obj in meshes:
         metrics = _mesh_metrics(obj)
-        score, reasons = _score(metrics, path.name)
-        candidates.append({"metrics": metrics, "score": score, "reasons": reasons})
+        hints = _semantic_hints(obj)
+        score, reasons = _score(metrics, path.name, hints)
+        candidates.append({
+            "metrics": metrics,
+            "semantic_hints": hints,
+            "collections": _collection_names(obj),
+            "score": score,
+            "reasons": reasons,
+        })
     candidates.sort(key=lambda item: (-item["score"], -item["metrics"]["vertices"], item["metrics"]["object"]))
     return {
         "path": str(path),
@@ -163,6 +205,10 @@ def main() -> int:
         "directory": str(root),
         "candidate_files": len(files),
         "policy": "analysis-only; no Cassidy assignment; no visual approval",
+        "selection_policy": {
+            "prefer": ["female", "full-body", "stylized", "healthy topology", "UVs"],
+            "reject_signals": ["body-part-only", "open boundaries", "non-manifold", "loose vertices", "very small dimensions"],
+        },
         "candidates": [],
     }
     for path in files:
@@ -180,6 +226,7 @@ def main() -> int:
         best = report["candidates"][0]
         candidate = best.get("best_candidate") or {}
         print(f"[Cassidy-Base-Inspector] Best candidate: {best.get('path')} score={candidate.get('score')}")
+        print(f"[Cassidy-Base-Inspector] Best object: {(candidate.get('metrics') or {}).get('object')}")
     return 0
 
 
