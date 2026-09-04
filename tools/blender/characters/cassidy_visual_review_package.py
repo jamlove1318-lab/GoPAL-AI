@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 import bpy
+from mathutils import Vector
 
 from .cassidy_review import REVIEW_GATES, REVIEW_VERSION
 
@@ -57,7 +58,10 @@ def _bounds(objects):
     for obj in objects:
         if obj.type != "MESH":
             continue
-        points.extend(obj.matrix_world @ corner for corner in obj.bound_box)
+        # Blender 5 exposes bound_box corners as bpy_prop_array values rather
+        # than mathutils.Vector instances. Convert explicitly before matrix
+        # multiplication so this remains compatible with Blender 5.x.
+        points.extend(obj.matrix_world @ Vector(corner) for corner in obj.bound_box)
     if not points:
         return None
     mins = [min(p[i] for p in points) for i in range(3)]
@@ -102,10 +106,7 @@ def _render_turnaround(output_dir: Path) -> list[dict[str, Any]]:
         return [{"view": name, "rendered": False, "error": "No authored Cassidy mesh bounds found."} for name, _ in VIEW_SPECS]
 
     center_values, size_values = bounds
-    center = bpy.mathutils.Vector(center_values) if hasattr(bpy, "mathutils") else None
-    if center is None:
-        from mathutils import Vector
-        center = Vector(center_values)
+    center = Vector(center_values)
     height = max(size_values[2], 1.0)
     radius = max(size_values[0], size_values[1], height) * 1.7
 
@@ -132,7 +133,6 @@ def _render_turnaround(output_dir: Path) -> list[dict[str, Any]]:
         except Exception:
             pass
         results = []
-        from mathutils import Vector
         target = center + Vector((0.0, 0.0, height * 0.04))
         for view_name, angle in VIEW_SPECS:
             camera.location = Vector((math.sin(angle) * radius, -math.cos(angle) * radius, height * 0.56))
