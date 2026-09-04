@@ -1,7 +1,8 @@
 """Cassidy production build entrypoint.
 
-The build prepares a reference-driven authoring workspace and an authored-asset
-assembly layer. It never generates a fake finished humanoid from primitives.
+This entrypoint prepares the reusable factory, stages the canonical reference,
+and assembles only genuine authored Cassidy assets. It never fabricates a
+finished humanoid from primitive geometry.
 """
 
 import bpy
@@ -18,6 +19,7 @@ from characters.cassidy_production_gate import evaluate_production_readiness
 from characters.cassidy_hero_asset_contract import validate_hero_asset_contract
 from characters.cassidy_staging import prepare_staging_scene
 from characters.cassidy_review import ensure_scene_review_record
+from characters.cassidy_canonical_reference_contract import load_canonical_reference
 
 
 def prepare_scene() -> dict:
@@ -30,6 +32,8 @@ def prepare_scene() -> dict:
     scene["gopal_asset"] = "Cassidy"
     scene["gopal_manifest_version"] = manifest["version"]
     scene["gopal_canonical_reference"] = manifest["canonical_reference"]
+
+    canonical_reference = load_canonical_reference(info.get("repo_root", "."))
     authoring = prepare_authoring_environment()
     workspace = prepare_cassidy_authoring_workspace()
     assembly = assemble_authored_assets()
@@ -40,6 +44,7 @@ def prepare_scene() -> dict:
     hero_contract = validate_hero_asset_contract()
     return {
         **info,
+        "canonical_reference": canonical_reference,
         "authoring": authoring,
         "workspace": workspace,
         "assembly": assembly,
