@@ -25,7 +25,8 @@ from characters.cassidy_visual_review_package import generate_visual_review_pack
 from characters.cassidy_hero_intake import validate_hero_source, register_authored_source
 from characters.cassidy_hero_source_manifest import load_manifest, apply_manifest
 from characters.cassidy_hero_quality_profile import analyze_hero_quality
-from characters.cassidy_canonical_source_registry import capture_source_snapshot, compare_source_snapshots, write_registry
+from characters.cassidy_canonical_source_registry import capture_source_snapshot, write_registry
+from characters.cassidy_canonical_preservation_gate import evaluate_preservation
 
 
 def _iter_action_fcurves(action):
@@ -142,7 +143,7 @@ def _print_blockers(report: dict) -> None:
     detail_keys = (
         "hero_intake", "hero_quality_profile", "hero_asset", "quality", "mesh", "modeling", "rig", "lod",
         "mobile_lod", "animation", "animation_authoring", "face_nodes", "expressions", "gaze", "facial_rig",
-        "hair_charm", "outfit", "review",
+        "hair_charm", "outfit", "review", "canonical_source_preservation",
     )
     print("[Cassidy-CI] Gate evidence:")
     for key in detail_keys:
@@ -156,6 +157,7 @@ def _print_blockers(report: dict) -> None:
             "missing", "missing_components", "missing_roles", "missing_nodes", "missing_animations", "missing_expressions",
             "empty_animations", "unbound_animations", "missing_materials", "invalid_outfits", "unbound_material_slots",
             "invalid_materials", "geometry_issues", "topology_issues", "issues", "loose_geometry", "missing_uv", "errors", "reasons",
+            "changed_components",
         ):
             items = value.get(field)
             if items:
@@ -213,14 +215,13 @@ def run() -> int:
             print("[Cassidy-CI] Running complete source-preserving production authoring pass")
             report["production_authoring"] = run_production_authoring(bpy.data.objects.get("Cassidy_Armature"))
             report["canonical_source_after"] = capture_source_snapshot("after-technical-processing")
-            report["canonical_source_preservation"] = compare_source_snapshots(
+            report["canonical_source_preservation"] = evaluate_preservation(
                 report["canonical_source_before"], report["canonical_source_after"]
             )
             _write_json(output / "canonical-source-preservation.json", report["canonical_source_preservation"])
-            if not report["canonical_source_preservation"]["identical"]:
-                report["canonical_source_preservation"]["blocked"] = True
-                report.setdefault("quality", {}).setdefault("reasons", []).append(
-                    "canonical Cassidy source changed during technical processing"
+            if not report["canonical_source_preservation"]["valid"]:
+                report.setdefault("quality", {}).setdefault("reasons", []).extend(
+                    report["canonical_source_preservation"]["reasons"]
                 )
                 report["ready"] = False
                 print("[Cassidy-CI] CANONICAL_SOURCE_PRESERVATION_REJECTED")
