@@ -222,6 +222,7 @@ def run() -> int:
                 report.setdefault("quality", {}).setdefault("reasons", []).append(
                     "canonical Cassidy source changed during technical processing"
                 )
+                report["ready"] = False
                 print("[Cassidy-CI] CANONICAL_SOURCE_PRESERVATION_REJECTED")
             else:
                 from characters.build_cassidy import validate_before_export
