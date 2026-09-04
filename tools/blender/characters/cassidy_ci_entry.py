@@ -1,9 +1,9 @@
 """GitHub/Linux entrypoint for Cassidy production.
 
 The pipeline prepares the deterministic workspace, imports a genuine source,
-performs strict hero-asset intake, applies only source-preserving technical
-work, validates it, and exports only when every objective gate passes. Visual
-approval remains human-controlled.
+performs strict hero-asset intake, records structural quality evidence, applies
+only source-preserving technical work, validates it, and exports only when every
+objective gate passes. Visual approval remains human-controlled.
 """
 from __future__ import annotations
 import json, os, sys
@@ -24,6 +24,7 @@ from characters.cassidy_production_authoring import run_production_authoring
 from characters.cassidy_visual_review_package import generate_visual_review_package
 from characters.cassidy_hero_intake import validate_hero_source, register_authored_source
 from characters.cassidy_hero_source_manifest import load_manifest, apply_manifest
+from characters.cassidy_hero_quality_profile import analyze_hero_quality
 
 
 def _iter_action_fcurves(action):
@@ -107,10 +108,7 @@ def _json_safe(value: Any) -> Any:
 
 def _write_json(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(_json_safe(payload), indent=2, sort_keys=True, allow_nan=False) + "\n",
-        encoding="utf-8",
-    )
+    path.write_text(json.dumps(_json_safe(payload), indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")
 
 
 def _source_from_environment() -> Path | None:
@@ -141,9 +139,9 @@ def _print_blockers(report: dict) -> None:
         for reason in reasons:
             print(f"  - {reason}")
     detail_keys = (
-        "hero_intake", "hero_asset", "quality", "mesh", "modeling", "rig", "lod",
-        "mobile_lod", "animation", "animation_authoring", "face_nodes", "expressions",
-        "gaze", "facial_rig", "hair_charm", "outfit", "review",
+        "hero_intake", "hero_quality_profile", "hero_asset", "quality", "mesh", "modeling", "rig", "lod",
+        "mobile_lod", "animation", "animation_authoring", "face_nodes", "expressions", "gaze", "facial_rig",
+        "hair_charm", "outfit", "review",
     )
     print("[Cassidy-CI] Gate evidence:")
     for key in detail_keys:
@@ -154,18 +152,13 @@ def _print_blockers(report: dict) -> None:
             continue
         print(f"  [{key}]")
         for field in (
-            "missing", "missing_nodes", "missing_animations", "missing_expressions", "empty_animations",
-            "unbound_animations", "missing_materials", "invalid_outfits", "unbound_material_slots",
-            "invalid_materials", "geometry_issues", "topology_issues", "issues", "loose_geometry",
-            "missing_uv", "errors", "reasons",
+            "missing", "missing_components", "missing_roles", "missing_nodes", "missing_animations", "missing_expressions",
+            "empty_animations", "unbound_animations", "missing_materials", "invalid_outfits", "unbound_material_slots",
+            "invalid_materials", "geometry_issues", "topology_issues", "issues", "loose_geometry", "missing_uv", "errors", "reasons",
         ):
             items = value.get(field)
             if items:
                 print(f"    {field}: {items}")
-        for nested_key in ("budgets", "identity", "hierarchy", "contract", "timing", "metadata", "library"):
-            nested = value.get(nested_key)
-            if isinstance(nested, dict) and nested.get("valid") is False:
-                print(f"    {nested_key}: {nested}")
     review = quality.get("review") or {}
     if review.get("errors"):
         print("[Cassidy-CI] Visual-review status:")
@@ -190,21 +183,17 @@ def run() -> int:
                 manifest = load_manifest(manifest_path)
                 report["source_manifest"] = apply_manifest(manifest)
             except (OSError, ValueError, json.JSONDecodeError) as exc:
-                report["source_manifest"] = {
-                    "valid": False,
-                    "errors": [str(exc)],
-                }
+                report["source_manifest"] = {"valid": False, "errors": [str(exc)]}
         else:
             report["source_manifest"] = {
                 "valid": False,
                 "errors": ["No CASSIDY_SOURCE_MANIFEST supplied; semantic component mapping remains unverified."],
             }
 
-        # Intake is deliberately before technical upgrade/rendering. A failed
-        # primitive placeholder should stop immediately instead of consuming
-        # several minutes on subdivision, staging and five-angle rendering.
         print("[Cassidy-CI] Running strict hero-asset intake gate")
         report["hero_intake"] = validate_hero_source()
+        print("[Cassidy-CI] Recording 3N.22 hero quality evidence")
+        report["hero_quality_profile"] = analyze_hero_quality()
         if not report["hero_intake"]["valid"]:
             print("[Cassidy-CI] HERO_ASSET_REJECTED")
             for reason in report["hero_intake"]["reasons"]:
