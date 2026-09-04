@@ -19,6 +19,7 @@ from characters.cassidy_export import export_runtime_package
 from characters.import_cassidy_source import import_source
 from characters import cassidy_source_upgrade as _source_upgrade
 from characters.cassidy_production_authoring import run_production_authoring
+from characters.cassidy_visual_review_package import generate_visual_review_package
 
 
 def _iter_action_fcurves(action):
@@ -135,6 +136,8 @@ def run() -> int:
         report["production_authoring"] = run_production_authoring(bpy.data.objects.get("Cassidy_Armature"))
         from characters.build_cassidy import validate_before_export
         report.update(validate_before_export())
+        print("[Cassidy-CI] Generating non-approving visual review evidence package")
+        report["visual_review_package"] = generate_visual_review_package(output, report.get("quality"))
     else:
         print("[Cassidy-CI] No genuine Cassidy source supplied; production remains blocked")
     _print_blockers(report)
