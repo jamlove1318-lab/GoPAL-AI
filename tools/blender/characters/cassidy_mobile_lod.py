@@ -1,17 +1,20 @@
 """Reusable mobile LOD and asset-budget validation for Cassidy.
 
-This module never decimates or mutates authored geometry. It measures the
-three authored LOD tiers and verifies identity-critical components remain
-present at every tier.
+The mobile material budget is measured as unique canonical material roles used
+by a complete LOD, not the sum of repeated one-slot assignments across every
+mesh. Reusing the same material on many meshes is the intended mobile pattern.
+Geometry remains authored and identity preservation remains independently
+validated.
 """
 
 import bpy
 
 from .cassidy_lod import REQUIRED_LODS, IDENTITY_CRITICAL, find_lod_objects
 
-MOBILE_LOD_VERSION = "3N.30"
+MOBILE_LOD_VERSION = "3N.55"
 VERTEX_BUDGETS = {"LOD0": 30000, "LOD1": 18000, "LOD2": 9000}
 MATERIAL_SLOT_BUDGET = 7
+CANONICAL_MATERIAL_PREFIX = "Cassidy_MAT_"
 
 
 def _objects_for_lod(lod):
@@ -22,8 +25,14 @@ def _objects_for_lod(lod):
 def _mesh_stats(objects):
     vertices = sum(len(o.data.vertices) for o in objects)
     polygons = sum(len(o.data.polygons) for o in objects)
-    materials = sum(len(o.data.materials) for o in objects)
-    return {"mesh_count": len(objects), "vertices": vertices, "polygons": polygons, "material_slots": materials}
+    unique_materials = set()
+    for obj in objects:
+        for material in obj.data.materials:
+            if material is not None:
+                role = material.get("gopal_material_slot")
+                unique_materials.add(str(role) if role else material.name)
+    return {"mesh_count": len(objects), "vertices": vertices, "polygons": polygons,
+            "material_slots": len(unique_materials), "unique_material_roles": sorted(unique_materials)}
 
 
 def validate_lod_budgets():
@@ -81,5 +90,6 @@ def validate_mobile_lod():
         "hierarchy": hierarchy,
         "required_lods": list(REQUIRED_LODS),
         "material_slot_budget": MATERIAL_SLOT_BUDGET,
+        "material_budget_policy": "unique-canonical-material-roles-per-lod",
         "policy": "authored-only-no-auto-decimation",
     }
