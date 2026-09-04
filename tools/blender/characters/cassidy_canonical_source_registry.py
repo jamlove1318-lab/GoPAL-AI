@@ -15,7 +15,7 @@ import bpy
 
 from .cassidy_hero_asset_contract import CHARACTER, REQUIRED_COMPONENTS
 
-REGISTRY_VERSION = "3N.24-canonical-source-registry"
+REGISTRY_VERSION = "3N.25-canonical-source-registry"
 
 
 def _mesh_signature(obj: Any) -> dict[str, Any]:
@@ -26,9 +26,11 @@ def _mesh_signature(obj: Any) -> dict[str, Any]:
     topology = []
     for polygon in mesh.polygons:
         topology.extend(int(v) for v in polygon.vertices)
+    materials = [slot.material.name if slot.material else None for slot in obj.material_slots]
     digest = hashlib.sha256()
     digest.update(json.dumps(coords, separators=(",", ":")).encode())
     digest.update(json.dumps(topology, separators=(",", ":")).encode())
+    digest.update(json.dumps(materials, separators=(",", ":")).encode())
     return {
         "object": obj.name,
         "component_id": str(obj.get("gopal_component_id", "")),
@@ -37,6 +39,7 @@ def _mesh_signature(obj: Any) -> dict[str, Any]:
         "polygons": len(mesh.polygons),
         "uv_layers": len(mesh.uv_layers),
         "shape_key_count": len(mesh.shape_keys.key_blocks) if mesh.shape_keys else 0,
+        "material_slots": materials,
         "signature": digest.hexdigest(),
     }
 
