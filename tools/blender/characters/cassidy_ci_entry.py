@@ -25,6 +25,7 @@ from characters.cassidy_visual_review_package import generate_visual_review_pack
 from characters.cassidy_hero_intake import validate_hero_source, register_authored_source
 from characters.cassidy_hero_source_manifest import load_manifest, apply_manifest
 from characters.cassidy_hero_quality_profile import analyze_hero_quality
+from characters.cassidy_canonical_source_registry import capture_source_snapshot, compare_source_snapshots, write_registry
 
 
 def _iter_action_fcurves(action):
@@ -204,14 +205,29 @@ def run() -> int:
                 print(f"  - {reason}")
         else:
             report["hero_registration"] = register_authored_source()
+            report["canonical_source_before"] = capture_source_snapshot("before-technical-processing")
+            registry_path = output / "canonical-source-registry.json"
+            write_registry(registry_path, report["canonical_source_before"], "source-intake")
             print("[Cassidy-CI] Applying source-derived technical upgrade")
             report["source_upgrade"] = upgrade_imported_cassidy_source()
             print("[Cassidy-CI] Running complete source-preserving production authoring pass")
             report["production_authoring"] = run_production_authoring(bpy.data.objects.get("Cassidy_Armature"))
-            from characters.build_cassidy import validate_before_export
-            report.update(validate_before_export())
-            print("[Cassidy-CI] Generating non-approving visual review evidence package")
-            report["visual_review_package"] = generate_visual_review_package(output, report.get("quality"))
+            report["canonical_source_after"] = capture_source_snapshot("after-technical-processing")
+            report["canonical_source_preservation"] = compare_source_snapshots(
+                report["canonical_source_before"], report["canonical_source_after"]
+            )
+            _write_json(output / "canonical-source-preservation.json", report["canonical_source_preservation"])
+            if not report["canonical_source_preservation"]["identical"]:
+                report["canonical_source_preservation"]["blocked"] = True
+                report.setdefault("quality", {}).setdefault("reasons", []).append(
+                    "canonical Cassidy source changed during technical processing"
+                )
+                print("[Cassidy-CI] CANONICAL_SOURCE_PRESERVATION_REJECTED")
+            else:
+                from characters.build_cassidy import validate_before_export
+                report.update(validate_before_export())
+                print("[Cassidy-CI] Generating non-approving visual review evidence package")
+                report["visual_review_package"] = generate_visual_review_package(output, report.get("quality"))
     else:
         print("[Cassidy-CI] No genuine Cassidy source supplied; production remains blocked")
     _print_blockers(report)
