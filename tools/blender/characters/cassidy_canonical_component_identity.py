@@ -4,6 +4,10 @@ Stable component IDs are the authority for Cassidy identity. External object nam
 are interchangeable labels resolved by a reviewed source manifest. This module
 prevents duplicate, missing, or conflicting ownership before technical processing
 or world-variant derivation.
+
+The reference sheet names both a head and face, but the production component
+model intentionally uses one authored ``cassidy-face-base`` surface for both
+semantic roles. Runtime nodes may still expose head and face independently.
 """
 from __future__ import annotations
 
@@ -13,7 +17,7 @@ import bpy
 
 from .cassidy_hero_asset_contract import CHARACTER, REQUIRED_COMPONENTS, REQUIRED_ROLES
 
-IDENTITY_VERSION = "3N.26-canonical-component-identity"
+IDENTITY_VERSION = "3N.27-canonical-component-identity"
 IDENTITY_COLLECTION = "CASSIDY_AUTHORED"
 
 COMPONENT_SPECS = {
@@ -25,6 +29,8 @@ COMPONENT_SPECS = {
     "cassidy-shoes": {"role": "shoes", "required": True, "continuous": False},
     "cassidy-companion-charm": {"role": "accessory", "required": True, "continuous": False},
 }
+
+SEMANTIC_ROLE_ALIASES = {"head": "cassidy-face-base"}
 
 
 def _cassidy_meshes() -> list[Any]:
@@ -58,23 +64,25 @@ def inspect_component_identity() -> dict[str, Any]:
             )
 
     duplicate_components = sorted(
-        component_id
-        for component_id, objects in by_id.items()
-        if len(objects) > 1
+        component_id for component_id, objects in by_id.items() if len(objects) > 1
     )
     missing_components = sorted(
-        component_id
-        for component_id, objects in by_id.items()
-        if not objects
+        component_id for component_id, objects in by_id.items() if not objects
     )
-    missing_roles = sorted(
-        role
-        for role in REQUIRED_ROLES
+
+    # ``head`` is a semantic alias of the authored face-base component. Do not
+    # require a second mesh just to satisfy the reference's head terminology.
+    missing_roles: list[str] = []
+    for role in REQUIRED_ROLES:
+        if role == "head":
+            if not by_id[SEMANTIC_ROLE_ALIASES["head"]]:
+                missing_roles.append(role)
+            continue
         if not any(
             str(obj.get("gopal_geometry_role", "")).strip().lower() == role
             for obj in meshes
-        )
-    )
+        ):
+            missing_roles.append(role)
 
     errors: list[str] = []
     if missing_components:
@@ -112,6 +120,7 @@ def inspect_component_identity() -> dict[str, Any]:
         "unowned_objects": sorted(unowned),
         "unsupported_components": sorted(unsupported),
         "role_conflicts": role_conflicts,
+        "semantic_role_aliases": dict(SEMANTIC_ROLE_ALIASES),
         "policy": "stable-component-id-is-authoritative",
     }
 
