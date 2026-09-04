@@ -17,7 +17,7 @@ from .cassidy_animation_library import author_missing_animation_clips, LIBRARY_V
 from .cassidy_outfit_authoring import MATERIAL_SLOTS, OUTFIT_VERSION
 from .cassidy_review import ensure_scene_review_record
 
-AUTHORING_VERSION = "3N.57"
+AUTHORING_VERSION = "3N.58"
 
 ROLE_TO_SLOT = {
     "body": "skin",
@@ -128,7 +128,11 @@ def _normalize_material_slots(obj) -> dict[str, Any]:
 def _is_outfit_object(obj) -> bool:
     role = str(obj.get("gopal_geometry_role", "")).lower()
     name = obj.name.lower()
-    return role in {"outfit", "clothing", "shoes", "footwear"} or any(token in name for token in OUTFIT_OBJECT_TOKENS) or name == "cassidy_body"
+    # Cassidy_Body and its generated LOD copies can be combined body/clothing
+    # meshes. They are outfit-bearing assets, but their body role must remain
+    # intact so material inference continues to preserve skin correctly.
+    is_body_mesh = name == "cassidy_body" or name.endswith("_cassidy_body")
+    return role in {"outfit", "clothing", "shoes", "footwear"} or is_body_mesh or any(token in name for token in OUTFIT_OBJECT_TOKENS)
 
 
 def _tag_base_outfit_metadata(obj) -> None:
@@ -178,9 +182,10 @@ def run_production_authoring(armature=None) -> dict[str, Any]:
     scene["gopal_cassidy_animation_library"] = LIBRARY_VERSION
     scene["gopal_cassidy_material_roles"] = list(MATERIAL_SLOTS)
     scene["gopal_cassidy_visual_review_required"] = True
-    review = scene.get("gopal_cassidy_review")
-    if not isinstance(review, dict):
-        review = ensure_scene_review_record()
+    review_before = scene.get("gopal_cassidy_review")
+    review_created = not isinstance(review_before, dict)
+    if review_created:
+        ensure_scene_review_record()
     return {
         "version": AUTHORING_VERSION,
         "source_derived": True,
@@ -188,6 +193,6 @@ def run_production_authoring(armature=None) -> dict[str, Any]:
         "materials": materials,
         "intentional_open_surfaces": open_surfaces,
         "visual_review_required": True,
-        "review_record_created": not isinstance(scene.get("gopal_cassidy_review"), dict),
+        "review_record_created": review_created,
         "policy": "source-preserving-authored-production-pass",
     }
