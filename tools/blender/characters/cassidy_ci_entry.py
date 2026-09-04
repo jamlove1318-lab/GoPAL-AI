@@ -10,8 +10,10 @@ from pathlib import Path
 from typing import Any
 import bpy
 
+# cassidy_ci_entry.py lives at <repo>/tools/blender/characters/.
+# TOOLS_ROOT is <repo>/tools/blender; its parent is the repository root.
 TOOLS_ROOT = Path(__file__).resolve().parents[1]
-REPO_ROOT = TOOLS_ROOT.parents[1]
+REPO_ROOT = TOOLS_ROOT.parent
 if str(TOOLS_ROOT) not in sys.path: sys.path.insert(0, str(TOOLS_ROOT))
 
 from characters.build_cassidy import main as build_cassidy
