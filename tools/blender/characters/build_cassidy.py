@@ -1,9 +1,7 @@
 """Cassidy production build entrypoint.
 
-This intentionally does not generate a fake finished humanoid. It prepares a
-clean, deterministic production scene, canonical materials, reference-guided
-authoring workspace, review staging, and validates that a real authored asset
-has been supplied before export.
+The build prepares a reference-driven authoring workspace and an authored-asset
+assembly layer. It never generates a fake finished humanoid from primitives.
 """
 
 import bpy
@@ -14,8 +12,10 @@ from characters.cassidy import validate_cassidy_scene
 from characters.cassidy_manifest import production_manifest
 from characters.cassidy_authoring import prepare_authoring_environment
 from characters.cassidy_authoring_workflow import prepare_cassidy_authoring_workspace
+from characters.cassidy_asset_assembler import assemble_authored_assets
 from characters.cassidy_authoring_checklist import authoring_handoff_checklist, validate_checklist
 from characters.cassidy_production_gate import evaluate_production_readiness
+from characters.cassidy_hero_asset_contract import validate_hero_asset_contract
 from characters.cassidy_staging import prepare_staging_scene
 from characters.cassidy_review import ensure_scene_review_record
 
@@ -32,14 +32,18 @@ def prepare_scene() -> dict:
     scene["gopal_canonical_reference"] = manifest["canonical_reference"]
     authoring = prepare_authoring_environment()
     workspace = prepare_cassidy_authoring_workspace()
+    assembly = assemble_authored_assets()
     staging = prepare_staging_scene()
     review = ensure_scene_review_record()
     checklist = authoring_handoff_checklist()
     checklist_validation = validate_checklist(checklist)
+    hero_contract = validate_hero_asset_contract()
     return {
         **info,
         "authoring": authoring,
         "workspace": workspace,
+        "assembly": assembly,
+        "hero_asset_contract": hero_contract,
         "staging": staging,
         "review": review,
         "authoring_checklist": checklist,
