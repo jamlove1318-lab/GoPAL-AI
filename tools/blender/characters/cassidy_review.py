@@ -4,9 +4,10 @@ The checklist records what must be reviewed by a human or art-validation
 process. It does not mark an asset as approved by itself.
 """
 
+from collections.abc import Mapping
 import bpy
 
-REVIEW_VERSION = "3N.12"
+REVIEW_VERSION = "3N.13"
 
 REVIEW_GATES = (
     "face-identity",
@@ -42,13 +43,18 @@ def ensure_scene_review_record():
     return record
 
 
+def _mapping_or_empty(value):
+    """Normalize Python dict and Blender IDPropertyGroup mappings alike."""
+    return dict(value) if isinstance(value, Mapping) else {}
+
+
 def validate_review_record(record):
-    if not isinstance(record, dict):
+    if not isinstance(record, Mapping):
         return {"valid": False, "errors": ["Review record is missing."]}
     if record.get("version") != REVIEW_VERSION:
         return {"valid": False, "errors": ["Review version mismatch."]}
-    gates = record.get("gates")
-    if not isinstance(gates, dict):
+    gates = _mapping_or_empty(record.get("gates"))
+    if not gates:
         return {"valid": False, "errors": ["Review gates are missing."]}
     missing = sorted(set(REVIEW_GATES) - set(gates))
     invalid = sorted(
@@ -67,4 +73,5 @@ def is_review_complete(record):
     validation = validate_review_record(record)
     if not validation["valid"]:
         return False
-    return all(record["gates"].get(gate) == "pass" for gate in REVIEW_GATES)
+    gates = _mapping_or_empty(record.get("gates"))
+    return all(gates.get(gate) == "pass" for gate in REVIEW_GATES)
