@@ -1,0 +1,49 @@
+{
+  "version": "3N.1-hero-source-manifest",
+  "character": "Cassidy",
+  "source_name": "cassidy-hero-production-source",
+  "components": [
+    {
+      "component_id": "cassidy-body-base",
+      "role": "body",
+      "object_names": ["Cassidy_Body_Authored"],
+      "continuous": true
+    },
+    {
+      "component_id": "cassidy-face-base",
+      "role": "face",
+      "object_names": ["Cassidy_Face_Authored"],
+      "continuous": false
+    },
+    {
+      "component_id": "cassidy-eyes",
+      "role": "eye",
+      "object_names": ["Cassidy_Eye_L", "Cassidy_Eye_R"],
+      "continuous": false
+    },
+    {
+      "component_id": "cassidy-hair",
+      "role": "hair",
+      "object_names": ["Cassidy_Hair_Authored"],
+      "continuous": false
+    },
+    {
+      "component_id": "cassidy-base-outfit",
+      "role": "outfit",
+      "object_names": ["Cassidy_Outfit_Authored"],
+      "continuous": false
+    },
+    {
+      "component_id": "cassidy-shoes",
+      "role": "shoes",
+      "object_names": ["Cassidy_Shoes_Authored"],
+      "continuous": false
+    },
+    {
+      "component_id": "cassidy-companion-charm",
+      "role": "accessory",
+      "object_names": ["Cassidy_Charm_Authored"],
+      "continuous": false
+    }
+  ]
+}
