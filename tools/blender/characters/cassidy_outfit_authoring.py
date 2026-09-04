@@ -2,7 +2,7 @@
 
 import bpy
 
-OUTFIT_VERSION = "3N.30"
+OUTFIT_VERSION = "3N.55"
 OUTFITS = (
     "base", "spring", "summer", "autumn", "winter",
     "emerald-valley", "japanese-world", "french-world", "festival", "adventure",
@@ -20,7 +20,7 @@ def find_outfit_objects():
     for obj in cassidy_meshes():
         role = str(obj.get("gopal_geometry_role", "")).lower()
         name = obj.name.lower()
-        if role in {"outfit", "clothing", "shoes", "footwear"} or any(t in name for t in ("outfit", "clothing", "shirt", "jacket", "shoe", "boot", "cloth")):
+        if role in {"outfit", "clothing", "shoes", "footwear"} or obj.name.startswith("LOD") and any(t in name for t in ("body", "outfit", "clothing", "shirt", "jacket", "shoe", "boot", "cloth")) or any(t in name for t in ("outfit", "clothing", "shirt", "jacket", "shoe", "boot", "cloth")):
             result.append(obj)
     return result
 
@@ -51,7 +51,14 @@ def bind_material_slot(obj, slot: str, material_name=None):
             raise ValueError(f"Material not found: {material_name}")
         if material.name not in [m.name for m in obj.data.materials if m]:
             obj.data.materials.append(material)
-    obj["gopal_material_slot"] = slot
+    slots = list(obj.get("gopal_material_slots", []))
+    if slot not in slots:
+        slots.append(slot)
+    obj["gopal_material_slots"] = slots
+    obj["gopal_material_slot"] = slot if len(slots) == 1 else "multi"
+    bindings = dict(obj.get("gopal_material_bindings", {}))
+    bindings[slot] = material_name or bindings.get(slot)
+    obj["gopal_material_bindings"] = bindings
     obj["gopal_material_authoring_version"] = OUTFIT_VERSION
     return obj
 
@@ -60,19 +67,32 @@ def validate_outfit_material_readiness():
     outfits = find_outfit_objects()
     missing_materials = [o.name for o in outfits if len(o.material_slots) == 0]
     invalid_outfits = [o.name for o in outfits if o.get("gopal_outfit_id") not in OUTFITS]
-    unbound_slots = [o.name for o in outfits if o.get("gopal_material_slot") not in MATERIAL_SLOTS]
+    unbound_slots = []
     invalid_materials = []
+    binding_issues = []
     for obj in outfits:
+        declared = set(obj.get("gopal_material_slots", []))
+        if not declared:
+            declared = {str(obj.get("gopal_material_slot", ""))}
+        declared.discard("")
+        if not declared or not declared.issubset(set(MATERIAL_SLOTS)):
+            unbound_slots.append(obj.name)
+        bindings = obj.get("gopal_material_bindings", {})
+        if not isinstance(bindings, dict) or any(slot not in bindings or not bindings[slot] for slot in declared):
+            binding_issues.append(obj.name)
         for index, slot in enumerate(obj.material_slots):
             if slot.material is None:
                 invalid_materials.append(f"{obj.name}:slot-{index}:empty")
+            elif slot.material.get("gopal_character") != "Cassidy":
+                invalid_materials.append(f"{obj.name}:slot-{index}:non-cassidy-material")
     return {
         "version": OUTFIT_VERSION,
-        "valid": bool(outfits) and not missing_materials and not invalid_outfits and not unbound_slots and not invalid_materials,
+        "valid": bool(outfits) and not missing_materials and not invalid_outfits and not unbound_slots and not binding_issues and not invalid_materials,
         "outfit_count": len(outfits),
         "missing_materials": missing_materials,
         "invalid_outfits": invalid_outfits,
         "unbound_material_slots": unbound_slots,
+        "binding_issues": binding_issues,
         "invalid_materials": invalid_materials,
         "required_material_slots": list(MATERIAL_SLOTS),
         "world_variants": dict(WORLD_VARIANTS),
