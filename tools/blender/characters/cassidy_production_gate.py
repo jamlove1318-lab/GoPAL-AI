@@ -2,8 +2,10 @@
 
 Structural validation and visual/art review are both required before export.
 Validation must report every missing authored dependency instead of throwing on
-an absent optional-in-progress asset, so the production report is actionable.
+an absent optional in-progress asset, so the production report is actionable.
 """
+
+from collections.abc import Mapping
 
 from characters.cassidy_quality import validate_authoring_environment
 from characters.cassidy_rig import validate_rig_contract
@@ -28,7 +30,7 @@ from characters.cassidy_review import validate_review_record, is_review_complete
 def _scene_review_record():
     import bpy
     record = bpy.context.scene.get("gopal_cassidy_review")
-    return dict(record) if isinstance(record, dict) else None
+    return dict(record) if isinstance(record, Mapping) else None
 
 
 def validate_visual_review() -> dict:
