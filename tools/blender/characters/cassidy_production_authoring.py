@@ -14,9 +14,10 @@ from typing import Any
 import bpy
 
 from .cassidy_animation_library import author_missing_animation_clips, LIBRARY_VERSION
-from .cassidy_outfit_authoring import MATERIAL_SLOTS, OUTFIT_VERSION, tag_outfit
+from .cassidy_outfit_authoring import MATERIAL_SLOTS, OUTFIT_VERSION
+from .cassidy_review import ensure_scene_review_record
 
-AUTHORING_VERSION = "3N.54"
+AUTHORING_VERSION = "3N.57"
 
 ROLE_TO_SLOT = {
     "body": "skin",
@@ -40,6 +41,8 @@ MATERIAL_NAMES = {
     "shoes": "Cassidy_MAT_shoes",
     "accessory": "Cassidy_MAT_accessory",
 }
+
+OUTFIT_OBJECT_TOKENS = ("outfit", "clothing", "shirt", "jacket", "shoe", "boot", "cloth")
 
 
 def _ensure_material(name: str):
@@ -97,8 +100,6 @@ def _normalize_material_slots(obj) -> dict[str, Any]:
     for old in old_materials:
         assignments.append(_material_slot_from_source(old, fallback))
 
-    # Keep no more than one physical slot per canonical mobile role. Preserve
-    # face-level material intent by remapping every polygon's material index.
     canonical = {slot: _ensure_material(MATERIAL_NAMES[slot]) for slot in MATERIAL_SLOTS}
     used_slots = []
     for slot in assignments:
@@ -124,15 +125,34 @@ def _normalize_material_slots(obj) -> dict[str, Any]:
     return {"name": obj.name, "valid": 1 <= len(used_slots) <= len(MATERIAL_SLOTS), "slots": used_slots}
 
 
+def _is_outfit_object(obj) -> bool:
+    role = str(obj.get("gopal_geometry_role", "")).lower()
+    name = obj.name.lower()
+    return role in {"outfit", "clothing", "shoes", "footwear"} or any(token in name for token in OUTFIT_OBJECT_TOKENS) or name == "cassidy_body"
+
+
+def _tag_base_outfit_metadata(obj) -> None:
+    """Tag outfit identity without overwriting the source mesh's semantic role.
+
+    Cassidy_Body is often a combined authored body/clothing mesh. Treating it
+    as geometry_role=outfit changes later material-role inference and can turn
+    skin into outfit material on a subsequent deterministic run. Keep the
+    original role intact and store outfit metadata separately instead.
+    """
+    obj["gopal_character"] = "Cassidy"
+    obj["gopal_outfit_id"] = "base"
+    obj["gopal_outfit_authoring_version"] = OUTFIT_VERSION
+    obj["gopal_outfit_metadata_only"] = True
+
+
 def _normalize_all_materials() -> list[dict[str, Any]]:
     reports = []
     for obj in list(bpy.data.objects):
         if obj.type != "MESH" or obj.get("gopal_character") != "Cassidy":
             continue
         reports.append(_normalize_material_slots(obj))
-        role = str(obj.get("gopal_geometry_role", "")).lower()
-        if role == "outfit" or obj.name == "Cassidy_Body":
-            tag_outfit(obj, "base")
+        if _is_outfit_object(obj):
+            _tag_base_outfit_metadata(obj)
     return reports
 
 
@@ -158,6 +178,9 @@ def run_production_authoring(armature=None) -> dict[str, Any]:
     scene["gopal_cassidy_animation_library"] = LIBRARY_VERSION
     scene["gopal_cassidy_material_roles"] = list(MATERIAL_SLOTS)
     scene["gopal_cassidy_visual_review_required"] = True
+    review = scene.get("gopal_cassidy_review")
+    if not isinstance(review, dict):
+        review = ensure_scene_review_record()
     return {
         "version": AUTHORING_VERSION,
         "source_derived": True,
@@ -165,5 +188,6 @@ def run_production_authoring(armature=None) -> dict[str, Any]:
         "materials": materials,
         "intentional_open_surfaces": open_surfaces,
         "visual_review_required": True,
+        "review_record_created": not isinstance(scene.get("gopal_cassidy_review"), dict),
         "policy": "source-preserving-authored-production-pass",
     }
