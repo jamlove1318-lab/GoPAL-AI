@@ -1,18 +1,18 @@
 """Fail-closed preservation gate for the canonical Cassidy source.
 
-The canonical hero source is the artistic authority. Technical processing may
-add approved runtime data, but it must not silently mutate canonical geometry,
-topology, UVs, shape keys, or component identity. Material-slot names are
-reported separately because controlled technical material changes are allowed.
+Technical processing may add approved runtime data, but it must not silently
+mutate canonical geometry, topology, UVs, shape keys, or component identity.
+Material-slot names are reported separately because controlled technical
+material changes are allowed.
 """
 from __future__ import annotations
 
 from typing import Any
 
-from .cassidy_canonical_source_registry import capture_source_snapshot, compare_source_snapshots
+from .cassidy_canonical_source_registry import compare_source_snapshots
 from .cassidy_hero_asset_contract import CHARACTER, REQUIRED_COMPONENTS
 
-GATE_VERSION = "3N.26-canonical-preservation-gate"
+GATE_VERSION = "3N.35-canonical-preservation-gate"
 PROTECTED_FIELDS = (
     "object",
     "component_id",
@@ -85,8 +85,3 @@ def evaluate_preservation(before: dict[str, Any], after: dict[str, Any]) -> dict
         "approval": "human_visual_review_required",
         "policy": "canonical-source-is-immutable-except-controlled-material-technical-changes",
     }
-
-
-def run_preservation_gate() -> dict[str, Any]:
-    """Snapshot current scene; useful for diagnostics before/after processing."""
-    return capture_source_snapshot("preservation-gate")
