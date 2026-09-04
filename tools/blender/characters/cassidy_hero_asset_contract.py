@@ -3,6 +3,11 @@
 The factory is an asset assembler/parameter driver, not a primitive humanoid
 creator. A production Cassidy must originate from authored, continuous hero
 geometry. This contract makes that policy explicit and machine-readable.
+
+The canonical reference requires both a head and face. The stable component
+model intentionally keeps these as one authored ``cassidy-face-base`` component:
+that component supplies the head/face surface while runtime semantic nodes
+remain independently addressable. This avoids inventing a duplicate head mesh.
 """
 from __future__ import annotations
 
@@ -11,7 +16,7 @@ from typing import Any
 
 import bpy
 
-CONTRACT_VERSION = "3N.1-hero-asset"
+CONTRACT_VERSION = "3N.2-hero-asset"
 CHARACTER = "Cassidy"
 BASE_COLLECTION = "CASSIDY_AUTHORED"
 REQUIRED_ROLES = (
@@ -63,6 +68,12 @@ def validate_hero_asset_contract() -> dict[str, Any]:
         if role in role_counts:
             role_counts[role] += 1
 
+    # One canonical authored face-base mesh is the head+face surface.
+    # Count it for both semantic roles without requiring duplicate geometry.
+    if any(obj.get("gopal_component_id") == "cassidy-face-base" for obj in meshes):
+        role_counts["head"] = max(role_counts["head"], 1)
+        role_counts["face"] = max(role_counts["face"], 1)
+
     authored = [obj for obj in meshes if obj.get("gopal_authored_asset") is True]
     generated_humanoid = [
         obj for obj in meshes
@@ -94,7 +105,9 @@ def validate_hero_asset_contract() -> dict[str, Any]:
         "continuous_mesh_count": len(connected_candidates),
         "primitive_humanoid_count": len(generated_humanoid),
         "role_counts": role_counts,
+        "required_roles": REQUIRED_ROLES,
         "required_components": REQUIRED_COMPONENTS,
+        "semantic_aliases": {"head": "cassidy-face-base", "face": "cassidy-face-base"},
     }
 
 
