@@ -1,8 +1,7 @@
 """Fail-closed preservation helpers for the accepted Cassidy source.
 
-The canonical authored source is protected from geometry, topology, UV, shape-key,
-and semantic identity changes. Controlled material-slot changes are reported but
-are not treated as source mutation.
+Canonical geometry, topology, UVs, shape keys and semantic component identity
+are immutable. Controlled material-slot changes are reported separately.
 """
 from __future__ import annotations
 
@@ -11,29 +10,21 @@ from typing import Any
 from .cassidy_hero_asset_contract import CHARACTER, REQUIRED_COMPONENTS
 from .cassidy_canonical_source_registry import capture_source_snapshot
 
-PRESERVATION_VERSION = "3N.26-source-preservation"
+PRESERVATION_VERSION = "3N.35-source-preservation"
 
 
 def _protected_signature(snapshot: dict[str, Any], component_id: str) -> tuple:
     items = snapshot.get("components", {}).get(component_id, [])
-    return tuple(
-        sorted(
-            (
-                item.get("object"),
-                item.get("component_id"),
-                item.get("vertices"),
-                item.get("edges"),
-                item.get("polygons"),
-                item.get("uv_layers"),
-                item.get("uv_signature"),
-                item.get("shape_key_count"),
-                item.get("shape_key_signature"),
-                item.get("geometry_signature"),
-                item.get("protected_signature"),
-            )
-            for item in items
+    return tuple(sorted(
+        (
+            item.get("object"), item.get("component_id"), item.get("vertices"),
+            item.get("edges"), item.get("polygons"), item.get("uv_layers"),
+            item.get("uv_signature"), item.get("shape_key_count"),
+            item.get("shape_key_signature"), item.get("geometry_signature"),
+            item.get("protected_signature"),
         )
-    )
+        for item in items
+    ))
 
 
 def compare_protected_source(before: dict[str, Any], after: dict[str, Any]) -> dict[str, Any]:
@@ -50,13 +41,12 @@ def compare_protected_source(before: dict[str, Any], after: dict[str, Any]) -> d
         after_materials = [item.get("material_slots") for item in after.get("components", {}).get(component_id, [])]
         if before_materials != after_materials:
             material_changes.append(component_id)
-
     return {
         "version": PRESERVATION_VERSION,
         "character": CHARACTER,
         "valid": not changed,
         "protected_components": list(REQUIRED_COMPONENTS),
-        "changed_components": changed,
+        "changed_components": sorted(set(changed)),
         "details": details,
         "material_changes": sorted(set(material_changes)),
         "policy": {
@@ -75,12 +65,10 @@ def compare_protected_source(before: dict[str, Any], after: dict[str, Any]) -> d
 
 
 def begin_preservation_scope() -> dict[str, Any]:
-    """Capture the canonical source immediately before technical processing."""
     return capture_source_snapshot("canonical-before-technical-processing")
 
 
 def end_preservation_scope(before: dict[str, Any]) -> dict[str, Any]:
-    """Capture and compare the canonical source after technical processing."""
     after = capture_source_snapshot("canonical-after-technical-processing")
     result = compare_protected_source(before, after)
     result["before_snapshot"] = before
