@@ -5,6 +5,7 @@ and assembles only genuine authored Cassidy assets. It never fabricates a
 finished humanoid from primitive geometry.
 """
 
+from pathlib import Path
 import bpy
 
 from factory.bootstrap import initialize
@@ -21,6 +22,8 @@ from characters.cassidy_staging import prepare_staging_scene
 from characters.cassidy_review import ensure_scene_review_record
 from characters.cassidy_canonical_reference_contract import load_canonical_reference
 
+REPO_ROOT = Path(__file__).resolve().parents[3]
+
 
 def prepare_scene() -> dict:
     info = initialize()
@@ -33,7 +36,7 @@ def prepare_scene() -> dict:
     scene["gopal_manifest_version"] = manifest["version"]
     scene["gopal_canonical_reference"] = manifest["canonical_reference"]
 
-    canonical_reference = load_canonical_reference(info.get("repo_root", "."))
+    canonical_reference = load_canonical_reference(REPO_ROOT)
     authoring = prepare_authoring_environment()
     workspace = prepare_cassidy_authoring_workspace()
     assembly = assemble_authored_assets()
