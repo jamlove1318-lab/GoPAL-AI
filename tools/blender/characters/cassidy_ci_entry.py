@@ -1,8 +1,8 @@
 """GitHub/Linux entrypoint for Cassidy production.
 
 The pipeline prepares the deterministic workspace, imports a genuine source,
-applies only objective source-derived technical upgrades, validates it, and
-exports only when all production gates pass.
+applies source-preserving production authoring, validates it, and exports only
+when every objective gate passes. Visual approval remains human-controlled.
 """
 from __future__ import annotations
 import json, os, sys
@@ -18,6 +18,7 @@ from characters.build_cassidy import main as build_cassidy
 from characters.cassidy_export import export_runtime_package
 from characters.import_cassidy_source import import_source
 from characters import cassidy_source_upgrade as _source_upgrade
+from characters.cassidy_production_authoring import run_production_authoring
 
 
 def _iter_action_fcurves(action):
@@ -26,32 +27,31 @@ def _iter_action_fcurves(action):
     if direct is not None:
         yield from direct
         return
-
     layers = getattr(action, "layers", None)
-    if layers is None:
-        return
+    if layers is None: return
     for layer in layers:
         strips = getattr(layer, "strips", None)
-        if strips is None:
-            continue
+        if strips is None: continue
         for strip in strips:
             bags = getattr(strip, "channelbags", None)
             if bags is not None:
-                for bag in bags:
-                    yield from getattr(bag, "fcurves", [])
+                for bag in bags: yield from getattr(bag, "fcurves", [])
                 continue
             bag = getattr(strip, "channelbag", None)
             if callable(bag):
-                try:
-                    bag = bag()
-                except TypeError:
-                    bag = None
-            if bag is not None:
-                yield from getattr(bag, "fcurves", [])
+                slots = getattr(action, "slots", None)
+                if slots is not None:
+                    for slot in slots:
+                        try: candidate = bag(slot)
+                        except (TypeError, RuntimeError): candidate = None
+                        if candidate is not None: yield from getattr(candidate, "fcurves", [])
+                else:
+                    try: candidate = bag()
+                    except (TypeError, RuntimeError): candidate = None
+                    if candidate is not None: yield from getattr(candidate, "fcurves", [])
 
 
 def _patch_blender5_action_migration() -> None:
-    """Patch only the legacy F-curve migration helper for layered Actions."""
     def _migrate_action_paths_compat(old: str, new: str) -> int:
         changed = 0
         needle = f'pose.bones["{old}"]'
@@ -62,7 +62,6 @@ def _patch_blender5_action_migration() -> None:
                     fcurve.data_path = fcurve.data_path.replace(needle, replacement)
                     changed += 1
         return changed
-
     _source_upgrade._migrate_action_paths = _migrate_action_paths_compat
 
 
@@ -101,52 +100,30 @@ def _print_blockers(report: dict) -> None:
     reasons = quality.get("reasons") or []
     if reasons:
         print("[Cassidy-CI] Remaining production blockers:")
-        for reason in reasons:
-            print(f"  - {reason}")
-
-    # Print actionable evidence for every failed gate. This is diagnostic-only;
-    # it never changes a gate result or substitutes metadata for real assets.
-    detail_keys = (
-        "quality", "mesh", "modeling", "rig", "lod", "mobile_lod",
-        "animation", "animation_authoring", "face_nodes", "expressions",
-        "gaze", "facial_rig", "hair_charm", "outfit", "review",
-    )
+        for reason in reasons: print(f"  - {reason}")
+    detail_keys = ("quality", "mesh", "modeling", "rig", "lod", "mobile_lod", "animation", "animation_authoring", "face_nodes", "expressions", "gaze", "facial_rig", "hair_charm", "outfit", "review")
     print("[Cassidy-CI] Gate evidence:")
     for key in detail_keys:
         value = report.get(key)
-        if not isinstance(value, dict):
-            continue
-        if value.get("valid", True) is True and value.get("complete", True) is True:
-            continue
+        if not isinstance(value, dict): continue
+        if value.get("valid", True) is True and value.get("complete", True) is True: continue
         print(f"  [{key}]")
-        for field in (
-            "missing", "missing_nodes", "missing_animations", "missing_expressions",
-            "empty_animations", "unbound_animations", "missing_materials",
-            "invalid_outfits", "unbound_material_slots", "invalid_materials",
-            "geometry_issues", "topology_issues", "issues", "loose_geometry",
-            "missing_uv", "errors", "reasons",
-        ):
+        for field in ("missing", "missing_nodes", "missing_animations", "missing_expressions", "empty_animations", "unbound_animations", "missing_materials", "invalid_outfits", "unbound_material_slots", "invalid_materials", "geometry_issues", "topology_issues", "issues", "loose_geometry", "missing_uv", "errors", "reasons"):
             items = value.get(field)
-            if items:
-                print(f"    {field}: {items}")
-        for nested_key in ("budgets", "identity", "hierarchy", "contract", "timing", "metadata"):
+            if items: print(f"    {field}: {items}")
+        for nested_key in ("budgets", "identity", "hierarchy", "contract", "timing", "metadata", "library"):
             nested = value.get(nested_key)
-            if isinstance(nested, dict) and nested.get("valid") is False:
-                print(f"    {nested_key}: {nested}")
-
+            if isinstance(nested, dict) and nested.get("valid") is False: print(f"    {nested_key}: {nested}")
     review = quality.get("review") or {}
-    errors = review.get("errors") or []
-    if errors:
+    if review.get("errors"):
         print("[Cassidy-CI] Visual-review status:")
-        for error in errors:
-            print(f"  - {error}")
+        for error in review["errors"]: print(f"  - {error}")
 
 
 def run() -> int:
     output = REPO_ROOT / "artifacts" / "cassidy"
     output.mkdir(parents=True, exist_ok=True)
     print("[Cassidy-CI] Starting deterministic production preparation")
-
     report = build_cassidy()
     source = _source_from_environment()
     if source:
@@ -154,20 +131,19 @@ def run() -> int:
         report["source_intake"] = import_source(source)
         print("[Cassidy-CI] Applying source-derived technical upgrade")
         report["source_upgrade"] = upgrade_imported_cassidy_source()
+        print("[Cassidy-CI] Running complete source-preserving production authoring pass")
+        report["production_authoring"] = run_production_authoring(bpy.data.objects.get("Cassidy_Armature"))
         from characters.build_cassidy import validate_before_export
         report.update(validate_before_export())
     else:
         print("[Cassidy-CI] No genuine Cassidy source supplied; production remains blocked")
-
     _print_blockers(report)
     _write_json(output / "production-report.json", report)
     blend_path = output / "cassidy-production.blend"
     bpy.ops.wm.save_as_mainfile(filepath=str(blend_path))
-
     if not report.get("ready"):
         print("[Cassidy-CI] PRODUCTION_BLOCKED")
         return 2
-
     print("[Cassidy-CI] Production gate passed; exporting runtime package")
     package = export_runtime_package(output)
     _write_json(output / "export-report.json", package)
