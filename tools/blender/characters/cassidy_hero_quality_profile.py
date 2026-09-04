@@ -10,10 +10,13 @@ import bpy
 
 from .cassidy_hero_asset_contract import CHARACTER, REQUIRED_COMPONENTS, REQUIRED_ROLES
 
-PROFILE_VERSION = "3N.22-hero-quality-profile"
+PROFILE_VERSION = "3N.34-hero-quality-profile"
 
-# These are diagnostic targets, not automatic visual approval.
+# Diagnostic targets derived from the canonical character reference. These are
+# evidence thresholds, not visual approval.
 TARGETS = {
+    "hero_triangles_min": 15000,
+    "hero_triangles_max": 45000,
     "body_vertices_floor": 1500,
     "body_polygons_floor": 1000,
     "body_components_max": 3,
@@ -22,6 +25,8 @@ TARGETS = {
     "boundary_edges_max": 0,
     "materials_max": 12,
     "bones_max": 64,
+    "expression_blendshape_min": 60,
+    "lod_levels_required": 4,
 }
 
 
@@ -37,6 +42,10 @@ def _component_id(obj: Any) -> str | None:
     return str(value) if value else None
 
 
+def _geometry_role(obj: Any) -> str:
+    return str(obj.get("gopal_geometry_role", "")).strip().lower()
+
+
 def _mesh_metrics(obj: Any) -> dict[str, Any]:
     mesh = obj.data
     loose_vertices = sum(1 for vertex in mesh.vertices if not vertex.link_edges)
@@ -47,17 +56,22 @@ def _mesh_metrics(obj: Any) -> dict[str, Any]:
     )
     material_names = [slot.material.name for slot in obj.material_slots if slot.material]
     uv_layers = getattr(mesh, "uv_layers", None)
+    triangles = sum(len(polygon.vertices) - 2 for polygon in mesh.polygons if len(polygon.vertices) >= 3)
+    shape_key_count = len(mesh.shape_keys.key_blocks) if mesh.shape_keys else 0
     return {
         "name": obj.name,
         "component_id": _component_id(obj),
+        "role": _geometry_role(obj),
         "vertices": len(mesh.vertices),
         "edges": len(mesh.edges),
         "polygons": len(mesh.polygons),
+        "triangles": triangles,
         "loose_vertices": loose_vertices,
         "boundary_edges": boundary_edges,
         "non_manifold_edges": non_manifold_edges,
         "uv_layers": len(uv_layers) if uv_layers is not None else 0,
         "shape_keys": mesh.shape_keys is not None,
+        "shape_key_count": shape_key_count,
         "materials": sorted(set(material_names)),
     }
 
@@ -77,30 +91,43 @@ def _armature_metrics() -> dict[str, Any]:
     }
 
 
+def _lod_levels() -> set[str]:
+    levels: set[str] = set()
+    for obj in _cassidy_meshes():
+        for key in ("gopal_lod", "gopal_lod_level"):
+            value = obj.get(key)
+            if value is not None:
+                levels.add(str(value).upper().replace("-", ""))
+    return levels
+
+
 def analyze_hero_quality() -> dict[str, Any]:
     meshes = _cassidy_meshes()
     metrics = [_mesh_metrics(obj) for obj in meshes]
     component_ids = {m["component_id"] for m in metrics if m["component_id"]}
     missing_components = sorted(set(REQUIRED_COMPONENTS) - component_ids)
-    roles = {
-        str(obj.get("gopal_component_id")): str(obj.get("gopal_role"))
-        for obj in meshes if obj.get("gopal_component_id")
-    }
-    missing_roles = sorted(set(REQUIRED_ROLES) - set(roles.values()))
 
-    body = [
-        m for m in metrics
-        if m["component_id"] == "cassidy-body-base"
-        or ("body" in m["name"].lower() and m["vertices"] >= TARGETS["body_vertices_floor"])
-    ]
+    # Head is an intentional semantic alias of the face-base component.
+    observed_roles = {_geometry_role(obj) for obj in meshes}
+    missing_roles = sorted(
+        role for role in REQUIRED_ROLES
+        if role != "head" and role not in observed_roles
+    )
+    if "cassidy-face-base" not in component_ids:
+        missing_roles.append("head")
+        missing_roles.append("face")
+
+    body = [m for m in metrics if m["component_id"] == "cassidy-body-base"]
     body_best = max(body, key=lambda item: item["vertices"], default=None)
+    hero_triangles = sum(item["triangles"] for item in metrics)
     reasons: list[str] = []
+
     if not meshes:
         reasons.append("no Cassidy authored mesh objects found")
     if missing_components:
         reasons.append("missing required semantic components: " + ", ".join(missing_components))
     if missing_roles:
-        reasons.append("missing required semantic roles: " + ", ".join(missing_roles))
+        reasons.append("missing required semantic roles: " + ", ".join(sorted(set(missing_roles))))
     if body_best is None:
         reasons.append("no viable Cassidy body-base mesh")
     else:
@@ -113,6 +140,11 @@ def analyze_hero_quality() -> dict[str, Any]:
         if body_best["non_manifold_edges"] > TARGETS["non_manifold_edges_max"]:
             reasons.append("body has non-manifold edges")
 
+    if hero_triangles < TARGETS["hero_triangles_min"]:
+        reasons.append("hero geometry is below the canonical 15K triangle floor")
+    elif hero_triangles > TARGETS["hero_triangles_max"]:
+        reasons.append("hero geometry exceeds the canonical 45K triangle ceiling")
+
     armature = _armature_metrics()
     if armature["bone_count"] > TARGETS["bones_max"]:
         reasons.append("armature exceeds mobile diagnostic bone budget")
@@ -120,6 +152,16 @@ def analyze_hero_quality() -> dict[str, Any]:
     all_materials = sorted({name for item in metrics for name in item["materials"]})
     if len(all_materials) > TARGETS["materials_max"]:
         reasons.append("source uses more than the diagnostic material budget")
+
+    expression_shapes = max((m["shape_key_count"] for m in metrics), default=0)
+    if expression_shapes < TARGETS["expression_blendshape_min"]:
+        reasons.append("facial shape-key count is below the 60+ blendshape target")
+
+    lod_levels = sorted(_lod_levels())
+    required_lods = {"LOD0", "LOD1", "LOD2", "LOD3"}
+    missing_lods = sorted(required_lods - set(lod_levels))
+    if missing_lods:
+        reasons.append("missing required LOD levels: " + ", ".join(missing_lods))
 
     return {
         "version": PROFILE_VERSION,
@@ -130,9 +172,14 @@ def analyze_hero_quality() -> dict[str, Any]:
         "reasons": reasons,
         "required_components": list(REQUIRED_COMPONENTS),
         "required_roles": list(REQUIRED_ROLES),
+        "semantic_role_aliases": {"head": "cassidy-face-base"},
         "missing_components": missing_components,
-        "missing_roles": missing_roles,
+        "missing_roles": sorted(set(missing_roles)),
         "body": body_best,
+        "hero_triangles": hero_triangles,
+        "facial_shape_key_count": expression_shapes,
+        "lod_levels": lod_levels,
+        "missing_lods": missing_lods,
         "meshes": metrics,
         "armature": armature,
         "materials": all_materials,
