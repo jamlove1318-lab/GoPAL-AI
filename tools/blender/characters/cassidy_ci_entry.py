@@ -28,6 +28,7 @@ from characters.cassidy_hero_quality_profile import analyze_hero_quality
 from characters.cassidy_canonical_source_registry import capture_source_snapshot, write_registry
 from characters.cassidy_canonical_preservation_gate import evaluate_preservation
 from characters.cassidy_canonical_component_identity import inspect_component_identity
+from characters.cassidy_canonical_reference_contract import load_canonical_reference
 
 
 def _iter_action_fcurves(action):
@@ -142,7 +143,7 @@ def _print_blockers(report: dict) -> None:
         for reason in reasons:
             print(f"  - {reason}")
     detail_keys = (
-        "hero_intake", "hero_quality_profile", "hero_component_identity", "hero_asset", "quality", "mesh", "modeling", "rig", "lod",
+        "canonical_reference", "hero_intake", "hero_quality_profile", "hero_component_identity", "hero_asset", "quality", "mesh", "modeling", "rig", "lod",
         "mobile_lod", "animation", "animation_authoring", "face_nodes", "expressions", "gaze", "facial_rig",
         "hair_charm", "outfit", "review", "canonical_source_preservation",
     )
@@ -175,9 +176,23 @@ def run() -> int:
     output.mkdir(parents=True, exist_ok=True)
     print("[Cassidy-CI] Starting deterministic production preparation")
     report = build_cassidy()
+
+    # The Markdown reference is the human-authored artistic source of truth.
+    # This contract checks its identity markers but never interprets prose as
+    # visual approval and never replaces a missing visual review.
+    report["canonical_reference"] = load_canonical_reference(REPO_ROOT)
+    if not report["canonical_reference"]["valid"]:
+        report.setdefault("quality", {}).setdefault("reasons", []).extend(
+            report["canonical_reference"]["errors"]
+        )
+        report["ready"] = False
+        print("[Cassidy-CI] CANONICAL_REFERENCE_REJECTED")
+        for reason in report["canonical_reference"]["errors"]:
+            print(f"  - {reason}")
+
     source = _source_from_environment()
     manifest_path = _manifest_from_environment()
-    if source:
+    if source and report["canonical_reference"]["valid"]:
         print(f"[Cassidy-CI] Importing genuine source: {source}")
         report["source_intake"] = import_source(source)
 
