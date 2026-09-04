@@ -27,6 +27,7 @@ from characters.cassidy_hero_source_manifest import load_manifest, apply_manifes
 from characters.cassidy_hero_quality_profile import analyze_hero_quality
 from characters.cassidy_canonical_source_registry import capture_source_snapshot, write_registry
 from characters.cassidy_canonical_preservation_gate import evaluate_preservation
+from characters.cassidy_canonical_component_identity import inspect_component_identity
 
 
 def _iter_action_fcurves(action):
@@ -141,7 +142,7 @@ def _print_blockers(report: dict) -> None:
         for reason in reasons:
             print(f"  - {reason}")
     detail_keys = (
-        "hero_intake", "hero_quality_profile", "hero_asset", "quality", "mesh", "modeling", "rig", "lod",
+        "hero_intake", "hero_quality_profile", "hero_component_identity", "hero_asset", "quality", "mesh", "modeling", "rig", "lod",
         "mobile_lod", "animation", "animation_authoring", "face_nodes", "expressions", "gaze", "facial_rig",
         "hair_charm", "outfit", "review", "canonical_source_preservation",
     )
@@ -154,10 +155,10 @@ def _print_blockers(report: dict) -> None:
             continue
         print(f"  [{key}]")
         for field in (
-            "missing", "missing_components", "missing_roles", "missing_nodes", "missing_animations", "missing_expressions",
+            "missing", "missing_components", "duplicate_components", "missing_roles", "missing_nodes", "missing_animations", "missing_expressions",
             "empty_animations", "unbound_animations", "missing_materials", "invalid_outfits", "unbound_material_slots",
             "invalid_materials", "geometry_issues", "topology_issues", "issues", "loose_geometry", "missing_uv", "errors", "reasons",
-            "changed_components",
+            "changed_components", "role_conflicts", "unowned_objects", "unsupported_components",
         ):
             items = value.get(field)
             if items:
@@ -207,29 +208,37 @@ def run() -> int:
                 print(f"  - {reason}")
         else:
             report["hero_registration"] = register_authored_source()
-            report["canonical_source_before"] = capture_source_snapshot("before-technical-processing")
-            registry_path = output / "canonical-source-registry.json"
-            write_registry(registry_path, report["canonical_source_before"], "source-intake")
-            print("[Cassidy-CI] Applying source-derived technical upgrade")
-            report["source_upgrade"] = upgrade_imported_cassidy_source()
-            print("[Cassidy-CI] Running complete source-preserving production authoring pass")
-            report["production_authoring"] = run_production_authoring(bpy.data.objects.get("Cassidy_Armature"))
-            report["canonical_source_after"] = capture_source_snapshot("after-technical-processing")
-            report["canonical_source_preservation"] = evaluate_preservation(
-                report["canonical_source_before"], report["canonical_source_after"]
-            )
-            _write_json(output / "canonical-source-preservation.json", report["canonical_source_preservation"])
-            if not report["canonical_source_preservation"]["valid"]:
+            report["hero_component_identity"] = inspect_component_identity()
+            if not report["hero_component_identity"]["valid"]:
+                print("[Cassidy-CI] HERO_COMPONENT_IDENTITY_REJECTED")
                 report.setdefault("quality", {}).setdefault("reasons", []).extend(
-                    report["canonical_source_preservation"]["reasons"]
+                    report["hero_component_identity"]["errors"]
                 )
                 report["ready"] = False
-                print("[Cassidy-CI] CANONICAL_SOURCE_PRESERVATION_REJECTED")
             else:
-                from characters.build_cassidy import validate_before_export
-                report.update(validate_before_export())
-                print("[Cassidy-CI] Generating non-approving visual review evidence package")
-                report["visual_review_package"] = generate_visual_review_package(output, report.get("quality"))
+                report["canonical_source_before"] = capture_source_snapshot("before-technical-processing")
+                registry_path = output / "canonical-source-registry.json"
+                write_registry(registry_path, report["canonical_source_before"], "source-intake")
+                print("[Cassidy-CI] Applying source-derived technical upgrade")
+                report["source_upgrade"] = upgrade_imported_cassidy_source()
+                print("[Cassidy-CI] Running complete source-preserving production authoring pass")
+                report["production_authoring"] = run_production_authoring(bpy.data.objects.get("Cassidy_Armature"))
+                report["canonical_source_after"] = capture_source_snapshot("after-technical-processing")
+                report["canonical_source_preservation"] = evaluate_preservation(
+                    report["canonical_source_before"], report["canonical_source_after"]
+                )
+                _write_json(output / "canonical-source-preservation.json", report["canonical_source_preservation"])
+                if not report["canonical_source_preservation"]["valid"]:
+                    report.setdefault("quality", {}).setdefault("reasons", []).extend(
+                        report["canonical_source_preservation"]["reasons"]
+                    )
+                    report["ready"] = False
+                    print("[Cassidy-CI] CANONICAL_SOURCE_PRESERVATION_REJECTED")
+                else:
+                    from characters.build_cassidy import validate_before_export
+                    report.update(validate_before_export())
+                    print("[Cassidy-CI] Generating non-approving visual review evidence package")
+                    report["visual_review_package"] = generate_visual_review_package(output, report.get("quality"))
     else:
         print("[Cassidy-CI] No genuine Cassidy source supplied; production remains blocked")
     _print_blockers(report)
