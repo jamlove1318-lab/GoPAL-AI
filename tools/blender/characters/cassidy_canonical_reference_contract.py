@@ -1,8 +1,8 @@
 """Machine-readable guard around the human-authored Cassidy character sheet.
 
 The Markdown character reference is the artistic source of truth. This module
-only verifies that the approved document exists and contains the locked
-identity anchors. It never infers visual approval from prose.
+only verifies the approved document and exposes exact, non-interpretive
+requirements for downstream validation. It never grants visual approval.
 """
 from __future__ import annotations
 
@@ -11,10 +11,48 @@ from pathlib import Path
 from typing import Any
 
 CHARACTER = "Cassidy"
-CONTRACT_VERSION = "3N.29-canonical-reference-contract"
+CONTRACT_VERSION = "3N.30-canonical-reference-contract"
 REFERENCE_PATH = Path("docs/cassidy-character-reference.md")
 CANONICAL_ASSET_ID = "file_00000000642c821198cbd141ddc7e8d7"
 CANONICAL_GENERATION_ID = "e5c1a053-d70e-4537-b5b2-aea7a70e0792"
+
+REFERENCE_REQUIREMENTS: dict[str, Any] = {
+    "identity": {
+        "tagline": "Your AI Companion. Your Guide. Your Friend.",
+        "eye_color": "near-black with warm brown undertone",
+        "hair_color": "dark chocolate brown with subtle warm highlights",
+        "hair_style": "soft natural waves with side braid",
+        "accessory": "luminous leaf-star compass charm necklace",
+        "base_outfit": "Emerald Valley adventurer/explorer outfit",
+        "world_identity_lock": ["face", "eyes", "hair", "core silhouette"],
+    },
+    "geometry": {
+        "proportion_style": "realistic stylized proportion (Heroic Realism)",
+        "triangles_min": 15000,
+        "triangles_max": 45000,
+    },
+    "facial": {
+        "blendshapes_min": 60,
+        "independent_eye_control": True,
+        "advanced_facial_rig": True,
+        "expressions": [
+            "neutral", "happy", "curious", "excited", "surprised",
+            "thoughtful", "playful", "concerned", "gentle",
+        ],
+    },
+    "poses": [
+        "greeting", "explaining", "listening", "thinking", "encouraging", "celebrating",
+    ],
+    "animations": ["idle-breath", "walk", "run", "talk", "think", "celebrate"],
+    "hair": {"pipeline": "Hair Cards + Strand Hybrid"},
+    "textures": {"type": "PBR", "resolution": "2K-4K"},
+    "lod": ["LOD0", "LOD1", "LOD2", "LOD3"],
+    "platforms": ["mobile", "tablet", "desktop"],
+    "camera": ["portrait", "half-body", "full-body", "over-the-shoulder"],
+    "visual_review_views": ["front", "3/4 front", "side", "3/4 back"],
+    "visual_review_required": True,
+    "source_policy": "external-authored-source-first",
+}
 
 REQUIRED_MARKERS = (
     "# Cassidy — Character Design Reference (GoPAL AI)",
@@ -51,6 +89,12 @@ REQUIRED_MARKERS = (
 )
 
 
+def reference_requirements() -> dict[str, Any]:
+    """Return a copy so validators cannot mutate canonical constraints."""
+    import copy
+    return copy.deepcopy(REFERENCE_REQUIREMENTS)
+
+
 def load_canonical_reference(repo_root: str | Path) -> dict[str, Any]:
     root = Path(repo_root).expanduser().resolve()
     path = root / REFERENCE_PATH
@@ -69,8 +113,6 @@ def load_canonical_reference(repo_root: str | Path) -> dict[str, Any]:
         if marker not in text:
             errors.append(f"canonical reference marker missing: {marker}")
 
-    # The canonical concept identifiers are tracked separately from this
-    # document. If they appear in a future revision, enforce their values.
     asset_matches = re.findall(r"(?:asset identifier|asset ID|asset)[:\s]*`([^`]+)`", text, re.IGNORECASE)
     generation_matches = re.findall(r"(?:generation identifier|generation ID)[:\s]*`([^`]+)`", text, re.IGNORECASE)
     if asset_matches and CANONICAL_ASSET_ID not in asset_matches:
@@ -86,6 +128,7 @@ def load_canonical_reference(repo_root: str | Path) -> dict[str, Any]:
         "canonical_asset_id": CANONICAL_ASSET_ID,
         "canonical_generation_id": CANONICAL_GENERATION_ID,
         "required_markers": list(REQUIRED_MARKERS),
+        "requirements": reference_requirements(),
         "errors": errors,
         "visual_approval": "human-controlled",
         "policy": "character-reference-markdown-is-artistic-source-of-truth",
