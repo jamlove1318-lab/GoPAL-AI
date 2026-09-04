@@ -6,7 +6,7 @@ to modifiers, shading state, semantic metadata, and structural inspection.
 
 import bpy
 
-MODEL_TOOL_VERSION = "3N.19"
+MODEL_TOOL_VERSION = "3N.20"
 AUTHORED_COLLECTION = "CASSIDY_AUTHORED"
 
 
@@ -68,10 +68,19 @@ def inspect_mesh_for_modeling(obj):
     mesh = obj.data
     uv_layers = len(mesh.uv_layers)
     material_slots = len(obj.material_slots)
-    loose_vertices = 0
-    for vertex in mesh.vertices:
-        if not vertex.link_edges:
-            loose_vertices += 1
+
+    # Blender 5.x MeshVertex no longer exposes the old link_edges helper.
+    # Count vertex connectivity directly from the mesh edge endpoint indices;
+    # this is version-independent and avoids mutating/evaluating the source.
+    edge_degree = [0] * len(mesh.vertices)
+    for edge in mesh.edges:
+        a, b = edge.vertices
+        if 0 <= a < len(edge_degree):
+            edge_degree[a] += 1
+        if 0 <= b < len(edge_degree):
+            edge_degree[b] += 1
+    loose_vertices = sum(1 for degree in edge_degree if degree == 0)
+
     return {
         "name": obj.name,
         "role": obj.get("gopal_geometry_role"),
