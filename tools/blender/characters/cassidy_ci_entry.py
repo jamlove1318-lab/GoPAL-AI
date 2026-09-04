@@ -23,6 +23,7 @@ from characters import cassidy_source_upgrade as _source_upgrade
 from characters.cassidy_production_authoring import run_production_authoring
 from characters.cassidy_visual_review_package import generate_visual_review_package
 from characters.cassidy_hero_intake import validate_hero_source, register_authored_source
+from characters.cassidy_hero_source_manifest import load_manifest, apply_manifest
 
 
 def _iter_action_fcurves(action):
@@ -122,6 +123,16 @@ def _source_from_environment() -> Path | None:
     return path
 
 
+def _manifest_from_environment() -> Path | None:
+    raw = os.environ.get("CASSIDY_SOURCE_MANIFEST")
+    if not raw:
+        return None
+    path = Path(raw).expanduser().resolve()
+    if not path.is_file():
+        raise FileNotFoundError(f"CASSIDY_SOURCE_MANIFEST does not exist: {path}")
+    return path
+
+
 def _print_blockers(report: dict) -> None:
     quality = report.get("quality") or {}
     reasons = quality.get("reasons") or []
@@ -168,9 +179,26 @@ def run() -> int:
     print("[Cassidy-CI] Starting deterministic production preparation")
     report = build_cassidy()
     source = _source_from_environment()
+    manifest_path = _manifest_from_environment()
     if source:
         print(f"[Cassidy-CI] Importing genuine source: {source}")
         report["source_intake"] = import_source(source)
+
+        if manifest_path:
+            print(f"[Cassidy-CI] Applying explicit source manifest: {manifest_path}")
+            try:
+                manifest = load_manifest(manifest_path)
+                report["source_manifest"] = apply_manifest(manifest)
+            except (OSError, ValueError, json.JSONDecodeError) as exc:
+                report["source_manifest"] = {
+                    "valid": False,
+                    "errors": [str(exc)],
+                }
+        else:
+            report["source_manifest"] = {
+                "valid": False,
+                "errors": ["No CASSIDY_SOURCE_MANIFEST supplied; semantic component mapping remains unverified."],
+            }
 
         # Intake is deliberately before technical upgrade/rendering. A failed
         # primitive placeholder should stop immediately instead of consuming
@@ -180,6 +208,10 @@ def run() -> int:
         if not report["hero_intake"]["valid"]:
             print("[Cassidy-CI] HERO_ASSET_REJECTED")
             for reason in report["hero_intake"]["reasons"]:
+                print(f"  - {reason}")
+        elif not report.get("source_manifest", {}).get("valid"):
+            print("[Cassidy-CI] HERO_ASSET_MAPPING_REJECTED")
+            for reason in report["source_manifest"]["errors"]:
                 print(f"  - {reason}")
         else:
             report["hero_registration"] = register_authored_source()
