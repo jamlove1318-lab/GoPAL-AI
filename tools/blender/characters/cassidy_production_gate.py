@@ -24,6 +24,7 @@ from characters.cassidy_hair_charm import validate_hair_and_charm
 from characters.cassidy_outfit_authoring import validate_outfit_material_readiness
 from characters.cassidy_review import validate_review_record, is_review_complete, REVIEW_VERSION
 from characters.cassidy_hero_asset_contract import validate_hero_asset_contract
+from characters.cassidy_canonical_component_identity import inspect_component_identity
 
 
 def _mapping_or_none(value):
@@ -84,6 +85,7 @@ def _face_gaze_result() -> dict:
 
 def evaluate_production_readiness() -> dict:
     hero_asset = validate_hero_asset_contract()
+    component_identity = inspect_component_identity()
     quality = validate_authoring_environment()
     mesh = validate_authored_meshes()
     modeling = validate_modeling_readiness()
@@ -102,6 +104,7 @@ def evaluate_production_readiness() -> dict:
 
     checks = (
         (hero_asset.get("valid", False), "hero asset contract requires authored continuous Cassidy geometry"),
+        (component_identity.get("valid", False), "canonical Cassidy component identity has not passed"),
         (quality.get("valid", False), "authoring environment or Cassidy semantic contract is incomplete"),
         (mesh.get("valid", False), "authored Cassidy mesh quality gate has not passed"),
         (modeling.get("valid", False), "modeling readiness gate has not passed"),
@@ -124,6 +127,7 @@ def evaluate_production_readiness() -> dict:
         "ready": not reasons,
         "reasons": reasons,
         "hero_asset": hero_asset,
+        "component_identity": component_identity,
         "quality": quality,
         "mesh": mesh,
         "modeling": modeling,
