@@ -1,8 +1,9 @@
 """Reusable authored-outfit and material-variant contract for Cassidy."""
 
+from collections.abc import Mapping
 import bpy
 
-OUTFIT_VERSION = "3N.55"
+OUTFIT_VERSION = "3N.59"
 OUTFITS = (
     "base", "spring", "summer", "autumn", "winter",
     "emerald-valley", "japanese-world", "french-world", "festival", "adventure",
@@ -20,7 +21,9 @@ def find_outfit_objects():
     for obj in cassidy_meshes():
         role = str(obj.get("gopal_geometry_role", "")).lower()
         name = obj.name.lower()
-        if role in {"outfit", "clothing", "shoes", "footwear"} or obj.name.startswith("LOD") and any(t in name for t in ("body", "outfit", "clothing", "shirt", "jacket", "shoe", "boot", "cloth")) or any(t in name for t in ("outfit", "clothing", "shirt", "jacket", "shoe", "boot", "cloth")):
+        if (role in {"outfit", "clothing", "shoes", "footwear"}
+                or (obj.name.startswith("LOD") and any(t in name for t in ("body", "outfit", "clothing", "shirt", "jacket", "shoe", "boot", "cloth")))
+                or any(t in name for t in ("outfit", "clothing", "shirt", "jacket", "shoe", "boot", "cloth"))):
             result.append(obj)
     return result
 
@@ -63,6 +66,11 @@ def bind_material_slot(obj, slot: str, material_name=None):
     return obj
 
 
+def _mapping_or_empty(value):
+    """Normalize dict and Blender IDPropertyGroup mapping values."""
+    return dict(value) if isinstance(value, Mapping) else {}
+
+
 def validate_outfit_material_readiness():
     outfits = find_outfit_objects()
     missing_materials = [o.name for o in outfits if len(o.material_slots) == 0]
@@ -77,8 +85,8 @@ def validate_outfit_material_readiness():
         declared.discard("")
         if not declared or not declared.issubset(set(MATERIAL_SLOTS)):
             unbound_slots.append(obj.name)
-        bindings = obj.get("gopal_material_bindings", {})
-        if not isinstance(bindings, dict) or any(slot not in bindings or not bindings[slot] for slot in declared):
+        bindings = _mapping_or_empty(obj.get("gopal_material_bindings", {}))
+        if not bindings or any(slot not in bindings or not bindings[slot] for slot in declared):
             binding_issues.append(obj.name)
         for index, slot in enumerate(obj.material_slots):
             if slot.material is None:
