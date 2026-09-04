@@ -1,11 +1,9 @@
 """Unified Cassidy production gate.
 
 Structural validation and visual/art review are both required before export.
-Validation must report every missing authored dependency instead of throwing on
-an absent optional in-progress asset, so the production report is actionable.
+The hero character must originate from authored continuous geometry; procedural
+primitive humanoid generation is explicitly forbidden.
 """
-
-from collections.abc import Mapping
 
 from characters.cassidy_quality import validate_authoring_environment
 from characters.cassidy_rig import validate_rig_contract
@@ -25,6 +23,7 @@ from characters.cassidy_facial_rig_authoring import validate_facial_rig
 from characters.cassidy_hair_charm import validate_hair_and_charm
 from characters.cassidy_outfit_authoring import validate_outfit_material_readiness
 from characters.cassidy_review import validate_review_record, is_review_complete, REVIEW_VERSION
+from characters.cassidy_hero_asset_contract import validate_hero_asset_contract
 
 
 def _mapping_or_none(value):
@@ -65,7 +64,6 @@ def validate_visual_review() -> dict:
 
 
 def _face_expression_result() -> dict:
-    """Return a deterministic missing-face result instead of raising."""
     import bpy
     face = bpy.data.objects.get("Cassidy_Face")
     if face is None or face.type != "MESH":
@@ -79,13 +77,13 @@ def _face_expression_result() -> dict:
 
 
 def _face_gaze_result() -> dict:
-    """Return a deterministic missing-armature result instead of raising."""
     import bpy
     armature = next((obj for obj in bpy.data.objects if obj.type == "ARMATURE"), None)
     return ensure_gaze_contract(armature)
 
 
 def evaluate_production_readiness() -> dict:
+    hero_asset = validate_hero_asset_contract()
     quality = validate_authoring_environment()
     mesh = validate_authored_meshes()
     modeling = validate_modeling_readiness()
@@ -103,6 +101,7 @@ def evaluate_production_readiness() -> dict:
     review = validate_visual_review()
 
     checks = (
+        (hero_asset.get("valid", False), "hero asset contract requires authored continuous Cassidy geometry"),
         (quality.get("valid", False), "authoring environment or Cassidy semantic contract is incomplete"),
         (mesh.get("valid", False), "authored Cassidy mesh quality gate has not passed"),
         (modeling.get("valid", False), "modeling readiness gate has not passed"),
@@ -124,6 +123,7 @@ def evaluate_production_readiness() -> dict:
     return {
         "ready": not reasons,
         "reasons": reasons,
+        "hero_asset": hero_asset,
         "quality": quality,
         "mesh": mesh,
         "modeling": modeling,
