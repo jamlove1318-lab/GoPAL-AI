@@ -9,7 +9,7 @@ import bpy
 from .cassidy import REQUIRED_ANIMATIONS
 from .cassidy_rig import BODY_BONES, find_cassidy_armature
 
-ANIMATION_VERSION = "3N.14"
+ANIMATION_VERSION = "3N.15"
 
 CLIP_FRAME_RANGES = {
     "idle": (1, 72),
@@ -26,6 +26,61 @@ CLIP_FRAME_RANGES = {
 }
 
 
+def _iter_action_fcurves(action):
+    """Yield F-curves across Blender 3.x/4.x/5.x Action APIs.
+
+    Blender 5.x stores animation curves inside layered Action channel bags;
+    the legacy ``action.fcurves`` collection no longer exists. Keep the
+    contract API stable while supporting both representations.
+    """
+    direct = getattr(action, "fcurves", None)
+    if direct is not None:
+        yield from direct
+        return
+
+    layers = getattr(action, "layers", None)
+    if layers is None:
+        return
+
+    for layer in layers:
+        strips = getattr(layer, "strips", None)
+        if strips is None:
+            continue
+        for strip in strips:
+            bags = getattr(strip, "channelbags", None)
+            if bags is not None:
+                for bag in bags:
+                    yield from getattr(bag, "fcurves", [])
+                continue
+
+            channelbag = getattr(strip, "channelbag", None)
+            if not callable(channelbag):
+                continue
+
+            # Blender 5.x normally requires an ActionSlot argument. Try the
+            # explicit slots first; fall back gracefully on older variants.
+            slots = getattr(action, "slots", None)
+            if slots is not None:
+                for slot in slots:
+                    try:
+                        bag = channelbag(slot)
+                    except (TypeError, RuntimeError):
+                        continue
+                    if bag is not None:
+                        yield from getattr(bag, "fcurves", [])
+            else:
+                try:
+                    bag = channelbag()
+                except (TypeError, RuntimeError):
+                    bag = None
+                if bag is not None:
+                    yield from getattr(bag, "fcurves", [])
+
+
+def _action_fcurve_count(action) -> int:
+    return sum(1 for _ in _iter_action_fcurves(action))
+
+
 def collect_animation_names():
     return {action.name for action in bpy.data.actions}
 
@@ -33,7 +88,7 @@ def collect_animation_names():
 def _action_bone_names(action) -> set[str]:
     """Return bone names targeted by pose-bone F-curves in an action."""
     names = set()
-    for fcurve in action.fcurves:
+    for fcurve in _iter_action_fcurves(action):
         path = fcurve.data_path
         if not path.startswith('pose.bones['):
             continue
@@ -49,7 +104,7 @@ def _action_bone_names(action) -> set[str]:
 
 def _is_meaningful_action(action, armature) -> bool:
     """Require authored motion to target Cassidy's actual rig bones."""
-    if action is None or len(action.fcurves) == 0 or armature is None:
+    if action is None or _action_fcurve_count(action) == 0 or armature is None:
         return False
     targeted = _action_bone_names(action)
     if not targeted:
@@ -64,7 +119,7 @@ def validate_animation_contract(armature=None) -> dict:
     missing = sorted(set(REQUIRED_ANIMATIONS) - names)
     empty = sorted(
         name for name in REQUIRED_ANIMATIONS
-        if name in names and len(bpy.data.actions[name].fcurves) == 0
+        if name in names and _action_fcurve_count(bpy.data.actions[name]) == 0
     )
     unbound = sorted(
         name for name in REQUIRED_ANIMATIONS
