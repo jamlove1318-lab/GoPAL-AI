@@ -27,10 +27,27 @@ from characters.cassidy_outfit_authoring import validate_outfit_material_readine
 from characters.cassidy_review import validate_review_record, is_review_complete, REVIEW_VERSION
 
 
+def _mapping_or_none(value):
+    """Normalize dict-like Blender IDProperties without assuming Mapping ABC support."""
+    if value is None:
+        return None
+    if isinstance(value, dict):
+        return dict(value)
+    items = getattr(value, "items", None)
+    if callable(items):
+        try:
+            return {k: v for k, v in items()}
+        except Exception:
+            pass
+    try:
+        return dict(value)
+    except Exception:
+        return None
+
+
 def _scene_review_record():
     import bpy
-    record = bpy.context.scene.get("gopal_cassidy_review")
-    return dict(record) if isinstance(record, Mapping) else None
+    return _mapping_or_none(bpy.context.scene.get("gopal_cassidy_review"))
 
 
 def validate_visual_review() -> dict:
