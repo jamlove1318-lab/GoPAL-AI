@@ -1,7 +1,8 @@
 """Strict, explainable quality analysis for an authored Cassidy hero source.
 
 This module is deliberately analysis-only. It never creates geometry, changes
-identity, or turns a weak asset into an approved one.
+identity, or turns a weak asset into an approved one. Canonical numeric targets
+come from the machine-readable projection of the human-authored character sheet.
 """
 from __future__ import annotations
 
@@ -9,25 +10,28 @@ from typing import Any
 import bpy
 
 from .cassidy_hero_asset_contract import CHARACTER, REQUIRED_COMPONENTS, REQUIRED_ROLES
+from .cassidy_canonical_reference_contract import reference_requirements
 
-PROFILE_VERSION = "3N.34-hero-quality-profile"
+PROFILE_VERSION = "3N.35-hero-quality-profile"
 
-# Diagnostic targets derived from the canonical character reference. These are
-# evidence thresholds, not visual approval.
-TARGETS = {
-    "hero_triangles_min": 15000,
-    "hero_triangles_max": 45000,
-    "body_vertices_floor": 1500,
-    "body_polygons_floor": 1000,
-    "body_components_max": 3,
-    "loose_vertices_max": 0,
-    "non_manifold_edges_max": 0,
-    "boundary_edges_max": 0,
-    "materials_max": 12,
-    "bones_max": 64,
-    "expression_blendshape_min": 60,
-    "lod_levels_required": 4,
-}
+
+def _targets() -> dict[str, Any]:
+    reference = reference_requirements()
+    geometry = reference["geometry"]
+    facial = reference["facial"]
+    return {
+        "hero_triangles_min": int(geometry["triangles_min"]),
+        "hero_triangles_max": int(geometry["triangles_max"]),
+        "body_vertices_floor": 1500,
+        "body_polygons_floor": 1000,
+        "loose_vertices_max": 0,
+        "non_manifold_edges_max": 0,
+        "boundary_edges_max": 0,
+        "materials_max": 12,
+        "bones_max": 64,
+        "expression_blendshape_min": int(facial["blendshapes_min"]),
+        "lod_levels_required": len(reference["lod"]),
+    }
 
 
 def _cassidy_meshes() -> list[Any]:
@@ -102,20 +106,19 @@ def _lod_levels() -> set[str]:
 
 
 def analyze_hero_quality() -> dict[str, Any]:
+    targets = _targets()
     meshes = _cassidy_meshes()
     metrics = [_mesh_metrics(obj) for obj in meshes]
     component_ids = {m["component_id"] for m in metrics if m["component_id"]}
     missing_components = sorted(set(REQUIRED_COMPONENTS) - component_ids)
 
-    # Head is an intentional semantic alias of the face-base component.
     observed_roles = {_geometry_role(obj) for obj in meshes}
     missing_roles = sorted(
         role for role in REQUIRED_ROLES
         if role != "head" and role not in observed_roles
     )
     if "cassidy-face-base" not in component_ids:
-        missing_roles.append("head")
-        missing_roles.append("face")
+        missing_roles.extend(["head", "face"])
 
     body = [m for m in metrics if m["component_id"] == "cassidy-body-base"]
     body_best = max(body, key=lambda item: item["vertices"], default=None)
@@ -131,34 +134,34 @@ def analyze_hero_quality() -> dict[str, Any]:
     if body_best is None:
         reasons.append("no viable Cassidy body-base mesh")
     else:
-        if body_best["vertices"] < TARGETS["body_vertices_floor"]:
+        if body_best["vertices"] < targets["body_vertices_floor"]:
             reasons.append("body vertex count is below diagnostic floor")
-        if body_best["polygons"] < TARGETS["body_polygons_floor"]:
+        if body_best["polygons"] < targets["body_polygons_floor"]:
             reasons.append("body polygon count is below diagnostic floor")
-        if body_best["loose_vertices"] > TARGETS["loose_vertices_max"]:
+        if body_best["loose_vertices"] > targets["loose_vertices_max"]:
             reasons.append("body has loose vertices")
-        if body_best["non_manifold_edges"] > TARGETS["non_manifold_edges_max"]:
+        if body_best["non_manifold_edges"] > targets["non_manifold_edges_max"]:
             reasons.append("body has non-manifold edges")
 
-    if hero_triangles < TARGETS["hero_triangles_min"]:
+    if hero_triangles < targets["hero_triangles_min"]:
         reasons.append("hero geometry is below the canonical 15K triangle floor")
-    elif hero_triangles > TARGETS["hero_triangles_max"]:
+    elif hero_triangles > targets["hero_triangles_max"]:
         reasons.append("hero geometry exceeds the canonical 45K triangle ceiling")
 
     armature = _armature_metrics()
-    if armature["bone_count"] > TARGETS["bones_max"]:
+    if armature["bone_count"] > targets["bones_max"]:
         reasons.append("armature exceeds mobile diagnostic bone budget")
 
     all_materials = sorted({name for item in metrics for name in item["materials"]})
-    if len(all_materials) > TARGETS["materials_max"]:
+    if len(all_materials) > targets["materials_max"]:
         reasons.append("source uses more than the diagnostic material budget")
 
     expression_shapes = max((m["shape_key_count"] for m in metrics), default=0)
-    if expression_shapes < TARGETS["expression_blendshape_min"]:
+    if expression_shapes < targets["expression_blendshape_min"]:
         reasons.append("facial shape-key count is below the 60+ blendshape target")
 
+    required_lods = set(reference_requirements()["lod"])
     lod_levels = sorted(_lod_levels())
-    required_lods = {"LOD0", "LOD1", "LOD2", "LOD3"}
     missing_lods = sorted(required_lods - set(lod_levels))
     if missing_lods:
         reasons.append("missing required LOD levels: " + ", ".join(missing_lods))
@@ -169,6 +172,7 @@ def analyze_hero_quality() -> dict[str, Any]:
         "valid": not reasons,
         "analysis_only": True,
         "approval": "human_visual_review_required",
+        "source_of_truth": "docs/cassidy-character-reference.md",
         "reasons": reasons,
         "required_components": list(REQUIRED_COMPONENTS),
         "required_roles": list(REQUIRED_ROLES),
@@ -183,5 +187,5 @@ def analyze_hero_quality() -> dict[str, Any]:
         "meshes": metrics,
         "armature": armature,
         "materials": all_materials,
-        "targets": dict(TARGETS),
+        "targets": targets,
     }
