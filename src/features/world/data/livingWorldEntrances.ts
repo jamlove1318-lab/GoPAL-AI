@@ -1,4 +1,5 @@
 import type { WorldTheme } from '../components/LivingWorldPrimitives';
+import { getLanguageWorldEntrances } from './livingLanguageWorldPhysical';
 
 export type WorldEntranceKind = 'door' | 'gate' | 'arch' | 'portal' | 'boarding-gate' | 'entrance';
 export type WorldEntranceDefinition = {
@@ -33,5 +34,5 @@ export const LIVING_WORLD_ENTRANCES: Record<string, WorldEntranceDefinition[]> =
   ],
 };
 
-export function getWorldEntrances(locationId: string) { return LIVING_WORLD_ENTRANCES[locationId] ?? []; }
+export function getWorldEntrances(locationId: string) { return LIVING_WORLD_ENTRANCES[locationId] ?? getLanguageWorldEntrances(locationId); }
 export function findWorldEntrance(locationId: string, id: string) { return getWorldEntrances(locationId).find(entrance => entrance.id === id) ?? null; }
