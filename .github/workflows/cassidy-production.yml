@@ -68,8 +68,18 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}/tools/blender
         run: |
           set -euo pipefail
+          export PYTHONPATH="${GITHUB_WORKSPACE}/tools/blender${PYTHONPATH:+:${PYTHONPATH}}"
+          python3 - <<'PY'
+          import sys
+          from pathlib import Path
+          root = Path.cwd() / 'tools' / 'blender'
+          sys.path.insert(0, str(root))
+          from characters.cassidy_source_locator import discover
+          print(f"Python package root: {root}")
+          print(f"characters import OK: {__import__('characters').__path__}")
+          print(f"Resolved Cassidy source: {discover(Path.cwd())}")
+          PY
           SOURCE="$(python3 - <<'PY'
-          import os
           import sys
           from pathlib import Path
           sys.path.insert(0, str(Path.cwd() / 'tools/blender'))
@@ -91,11 +101,30 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}/tools/blender
         run: |
           set -euo pipefail
+          export PYTHONPATH="${GITHUB_WORKSPACE}/tools/blender${PYTHONPATH:+:${PYTHONPATH}}"
+          python3 - <<'PY'
+          import sys
+          from pathlib import Path
+          root = Path.cwd() / 'tools' / 'blender'
+          sys.path.insert(0, str(root))
+          import characters
+          print(f"CI Python package bootstrap OK: {characters.__path__}")
+          PY
           if [ "${{ inputs.clean || 'true' }}" = "true" ]; then
             blender --background --factory-startup --python tools/blender/characters/cassidy_ci_entry.py 2>&1 | tee artifacts/cassidy/blender.log
           else
             blender --background --python tools/blender/characters/cassidy_ci_entry.py 2>&1 | tee artifacts/cassidy/blender.log
           fi
+          test -f artifacts/cassidy/production-report.json || { echo "ERROR: Cassidy production report was not generated"; exit 1; }
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('artifacts/cassidy/production-report.json').read_text(encoding='utf-8'))
+          if not report.get('ready', False):
+              print('ERROR: Cassidy production report is not ready; objective gates blocked production.')
+              raise SystemExit(2)
+          print('Cassidy production report: READY')
+          PY
 
       - name: Publish Cassidy build artifacts
         if: always()
