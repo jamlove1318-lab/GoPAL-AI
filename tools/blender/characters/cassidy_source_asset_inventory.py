@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -165,7 +166,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Inventory a genuine Cassidy source asset without modifying it.")
     parser.add_argument("source", type=Path)
     parser.add_argument("--output", type=Path, required=True)
-    args = parser.parse_args()
+    argv = sys.argv
+    script_args = argv[argv.index("--") + 1:] if "--" in argv else []
+    args = parser.parse_args(script_args)
     report = inspect_source(args.source.expanduser().resolve())
     destination = args.output.expanduser().resolve()
     destination.parent.mkdir(parents=True, exist_ok=True)
