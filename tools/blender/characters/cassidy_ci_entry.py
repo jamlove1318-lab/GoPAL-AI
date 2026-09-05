@@ -30,6 +30,7 @@ from characters.cassidy_canonical_source_registry import capture_source_snapshot
 from characters.cassidy_canonical_preservation_gate import evaluate_preservation
 from characters.cassidy_canonical_component_identity import inspect_component_identity
 from characters.cassidy_canonical_reference_contract import load_canonical_reference
+from characters.cassidy_source_locator import discover as discover_cassidy_source
 
 
 def _iter_action_fcurves(action):
@@ -117,12 +118,19 @@ def _write_json(path: Path, payload: dict) -> None:
 
 
 def _source_from_environment() -> Path | None:
+    """Resolve the genuine source from explicit env or deterministic runner discovery."""
     raw = os.environ.get("CASSIDY_SOURCE_BLEND") or os.environ.get("CASSIDY_SOURCE_ASSET")
-    if not raw:
+    if raw:
+        path = Path(raw).expanduser().resolve()
+        if not path.is_file():
+            raise FileNotFoundError(f"CASSIDY_SOURCE_BLEND does not exist: {path}")
+        return path
+    try:
+        path = discover_cassidy_source(REPO_ROOT)
+    except FileNotFoundError:
         return None
-    path = Path(raw).expanduser().resolve()
-    if not path.is_file():
-        raise FileNotFoundError(f"CASSIDY_SOURCE_BLEND does not exist: {path}")
+    print(f"[Cassidy-CI] AUTO_SOURCE_DISCOVERY: {path}")
+    print(f"[Cassidy-CI] AUTO_SOURCE_SHA256: {__import__('hashlib').sha256(path.read_bytes()).hexdigest()}")
     return path
 
 
@@ -155,13 +163,7 @@ def _run_source_inventory(source: Path, output: Path) -> dict[str, Any]:
         "--output",
         str(inventory_report),
     ]
-    completed = subprocess.run(
-        command,
-        cwd=str(REPO_ROOT),
-        text=True,
-        capture_output=True,
-        check=False,
-    )
+    completed = subprocess.run(command, cwd=str(REPO_ROOT), text=True, capture_output=True, check=False)
     if completed.returncode != 0:
         detail = (completed.stderr or completed.stdout or "inventory process failed").strip()
         raise RuntimeError(f"Source inventory failed ({completed.returncode}): {detail}")
@@ -177,11 +179,7 @@ def _print_blockers(report: dict) -> None:
         print("[Cassidy-CI] Remaining production blockers:")
         for reason in reasons:
             print(f"  - {reason}")
-    detail_keys = (
-        "canonical_reference", "source_asset_inventory", "hero_intake", "hero_quality_profile", "hero_component_identity", "hero_asset", "quality", "mesh", "modeling", "rig", "lod",
-        "mobile_lod", "animation", "animation_authoring", "face_nodes", "expressions", "gaze", "facial_rig",
-        "hair_charm", "outfit", "review", "canonical_source_preservation",
-    )
+    detail_keys = ("canonical_reference", "source_asset_inventory", "hero_intake", "hero_quality_profile", "hero_component_identity", "hero_asset", "quality", "mesh", "modeling", "rig", "lod", "mobile_lod", "animation", "animation_authoring", "face_nodes", "expressions", "gaze", "facial_rig", "hair_charm", "outfit", "review", "canonical_source_preservation")
     print("[Cassidy-CI] Gate evidence:")
     for key in detail_keys:
         value = report.get(key)
@@ -190,12 +188,7 @@ def _print_blockers(report: dict) -> None:
         if value.get("valid", True) is True and value.get("complete", True) is True:
             continue
         print(f"  [{key}]")
-        for field in (
-            "missing", "missing_components", "duplicate_components", "missing_roles", "missing_nodes", "missing_animations", "missing_expressions",
-            "empty_animations", "unbound_animations", "missing_materials", "invalid_outfits", "unbound_material_slots",
-            "invalid_materials", "geometry_issues", "topology_issues", "issues", "loose_geometry", "missing_uv", "errors", "reasons",
-            "changed_components", "role_conflicts", "unowned_objects", "unsupported_components",
-        ):
+        for field in ("missing", "missing_components", "duplicate_components", "missing_roles", "missing_nodes", "missing_animations", "missing_expressions", "empty_animations", "unbound_animations", "missing_materials", "invalid_outfits", "unbound_material_slots", "invalid_materials", "geometry_issues", "topology_issues", "issues", "loose_geometry", "missing_uv", "errors", "reasons", "changed_components", "role_conflicts", "unowned_objects", "unsupported_components"):
             items = value.get(field)
             if items:
                 print(f"    {field}: {items}")
@@ -223,26 +216,16 @@ def run() -> int:
             print("[Cassidy-CI] SOURCE_INVENTORY_REJECTED")
             print(f"  - {exc}")
     else:
-        report["source_asset_inventory"] = {
-            "valid": False,
-            "errors": ["No genuine Cassidy source supplied; source inventory cannot run."],
-        }
+        report["source_asset_inventory"] = {"valid": False, "errors": ["No genuine Cassidy source supplied; source inventory cannot run."]}
 
     report.update(build_cassidy())
     if not report.get("source_asset_inventory", {}).get("valid", False):
-        report.setdefault("quality", {}).setdefault("reasons", []).extend(
-            report["source_asset_inventory"].get("errors", ["Source inventory failed."])
-        )
+        report.setdefault("quality", {}).setdefault("reasons", []).extend(report["source_asset_inventory"].get("errors", ["Source inventory failed."]))
         report["ready"] = False
 
-    # The Markdown reference is the human-authored artistic source of truth.
-    # This contract checks its identity markers but never interprets prose as
-    # visual approval and never replaces a missing visual review.
     report["canonical_reference"] = load_canonical_reference(REPO_ROOT)
     if not report["canonical_reference"]["valid"]:
-        report.setdefault("quality", {}).setdefault("reasons", []).extend(
-            report["canonical_reference"]["errors"]
-        )
+        report.setdefault("quality", {}).setdefault("reasons", []).extend(report["canonical_reference"]["errors"])
         report["ready"] = False
         print("[Cassidy-CI] CANONICAL_REFERENCE_REJECTED")
         for reason in report["canonical_reference"]["errors"]:
@@ -261,10 +244,7 @@ def run() -> int:
             except (OSError, ValueError, json.JSONDecodeError) as exc:
                 report["source_manifest"] = {"valid": False, "errors": [str(exc)]}
         else:
-            report["source_manifest"] = {
-                "valid": False,
-                "errors": ["No CASSIDY_SOURCE_MANIFEST supplied; semantic component mapping remains unverified."],
-            }
+            report["source_manifest"] = {"valid": False, "errors": ["No CASSIDY_SOURCE_MANIFEST supplied; semantic component mapping remains unverified."]}
 
         print("[Cassidy-CI] Running strict hero-asset intake gate")
         report["hero_intake"] = validate_hero_source()
@@ -283,9 +263,7 @@ def run() -> int:
             report["hero_component_identity"] = inspect_component_identity()
             if not report["hero_component_identity"]["valid"]:
                 print("[Cassidy-CI] HERO_COMPONENT_IDENTITY_REJECTED")
-                report.setdefault("quality", {}).setdefault("reasons", []).extend(
-                    report["hero_component_identity"]["errors"]
-                )
+                report.setdefault("quality", {}).setdefault("reasons", []).extend(report["hero_component_identity"]["errors"])
                 report["ready"] = False
             else:
                 report["canonical_source_before"] = capture_source_snapshot("before-technical-processing")
@@ -296,14 +274,10 @@ def run() -> int:
                 print("[Cassidy-CI] Running complete source-preserving production authoring pass")
                 report["production_authoring"] = run_production_authoring(bpy.data.objects.get("Cassidy_Armature"))
                 report["canonical_source_after"] = capture_source_snapshot("after-technical-processing")
-                report["canonical_source_preservation"] = evaluate_preservation(
-                    report["canonical_source_before"], report["canonical_source_after"]
-                )
+                report["canonical_source_preservation"] = evaluate_preservation(report["canonical_source_before"], report["canonical_source_after"])
                 _write_json(output / "canonical-source-preservation.json", report["canonical_source_preservation"])
                 if not report["canonical_source_preservation"]["valid"]:
-                    report.setdefault("quality", {}).setdefault("reasons", []).extend(
-                        report["canonical_source_preservation"]["reasons"]
-                    )
+                    report.setdefault("quality", {}).setdefault("reasons", []).extend(report["canonical_source_preservation"]["reasons"])
                     report["ready"] = False
                     print("[Cassidy-CI] CANONICAL_SOURCE_PRESERVATION_REJECTED")
                 else:
