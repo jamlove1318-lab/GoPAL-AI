@@ -12,10 +12,15 @@ from pathlib import Path
 from typing import Any
 import bpy
 
-TOOLS_ROOT = Path(__file__).resolve().parents[2]
-REPO_ROOT = TOOLS_ROOT.parent
-if str(TOOLS_ROOT) not in sys.path:
-    sys.path.insert(0, str(TOOLS_ROOT))
+# Blender can seed sys.path from the script directory rather than the repository
+# package root. Bootstrap the two relevant roots explicitly before importing the
+# namespace packages used by the production factory.
+CHARACTERS_ROOT = Path(__file__).resolve().parent
+TOOLS_ROOT = CHARACTERS_ROOT.parent
+REPO_ROOT = TOOLS_ROOT.parent.parent
+for _path in (str(TOOLS_ROOT), str(CHARACTERS_ROOT), str(REPO_ROOT)):
+    if _path not in sys.path:
+        sys.path.insert(0, _path)
 
 from characters.build_cassidy import main as build_cassidy
 from characters.cassidy_export import export_runtime_package
@@ -145,12 +150,7 @@ def _manifest_from_environment() -> Path | None:
 
 
 def _run_source_inventory(source: Path, output: Path) -> dict[str, Any]:
-    """Run evidence-only inventory in a separate Blender process.
-
-    The inventory loader intentionally resets/opens Blender state. Running it
-    in-process would destroy the production scene, so CI isolates it in a
-    second headless Blender process before the real production build.
-    """
+    """Run evidence-only inventory in a separate Blender process."""
     inventory_script = Path(__file__).with_name("cassidy_source_asset_inventory.py")
     inventory_report = output / "source-asset-inventory.json"
     command = [
@@ -203,6 +203,8 @@ def run() -> int:
     output = REPO_ROOT / "artifacts" / "cassidy"
     output.mkdir(parents=True, exist_ok=True)
     print("[Cassidy-CI] Starting deterministic production preparation")
+    print(f"[Cassidy-CI] REPO_ROOT={REPO_ROOT}")
+    print(f"[Cassidy-CI] TOOLS_ROOT={TOOLS_ROOT}")
 
     source = _source_from_environment()
     report: dict[str, Any] = {}
@@ -215,8 +217,6 @@ def run() -> int:
             report["source_asset_inventory"] = {"valid": False, "errors": [str(exc)]}
             print("[Cassidy-CI] SOURCE_INVENTORY_REJECTED")
             print(f"  - {exc}")
-    else:
-        report["source_asset_inventory"] = {"valid": False, "errors": ["No genuine Cassidy source supplied; source inventory cannot run."]}
 
     report.update(build_cassidy())
     if not report.get("source_asset_inventory", {}).get("valid", False):
