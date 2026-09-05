@@ -1,12 +1,13 @@
 """GitHub/Linux entrypoint for Cassidy production.
 
-The pipeline prepares the deterministic workspace, imports a genuine source,
-performs strict hero-asset intake, records structural quality evidence, applies
-only source-preserving technical work, validates it, and exports only when every
-objective gate passes. Visual approval remains human-controlled.
+The pipeline prepares the deterministic workspace, inventories and imports a
+genuine source, performs strict hero-asset intake, records structural quality
+evidence, applies only source-preserving technical work, validates it, and
+exports only when every objective gate passes. Visual approval remains
+human-controlled.
 """
 from __future__ import annotations
-import json, os, sys
+import json, os, subprocess, sys
 from pathlib import Path
 from typing import Any
 import bpy
@@ -135,6 +136,40 @@ def _manifest_from_environment() -> Path | None:
     return path
 
 
+def _run_source_inventory(source: Path, output: Path) -> dict[str, Any]:
+    """Run evidence-only inventory in a separate Blender process.
+
+    The inventory loader intentionally resets/opens Blender state. Running it
+    in-process would destroy the production scene, so CI isolates it in a
+    second headless Blender process before the real production build.
+    """
+    inventory_script = Path(__file__).with_name("cassidy_source_asset_inventory.py")
+    inventory_report = output / "source-asset-inventory.json"
+    command = [
+        bpy.app.binary_path,
+        "--background",
+        "--python",
+        str(inventory_script),
+        "--",
+        str(source),
+        "--output",
+        str(inventory_report),
+    ]
+    completed = subprocess.run(
+        command,
+        cwd=str(REPO_ROOT),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        detail = (completed.stderr or completed.stdout or "inventory process failed").strip()
+        raise RuntimeError(f"Source inventory failed ({completed.returncode}): {detail}")
+    if not inventory_report.is_file():
+        raise RuntimeError("Source inventory completed without producing its JSON report")
+    return json.loads(inventory_report.read_text(encoding="utf-8"))
+
+
 def _print_blockers(report: dict) -> None:
     quality = report.get("quality") or {}
     reasons = quality.get("reasons") or []
@@ -143,7 +178,7 @@ def _print_blockers(report: dict) -> None:
         for reason in reasons:
             print(f"  - {reason}")
     detail_keys = (
-        "canonical_reference", "hero_intake", "hero_quality_profile", "hero_component_identity", "hero_asset", "quality", "mesh", "modeling", "rig", "lod",
+        "canonical_reference", "source_asset_inventory", "hero_intake", "hero_quality_profile", "hero_component_identity", "hero_asset", "quality", "mesh", "modeling", "rig", "lod",
         "mobile_lod", "animation", "animation_authoring", "face_nodes", "expressions", "gaze", "facial_rig",
         "hair_charm", "outfit", "review", "canonical_source_preservation",
     )
@@ -175,7 +210,30 @@ def run() -> int:
     output = REPO_ROOT / "artifacts" / "cassidy"
     output.mkdir(parents=True, exist_ok=True)
     print("[Cassidy-CI] Starting deterministic production preparation")
-    report = build_cassidy()
+
+    source = _source_from_environment()
+    report: dict[str, Any] = {}
+    if source:
+        print(f"[Cassidy-CI] Inventorying genuine source in isolated Blender process: {source}")
+        try:
+            report["source_asset_inventory"] = _run_source_inventory(source, output)
+            print("[Cassidy-CI] SOURCE_INVENTORY_PASS")
+        except (OSError, ValueError, RuntimeError, json.JSONDecodeError) as exc:
+            report["source_asset_inventory"] = {"valid": False, "errors": [str(exc)]}
+            print("[Cassidy-CI] SOURCE_INVENTORY_REJECTED")
+            print(f"  - {exc}")
+    else:
+        report["source_asset_inventory"] = {
+            "valid": False,
+            "errors": ["No genuine Cassidy source supplied; source inventory cannot run."],
+        }
+
+    report.update(build_cassidy())
+    if not report.get("source_asset_inventory", {}).get("valid", False):
+        report.setdefault("quality", {}).setdefault("reasons", []).extend(
+            report["source_asset_inventory"].get("errors", ["Source inventory failed."])
+        )
+        report["ready"] = False
 
     # The Markdown reference is the human-authored artistic source of truth.
     # This contract checks its identity markers but never interprets prose as
@@ -190,7 +248,6 @@ def run() -> int:
         for reason in report["canonical_reference"]["errors"]:
             print(f"  - {reason}")
 
-    source = _source_from_environment()
     manifest_path = _manifest_from_environment()
     if source and report["canonical_reference"]["valid"]:
         print(f"[Cassidy-CI] Importing genuine source: {source}")
