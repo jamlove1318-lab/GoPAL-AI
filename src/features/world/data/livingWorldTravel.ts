@@ -21,15 +21,17 @@ function isFictionalWorld(location: WorldLocationDefinition): boolean {
   return !!world && world.tags?.includes('fictional') === true;
 }
 
-export function resolveWorldTravel(source: WorldLocationDefinition, target: WorldLocationDefinition): WorldTravelDefinition {
+export function resolveWorldTravel(source: WorldLocationDefinition, target: WorldLocationDefinition, preferredMode?: WorldTravelMode): WorldTravelDefinition {
   const sourceWorldId = worldId(source);
   const targetWorldId = worldId(target);
   const crossWorld = sourceWorldId !== targetWorldId;
 
   if (!crossWorld) {
     const tags = new Set([...(source.tags ?? []), ...(target.tags ?? [])]);
-    const mode: WorldTravelMode = tags.has('rail') ? 'train' : tags.has('bus') ? 'bus' : tags.has('road') ? 'car' : 'train';
-    return { mode, scope: 'local', durationSeconds: mode === 'train' ? 7 : 5, cinematicRequired: true, reason: 'Locations in the same world use physical ground travel.' };
+    const mode: WorldTravelMode = preferredMode === 'car' || preferredMode === 'bus' || preferredMode === 'train'
+      ? preferredMode
+      : tags.has('rail') ? 'train' : tags.has('bus') ? 'bus' : tags.has('road') ? 'car' : 'train';
+    return { mode, scope: 'local', durationSeconds: mode === 'train' ? 7 : mode === 'bus' ? 6 : 5, cinematicRequired: true, reason: 'Locations in the same world use physical ground travel.' };
   }
 
   if (isFictionalWorld(target)) {
@@ -39,11 +41,12 @@ export function resolveWorldTravel(source: WorldLocationDefinition, target: Worl
   return { mode: 'plane', scope: 'cross-world', durationSeconds: 8, cinematicRequired: true, reason: 'Cross-world travel to a real-world language destination uses air travel.' };
 }
 
-export function resolveWorldTravelByIds(source: WorldLocationDefinition, target: WorldLocationDefinition) {
+export function resolveWorldTravelByIds(source: WorldLocationDefinition, target: WorldLocationDefinition, preferredMode?: WorldTravelMode) {
   const sourceWorld = getLanguageWorld(source.languageWorldId ?? '') ?? getLanguageWorldForLocation(source);
   const targetWorld = getLanguageWorld(target.languageWorldId ?? '') ?? getLanguageWorldForLocation(target);
   return resolveWorldTravel(
     sourceWorld ? { ...source, languageWorldId: sourceWorld.id } : source,
     targetWorld ? { ...target, languageWorldId: targetWorld.id } : target,
+    preferredMode,
   );
 }
