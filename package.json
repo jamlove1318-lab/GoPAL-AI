@@ -34,7 +34,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "validate:cassidy-2d": "node scripts/validate-cassidy-2d-manifest.mjs"
   },
   "private": true
 }
