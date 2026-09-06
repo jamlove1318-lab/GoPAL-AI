@@ -10,6 +10,7 @@ import { getWorldCharacters } from './livingWorldCharacters';
 import type { WorldEntranceDefinition } from './livingWorldEntrances';
 import { getWorldEntrances } from './livingWorldEntrances';
 import { getLivingLocationTemplate } from './livingWorldCatalog';
+import { getLanguageWorldLocation } from './livingLanguageWorldLocations';
 import { getReusableWorldObject, getReusableWorldObjectsByFamily, type WorldObjectFamily } from './livingWorldObjectCatalog';
 import { getWorldTemplate, type WorldTemplateKind } from './livingWorldTemplateLibrary';
 export type WorldArchetype='village'|'city'|'campus'|'forest'|'mountain'|'coastal'|'fantasy'|'scifi'|'game-level';
@@ -33,5 +34,26 @@ export function buildWorldConstructionKit(locationId:string):WorldConstructionKi
 export function getReusableObjectBlueprint(type:string){return getReusableWorldObject(type);}
 export function getReusableObjectFamily(family:WorldObjectFamily){return getReusableWorldObjectsByFamily(family);}
 export function getReusableTemplate(kind:WorldTemplateKind){return getWorldTemplate(`${kind}-template`);}
-function inferArchetype(locationId:string):WorldArchetype{if(locationId.includes('campus'))return'campus';if(locationId.includes('city')||locationId.includes('tokyo')||locationId.includes('paris')||locationId.includes('shibuya')||locationId.includes('montmartre'))return'city';if(locationId.includes('forest')||locationId.includes('garden'))return'forest';if(locationId.includes('mountain')||locationId.includes('gion'))return'mountain';if(locationId.includes('coast')||locationId.includes('beach')||locationId.includes('cafe')||locationId.includes('bakery'))return'coastal';if(locationId.includes('fantasy'))return'fantasy';if(locationId.includes('scifi')||locationId.includes('space'))return'scifi';if(locationId.includes('game'))return'game-level';return'village';}
+function inferArchetype(locationId:string):WorldArchetype{
+ const location=getLanguageWorldLocation(locationId);
+ if(location){
+  const tags=new Set(location.tags);
+  if(tags.has('fantasy')||tags.has('magic'))return'fantasy';
+  if(tags.has('scifi')||tags.has('technology')||tags.has('space'))return'scifi';
+  if(tags.has('education')||tags.has('campus')||tags.has('learning'))return'campus';
+  if(tags.has('mountain')||tags.has('altitude'))return'mountain';
+  if(tags.has('coast')||tags.has('harbor')||tags.has('beach')||tags.has('mediterranean'))return'coastal';
+  if(tags.has('forest')||tags.has('garden')||tags.has('nature'))return'forest';
+  if(tags.has('city')||tags.has('urban')||tags.has('architecture')||tags.has('transit')||tags.has('history')||tags.has('culture')||tags.has('tradition'))return'city';
+ }
+ if(locationId.includes('campus'))return'campus';
+ if(locationId.includes('city')||locationId.includes('tokyo')||locationId.includes('paris')||locationId.includes('shibuya')||locationId.includes('montmartre'))return'city';
+ if(locationId.includes('forest')||locationId.includes('garden'))return'forest';
+ if(locationId.includes('mountain'))return'mountain';
+ if(locationId.includes('coast')||locationId.includes('beach'))return'coastal';
+ if(locationId.includes('fantasy'))return'fantasy';
+ if(locationId.includes('scifi')||locationId.includes('space'))return'scifi';
+ if(locationId.includes('game'))return'game-level';
+ return'village';
+}
 export function constructionKitSummary(kit:WorldConstructionKit){return{id:kit.id,archetype:kit.archetype,theme:kit.theme,templateId:kit.templateId,buildings:kit.buildings.length,networks:kit.infrastructureNetworks.length,transportNetworks:kit.transport.length,gameplay:kit.gameplay.length,characters:kit.characters.length,entrances:kit.entrances.length,availableObjectFamilies:kit.availableObjectFamilies?.length??0};}
