@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import Svg, { Circle, Ellipse, G, Line, Path, Polygon, Rect } from 'react-native-svg';
 import { buildingVariant, propScale, WORLD_PALETTES } from '../data/livingWorldArt';
 import { worldDepth } from '../geometry/livingWorldGeometry';
@@ -85,13 +85,12 @@ export function WorldBuilding({ building, theme = 'emerald' }: { building: World
             <Rect x={isTall ? 24 : 18} y="46" width={isTall ? 80 : 92} height={isTall ? 55 : 55} rx="7" fill={art.wall} />
             <Rect x={isTall ? 30 : 25} y="54" width="22" height="19" rx="3" fill={art.window} stroke={art.trim} strokeWidth="2" />
             <Rect x={isTall ? 76 : 81} y="54" width="22" height="19" rx="3" fill={art.window} stroke={art.trim} strokeWidth="2" />
-            <Path d={isTall ? 'M54 101V70Q64 59 74 70V101Z' : 'M54 101V70Q64 59 74 70V101Z'} fill={art.accent} />
+            <Path d="M54 101V70Q64 59 74 70V101Z" fill={art.accent} />
             {building.type === 'school' ? <G><Rect x="46" y="23" width="36" height="9" rx="3" fill={art.accent} /><Path d="M52 27H76" stroke={art.trim} strokeWidth="2" /></G> : null}
             {building.type === 'library' ? <Path d="M34 78V50M45 78V50M83 78V50M94 78V50" stroke={art.trim} strokeWidth="3" opacity={.7} /> : null}
           </>}
         </G>
       </Svg>
-      {building.label ? <Text style={{ position: 'absolute', bottom: -14 * scale, left: 0, right: 0, textAlign: 'center', fontSize: 8 * scale, fontWeight: '800', color: '#fff', backgroundColor: 'rgba(15,23,42,.48)', paddingHorizontal: 5, borderRadius: 8 }}>{building.label}</Text> : null}
     </Pressable>
   );
 }
