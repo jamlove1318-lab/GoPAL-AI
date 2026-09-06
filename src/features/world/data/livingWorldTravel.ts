@@ -32,11 +32,11 @@ export function resolveWorldTravel(source: WorldLocationDefinition, target: Worl
     return { mode, scope: 'local', durationSeconds: mode === 'train' ? 7 : 5, cinematicRequired: true, reason: 'Locations in the same world use physical ground travel.' };
   }
 
-  if (isFictionalWorld(target) || isFictionalWorld(source)) {
-    return { mode: 'magic', scope: 'cross-world', durationSeconds: 6, cinematicRequired: true, reason: 'Fictional worlds use a world-specific magical transition.' };
+  if (isFictionalWorld(target)) {
+    return { mode: 'magic', scope: 'cross-world', durationSeconds: 6, cinematicRequired: true, reason: 'Fictional destinations use a world-specific magical transition.' };
   }
 
-  return { mode: 'plane', scope: 'cross-world', durationSeconds: 8, cinematicRequired: true, reason: 'Cross-world travel uses air travel.' };
+  return { mode: 'plane', scope: 'cross-world', durationSeconds: 8, cinematicRequired: true, reason: 'Cross-world travel to a real-world language destination uses air travel.' };
 }
 
 export function resolveWorldTravelByIds(source: WorldLocationDefinition, target: WorldLocationDefinition) {
