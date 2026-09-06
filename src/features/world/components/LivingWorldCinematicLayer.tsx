@@ -15,7 +15,7 @@ export function LivingWorldCinematicLayer({runtime}:{runtime:LivingWorldRuntime}
   return()=>animation.stop();
  },[scenario,progress,fade]);
  if(!scenario)return null;
- const sweepX=progress.interpolate({inputRange:[0,.5,1],outputRange:['-55%','10%','55%']});
+ const sweepX=progress.interpolate({inputRange:[0,.5,1],outputRange:[-220,40,220]});
  const reveal=progress.interpolate({inputRange:[0,.18,.45,.82,1],outputRange:[.92,.48,.18,.10,0]});
  const bars=progress.interpolate({inputRange:[0,.2,.75,1],outputRange:[1,.7,.28,0]});
  return <Animated.View pointerEvents="none" style={[styles.root,{opacity:fade}]}>
