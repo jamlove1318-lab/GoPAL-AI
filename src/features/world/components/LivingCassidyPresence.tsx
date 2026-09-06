@@ -1,6 +1,6 @@
 import React,{useEffect,useMemo,useState}from'react';
 import{Pressable,View,type DimensionValue}from'react-native';
-import{CassidyCharacter}from'../../../components/CassidyCharacter';
+import{CassidyPuppetRenderer}from'../../../components/cassidy/CassidyPuppetRenderer';
 import{CassidyPresenceContext,resolveCassidyWorldPresence}from'../../../engines/cassidy/cassidyWorldPresenceEngine';
 import{resolveCassidySceneAnchor,type CassidyPhysicalAnchor}from'../../../engines/cassidy/cassidySceneAnchorEngine';
 import type{CassidyLifeActivity}from'../../../engines/cassidy/cassidyLifeEngine';
@@ -72,7 +72,7 @@ export function LivingCassidyPresence({languageCode='ja',context='exploring',pla
  const flip=puppet.facing==='left'?[{scaleX:-1}]:undefined;
  return <Pressable accessibilityRole="button" accessibilityLabel={invitation?'Cassidy is inviting you':'Cassidy is in the world'} onPress={()=>eventBus.emit('cassidy:worldPresenceTapped',{activity:lifeActivity},'world')} className="absolute z-[35] items-center" style={{left:puppet.anchor.left as DimensionValue,top:puppet.anchor.top as DimensionValue}}>
   <View style={{transform:flip}}>
-   <CassidyCharacter height={puppet.anchor.height} action={puppet.action} speaking={puppet.speaking} expression={presence.mood}/>
+   <CassidyPuppetRenderer state={puppet} height={puppet.anchor.height}/>
   </View>
   {invitation&&<View pointerEvents="none" className="absolute -right-1 top-2 h-2 w-2 rounded-full bg-emerald-300"/>}
  </Pressable>;
