@@ -1,5 +1,6 @@
 import type { WorldTheme } from '../components/LivingWorldPrimitives';
 import { getLanguageWorldEntrances } from './livingLanguageWorldPhysical';
+import { getLanguageWorldLocation, getLanguageWorldLocations } from './livingLanguageWorldLocations';
 
 export type WorldEntranceKind = 'door' | 'gate' | 'arch' | 'portal' | 'boarding-gate' | 'entrance';
 export type WorldEntranceDefinition = {
@@ -34,5 +35,32 @@ export const LIVING_WORLD_ENTRANCES: Record<string, WorldEntranceDefinition[]> =
   ],
 };
 
-export function getWorldEntrances(locationId: string) { return LIVING_WORLD_ENTRANCES[locationId] ?? getLanguageWorldEntrances(locationId); }
+function getSequentialLanguageWorldEntrance(locationId: string): WorldEntranceDefinition | null {
+  const location = getLanguageWorldLocation(locationId);
+  if (!location) return null;
+  const ordered = getLanguageWorldLocations(location.worldId);
+  const index = ordered.findIndex(item => item.id === locationId);
+  const next = ordered[index + 1];
+  if (!next) return null;
+  return {
+    id: `${locationId}-next-location`,
+    kind: 'gate',
+    x: 90,
+    y: 48,
+    targetId: next.id,
+    targetType: 'location',
+    label: `Travel to ${next.name}`,
+    interactive: true,
+    theme: location.kind === 'real' ? 'coastal' : 'emerald',
+    tags: ['transport', 'world-travel', 'language-world'],
+  };
+}
+
+export function getWorldEntrances(locationId: string) {
+  const staticEntrances = LIVING_WORLD_ENTRANCES[locationId];
+  if (staticEntrances) return staticEntrances;
+  const base = getLanguageWorldEntrances(locationId);
+  const travel = getSequentialLanguageWorldEntrance(locationId);
+  return travel ? [...base, travel] : base;
+}
 export function findWorldEntrance(locationId: string, id: string) { return getWorldEntrances(locationId).find(entrance => entrance.id === id) ?? null; }
