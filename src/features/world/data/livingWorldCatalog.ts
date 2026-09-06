@@ -1,3 +1,10 @@
+/**
+ * Canonical physical-world catalog.
+ *
+ * Emerald Valley remains the home world. Language-world locations are materialized
+ * from the canonical language-location registry so their physical identity stays
+ * data-driven and reusable.
+ */
 import type { WorldBuildingDefinition, WorldPropDefinition, WorldTheme } from '../components/LivingWorldPrimitives';
 import { getLanguageWorldLocation } from './livingLanguageWorldLocations';
 
@@ -109,26 +116,63 @@ export const LIVING_LOCATION_TEMPLATES: LivingLocationTemplate[] = [
 function languageTemplate(locationId: string): LivingLocationTemplate | null {
   const location = getLanguageWorldLocation(locationId);
   if (!location) return null;
-  const city = location.city?.toLowerCase() ?? '';
   const tags = new Set(location.tags);
-  const theme: WorldTheme = tags.has('nature') || tags.has('garden') ? 'emerald' : tags.has('history') || tags.has('tradition') ? 'festival' : 'coastal';
-  const primaryBuilding: WorldBuildingDefinition['type'] = tags.has('cafe') ? 'cafe' : tags.has('bakery') || tags.has('food') ? 'market' : tags.has('garden') || tags.has('nature') ? 'house' : 'library';
-  const secondaryBuilding: WorldBuildingDefinition['type'] = location.kind === 'real' ? 'railway-station' : 'cafe';
+  const experiences = new Set(location.experiences);
+  const theme: WorldTheme = location.worldId === 'japanese'
+    ? tags.has('garden') || tags.has('nature') ? 'emerald' : 'sakura'
+    : tags.has('coast') || tags.has('mediterranean') ? 'coastal' : tags.has('history') || tags.has('tradition') ? 'festival' : 'coastal';
+
+  const primaryBuilding: WorldBuildingDefinition['type'] =
+    tags.has('cafe') || tags.has('bakery') ? 'cafe' :
+    tags.has('market') || tags.has('food') || tags.has('shopping') ? 'market' :
+    tags.has('garden') || tags.has('nature') ? 'sanctuary' :
+    tags.has('workshop') || tags.has('crafts') ? 'workshop' :
+    tags.has('school') || tags.has('learning') ? 'school' :
+    tags.has('history') || tags.has('tradition') || tags.has('culture') ? 'library' :
+    'library';
+
+  const secondaryBuilding: WorldBuildingDefinition['type'] =
+    tags.has('workshop') || tags.has('crafts') ? 'workshop' :
+    tags.has('coast') || tags.has('harbor') || tags.has('transit') ? 'railway-station' :
+    tags.has('food') || tags.has('conversation') ? 'cafe' :
+    'house';
+
+  const landmarkBuilding: WorldBuildingDefinition['type'] =
+    tags.has('garden') || tags.has('nature') ? 'house' :
+    tags.has('history') || tags.has('tradition') ? 'sanctuary' :
+    tags.has('city') || tags.has('architecture') ? 'library' :
+    'house';
+
+  const propSet: WorldPropDefinition[] = [
+    { id: `${location.id}-tree-1`, type: 'tree', x: 9, y: 17, scale: 0.9 },
+    { id: `${location.id}-tree-2`, type: 'tree', x: 90, y: 20, scale: 0.78 },
+    { id: `${location.id}-bench`, type: 'bench', x: 55, y: 77 },
+    { id: `${location.id}-lamp`, type: 'lamp', x: 62, y: 51 },
+  ];
+
+  if (tags.has('garden') || tags.has('nature') || tags.has('seasonal')) {
+    propSet.push(
+      { id: `${location.id}-flower-1`, type: 'flower', x: 25, y: 61, scale: 1.15 },
+      { id: `${location.id}-flower-2`, type: 'flower', x: 82, y: 67, scale: 0.95 },
+    );
+  }
+  if (tags.has('coast') || tags.has('harbor') || tags.has('mediterranean')) {
+    propSet.push({ id: `${location.id}-rock`, type: 'rock', x: 91, y: 75, scale: 1.05 });
+  }
+  if (tags.has('market') || tags.has('food') || experiences.has('conversation')) {
+    propSet.push({ id: `${location.id}-market-lamp`, type: 'lamp', x: 37, y: 44, scale: 0.9 });
+  }
+
   return {
     id: location.id,
     name: location.name,
     theme,
     buildings: [
       { id: `${location.id}-hub`, type: primaryBuilding, x: 42, y: 42, scale: 1.05, label: location.name },
-      { id: `${location.id}-learning`, type: secondaryBuilding, x: 70, y: 62, scale: 0.9, label: location.experiences.includes('conversation') ? 'Conversation Spot' : 'Discovery Spot' },
-      ...(city ? [{ id: `${location.id}-landmark`, type: 'house' as const, x: 20, y: 25, scale: 0.85, label: location.city }] : []),
+      { id: `${location.id}-learning`, type: secondaryBuilding, x: 70, y: 62, scale: 0.92, label: experiences.has('conversation') ? 'Conversation Spot' : 'Discovery Spot' },
+      { id: `${location.id}-landmark`, type: landmarkBuilding, x: 20, y: 25, scale: 0.86, label: location.city ?? 'Local Landmark' },
     ],
-    props: [
-      { id: `${location.id}-tree-1`, type: 'tree', x: 10, y: 18, scale: 0.85 },
-      { id: `${location.id}-tree-2`, type: 'tree', x: 88, y: 20, scale: 0.8 },
-      { id: `${location.id}-bench`, type: 'bench', x: 55, y: 76 },
-      { id: `${location.id}-lamp`, type: 'lamp', x: 62, y: 51 },
-    ],
+    props: propSet,
   };
 }
 
