@@ -33,7 +33,7 @@ export function LivingWorldEntranceLayer({ runtime }: { runtime: LivingWorldRunt
             accessibilityRole="button"
             accessibilityLabel={entrance.label ?? 'Travel'}
             onPress={() => {
-              if (entrance.targetId) runtime.transitionToLocation(entrance.targetId, 'player');
+              if (entrance.targetId) runtime.transitionToLocation(entrance.targetId, 'player', undefined, entrance.travelMode);
             }}
             style={[
               styles.hit,
