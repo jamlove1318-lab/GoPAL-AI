@@ -1,4 +1,5 @@
 import type { WorldTheme } from '../components/LivingWorldPrimitives';
+import type { WorldTravelMode } from './livingWorldTravel';
 import { getLanguageWorldEntrances } from './livingLanguageWorldPhysical';
 import { getLanguageWorldLocation, getLanguageWorldLocations } from './livingLanguageWorldLocations';
 
@@ -15,6 +16,7 @@ export type WorldEntranceDefinition = {
   rotation?: number;
   scale?: number;
   theme?: WorldTheme;
+  travelMode?: WorldTravelMode;
   locked?: boolean;
   interactive?: boolean;
   tags?: string[];
@@ -26,12 +28,12 @@ export const LIVING_WORLD_ENTRANCES: Record<string, WorldEntranceDefinition[]> =
     { id: 'cafe-door', kind: 'door', x: 50, y: 44, targetId: 'cafe-interior', targetType: 'interior', label: 'Enter Café', interactive: true },
     { id: 'library-door', kind: 'door', x: 76, y: 26, targetId: 'library-interior', targetType: 'interior', label: 'Enter Library', interactive: true },
     { id: 'market-gate', kind: 'gate', x: 82, y: 72, targetId: 'market-interior', targetType: 'interior', label: 'Enter Market', interactive: true },
-    { id: 'station-entrance', kind: 'entrance', x: 72, y: 76, targetId: 'learning-campus', targetType: 'location', label: 'Take the Valley Railway', interactive: true, tags: ['transport', 'rail', 'local'] },
+    { id: 'station-entrance', kind: 'entrance', x: 72, y: 76, targetId: 'learning-campus', targetType: 'location', label: 'Take the Valley Railway', interactive: true, travelMode: 'train', tags: ['transport', 'rail', 'local'] },
   ],
   'learning-campus': [
     { id: 'academy-door', kind: 'door', x: 46, y: 31, targetId: 'academy-interior', targetType: 'interior', label: 'Enter Academy', interactive: true },
     { id: 'campus-library-door', kind: 'door', x: 71, y: 54, targetId: 'campus-library-interior', targetType: 'interior', label: 'Enter Library', interactive: true },
-    { id: 'airport-terminal', kind: 'boarding-gate', x: 22, y: 23, targetId: 'campus-airport-interior', targetType: 'location', label: 'Enter Airport', interactive: true, tags: ['transport', 'air'] },
+    { id: 'airport-terminal', kind: 'boarding-gate', x: 22, y: 23, targetId: 'campus-airport-interior', targetType: 'location', label: 'Enter Airport', interactive: true, travelMode: 'plane', tags: ['transport', 'air'] },
   ],
 };
 
@@ -52,6 +54,7 @@ function getSequentialLanguageWorldEntrance(locationId: string): WorldEntranceDe
     label: `Travel to ${next.name}`,
     interactive: true,
     theme: location.kind === 'real' ? 'coastal' : 'emerald',
+    travelMode: 'train',
     tags: ['transport', 'rail', 'language-world'],
   };
 }
