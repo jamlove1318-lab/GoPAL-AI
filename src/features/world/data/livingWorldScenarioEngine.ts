@@ -31,26 +31,14 @@ function locationShots(location: WorldLocationDefinition): WorldScenarioShot[] {
     { id: 'establishing', durationMs: 850, focus: 'establishing', motion: 'reveal', priority: 1 },
     { id: 'landmark', durationMs: 700, focus: 'landmark', motion: 'push', priority: 2 },
   ];
-  if (tag(location, 'coastal') || tag(location, 'nature') || tag(location, 'seasonal')) {
-    shots.push({ id: 'environment', durationMs: 650, focus: 'environment', motion: 'pan', priority: 3 });
-  }
+  if (tag(location, 'coastal') || tag(location, 'nature') || tag(location, 'seasonal')) shots.push({ id: 'environment', durationMs: 650, focus: 'environment', motion: 'pan', priority: 3 });
   shots.push({ id: 'resident-life', durationMs: 650, focus: 'resident', motion: 'follow', priority: 4 });
   return shots;
 }
 
 export function buildLocationArrivalScenario(location: WorldLocationDefinition, worldId: string | null): WorldScenario {
   const shots = locationShots(location);
-  return {
-    id: `arrival:${location.id}`,
-    kind: 'location-arrival',
-    phase: 'opening',
-    worldId,
-    locationId: location.id,
-    title: location.name,
-    durationMs: clampDuration(shots.reduce((sum, shot) => sum + shot.durationMs, 0)),
-    shots,
-    metadata: { locationName: location.name, theme: location.theme, tags: [...(location.tags ?? [])] },
-  };
+  return { id: `arrival:${location.id}`, kind: 'location-arrival', phase: 'opening', worldId, locationId: location.id, title: location.name, durationMs: clampDuration(shots.reduce((sum, shot) => sum + shot.durationMs, 0)), shots, metadata: { locationName: location.name, theme: location.theme, tags: [...(location.tags ?? [])] } };
 }
 
 export function buildWorldArrivalScenario(location: WorldLocationDefinition, worldId: string | null, transport?: WorldTravelDefinition): WorldScenario {
@@ -60,17 +48,7 @@ export function buildWorldArrivalScenario(location: WorldLocationDefinition, wor
     { id: 'world-life', durationMs: 850, focus: 'resident', motion: 'follow', priority: 3 },
     { id: 'world-environment', durationMs: 750, focus: 'environment', motion: 'pan', priority: 4 },
   ];
-  return {
-    id: `world-arrival:${worldId ?? 'unknown'}:${location.id}`,
-    kind: 'world-arrival',
-    phase: 'opening',
-    worldId,
-    locationId: location.id,
-    title: worldId ?? location.name,
-    durationMs: clampDuration(shots.reduce((sum, shot) => sum + shot.durationMs, 0)),
-    shots,
-    metadata: { transportMode: transport?.mode ?? null, transportScope: transport?.scope ?? null, worldId, locationId: location.id },
-  };
+  return { id: `world-arrival:${worldId ?? 'unknown'}:${location.id}`, kind: 'world-arrival', phase: 'opening', worldId, locationId: location.id, title: worldId ?? location.name, durationMs: clampDuration(shots.reduce((sum, shot) => sum + shot.durationMs, 0)), shots, metadata: { transportMode: transport?.mode ?? null, transportScope: transport?.scope ?? null, worldId, locationId: location.id } };
 }
 
 export function buildTravelScenario(source: WorldLocationDefinition, target: WorldLocationDefinition, travel: WorldTravelDefinition): WorldScenario {
@@ -79,48 +57,25 @@ export function buildTravelScenario(source: WorldLocationDefinition, target: Wor
     { id: 'journey', durationMs: Math.max(1200, travel.durationSeconds * 300), focus: 'transport', motion: 'pan', priority: 2 },
     { id: 'arrival-reveal', durationMs: 1000, focus: 'establishing', motion: 'reveal', priority: 3 },
   ];
-  return {
-    id: `travel:${source.id}:${target.id}`,
-    kind: 'travel',
-    phase: 'opening',
-    worldId: target.languageWorldId ?? null,
-    locationId: target.id,
-    title: target.name,
-    durationMs: clampDuration(shots.reduce((sum, shot) => sum + shot.durationMs, 0)),
-    shots,
-    metadata: { sourceLocationId: source.id, targetLocationId: target.id, mode: travel.mode, scope: travel.scope },
-  };
+  return { id: `travel:${source.id}:${target.id}`, kind: 'travel', phase: 'opening', worldId: target.languageWorldId ?? null, locationId: target.id, title: target.name, durationMs: clampDuration(shots.reduce((sum, shot) => sum + shot.durationMs, 0)), shots, metadata: { sourceLocationId: source.id, targetLocationId: target.id, mode: travel.mode, scope: travel.scope } };
 }
 
 export function buildResidentScenario(location: WorldLocationDefinition, residentId: string, phase: WorldScenarioPhase): WorldScenario {
   const shots: WorldScenarioShot[] = phase === 'opening'
-    ? [
-        { id: 'resident-arrives', durationMs: 700, focus: 'resident', motion: 'follow', priority: 1 },
-        { id: 'resident-context', durationMs: 550, focus: 'environment', motion: 'pan', priority: 2 },
-      ]
+    ? [{ id: 'resident-arrives', durationMs: 700, focus: 'resident', motion: 'follow', priority: 1 }, { id: 'resident-context', durationMs: 550, focus: 'environment', motion: 'pan', priority: 2 }]
     : phase === 'closing'
       ? [{ id: 'resident-departs', durationMs: 800, focus: 'resident', motion: 'follow', priority: 1 }]
-      : [
-          { id: 'resident-interaction', durationMs: 900, focus: 'resident', motion: 'push', priority: 1 },
-          { id: 'interaction-context', durationMs: 600, focus: 'environment', motion: 'hold', priority: 2 },
-        ];
-  return {
-    id: `resident:${location.id}:${residentId}:${phase}`,
-    kind: 'resident-interaction',
-    phase,
-    worldId: location.languageWorldId ?? null,
-    locationId: location.id,
-    title: residentId,
-    durationMs: clampDuration(shots.reduce((sum, shot) => sum + shot.durationMs, 0)),
-    shots,
-    metadata: { residentId, phase, locationId: location.id },
-  };
+      : [{ id: 'resident-interaction', durationMs: 900, focus: 'resident', motion: 'push', priority: 1 }, { id: 'interaction-context', durationMs: 600, focus: 'environment', motion: 'hold', priority: 2 }];
+  return { id: `resident:${location.id}:${residentId}:${phase}`, kind: 'resident-interaction', phase, worldId: location.languageWorldId ?? null, locationId: location.id, title: residentId, durationMs: clampDuration(shots.reduce((sum, shot) => sum + shot.durationMs, 0)), shots, metadata: { residentId, phase, locationId: location.id } };
 }
 
 export class LivingWorldScenarioEngine {
   private active: WorldScenario | null = null;
-  start(scenario: WorldScenario) { this.active = scenario; return scenario; }
-  clear() { this.active = null; }
+  private queue: WorldScenario[] = [];
+  start(scenario: WorldScenario) { this.queue = []; this.active = scenario; return scenario; }
+  startSequence(scenarios: WorldScenario[]) { this.queue = scenarios.slice(1); this.active = scenarios[0] ?? null; return this.active; }
+  advance() { this.active = this.queue.shift() ?? null; return this.active; }
+  clear() { this.queue = []; this.active = null; }
   getActive() { return this.active; }
   handleEvent(event: WorldEvent, location: WorldLocationDefinition, worldId: string | null) {
     if (event.type === 'travel-requested') return this.start(buildLocationArrivalScenario(location, worldId));
