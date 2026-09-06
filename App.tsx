@@ -8,9 +8,9 @@ import{startLivingWorldReactor}from'./src/engines';
 import{AppErrorBoundary}from'./src/components/AppErrorBoundary';
 
 /**
- * The world is the application surface.
- * Navigation dashboards/cards are deliberately not mounted here.
- * World systems remain available through their engines and world interactions.
+ * The living world is the application surface.
+ * Non-world presentation shells are deliberately not mounted here.
+ * World systems remain available through their engines and physical interactions.
  */
 export default function App(){
  useEffect(()=>{
