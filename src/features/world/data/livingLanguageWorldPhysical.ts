@@ -4,6 +4,7 @@ import type { WorldTransportDefinition } from './livingWorldTransport';
 import type { WorldCharacterDefinition, WorldCharacterSpawnPoint } from './livingWorldCharacters';
 import type { WorldEntranceDefinition } from './livingWorldEntrances';
 import { getLanguageWorldLocation } from './livingLanguageWorldLocations';
+import { getPhysicalLocationProfile } from './livingPhysicalLocationProfiles';
 
 /** Shared physical-world defaults for real and fictional locations inside language worlds. */
 function theme(locationId:string):WorldTheme{
@@ -14,12 +15,46 @@ function theme(locationId:string):WorldTheme{
   return'coastal';
 }
 
+function profileInfrastructure(locationId:string, base:WorldInfrastructureDefinition[]):WorldInfrastructureDefinition[]{
+  const profile=getPhysicalLocationProfile(locationId);
+  if(!profile)return base;
+  const allowed=new Set(profile.infrastructure);
+  const keep=(item:WorldInfrastructureDefinition)=>{
+    if(item.kind==='road'||item.kind==='intersection'||item.kind==='traffic-signal')return allowed.has('road')||allowed.has('crosswalk')||profile.streetPattern==='grid';
+    if(item.kind==='street-light')return profile.density!=='open';
+    if(item.kind==='bus-stop')return allowed.has('road')||allowed.has('promenade');
+    if(item.kind==='parking')return profile.density==='dense'&&allowed.has('road');
+    return true;
+  };
+  const result=base.filter(keep);
+  const t=theme(locationId);
+  if(allowed.has('crosswalk')&&!result.some(item=>item.kind==='traffic-signal')) result.push({id:`${locationId}-profile-crossing`,kind:'traffic-signal',x:52,y:53,scale:.75,variant:'profile-crossing',zIndex:19,theme:t});
+  if(allowed.has('rail')&&!result.some(item=>item.kind==='railway-crossing')) result.push({id:`${locationId}-profile-rail-crossing`,kind:'railway-crossing',x:73,y:54,interactive:true,zIndex:18,theme:t});
+  if(allowed.has('canal')&&!result.some(item=>item.kind==='bridge')) result.push({id:`${locationId}-profile-canal-bridge`,kind:'bridge',x:54,y:56,width:18,height:8,rotation:4,variant:'canal',zIndex:16,theme:t});
+  if(allowed.has('promenade')&&!result.some(item=>item.kind==='pier')) result.push({id:`${locationId}-profile-waterfront-pier`,kind:'pier',x:86,y:69,width:8,height:20,rotation:2,variant:'waterfront',zIndex:11,theme:t});
+  return result;
+}
+
+function profileNetworks(locationId:string, base:WorldInfrastructureNetwork[]):WorldInfrastructureNetwork[]{
+  const profile=getPhysicalLocationProfile(locationId);
+  if(!profile)return base;
+  const allowed=new Set(profile.infrastructure);
+  const result=base.filter(network=>network.kind!=='road'||allowed.has('road')||profile.streetPattern==='grid');
+  const t=theme(locationId);
+  if(allowed.has('promenade')) result.push({id:`${locationId}-profile-promenade`,kind:'sidewalk',points:[{x:0,y:70},{x:25,y:66},{x:50,y:68},{x:75,y:70},{x:103,y:66}],width:8,variant:'promenade',theme:t});
+  if(allowed.has('garden-path')) result.push({id:`${locationId}-profile-garden-path`,kind:'sidewalk',points:[{x:18,y:66},{x:34,y:54},{x:50,y:43},{x:72,y:35}],width:7,variant:'garden-path',theme:t});
+  if(allowed.has('canal')) result.push({id:`${locationId}-profile-canal-edge`,kind:'sidewalk',points:[{x:0,y:75},{x:25,y:71},{x:50,y:75},{x:75,y:78},{x:103,y:73}],width:6,variant:'canal-edge',theme:t});
+  if(profile.streetPattern==='grid') result.push({id:`${locationId}-profile-cross-street`,kind:'road',points:[{x:48,y:22},{x:49,y:44},{x:50,y:68},{x:51,y:94}],width:16,variant:'urban-grid',theme:t});
+  if(profile.streetPattern==='plaza'||profile.streetPattern==='courtyard') result.push({id:`${locationId}-profile-pedestrian-spine`,kind:'sidewalk',points:[{x:50,y:30},{x:50,y:46},{x:38,y:58},{x:25,y:62}],width:8,variant:'stone-pedestrian',theme:t});
+  return result;
+}
+
 export function getLanguageWorldInfrastructure(locationId:string):WorldInfrastructureDefinition[]{
   const location=getLanguageWorldLocation(locationId);
   if(!location)return[];
   const t=theme(locationId);
   const id=location.id;
-  return [
+  const base:WorldInfrastructureDefinition[]=[
     {id:`${id}-bus-stop`,kind:'bus-stop',x:54,y:60,label:'Local Transit',interactive:true,zIndex:18,theme:t},
     {id:`${id}-intersection`,kind:'intersection',x:50,y:56,width:18,height:18,variant:'language-world',zIndex:15,theme:t},
     {id:`${id}-crossing`,kind:'traffic-signal',x:53,y:55,scale:.75,variant:'language-world',zIndex:19,theme:t},
@@ -28,6 +63,7 @@ export function getLanguageWorldInfrastructure(locationId:string):WorldInfrastru
     {id:`${id}-bench`,kind:'parking',x:82,y:69,width:12,height:7,variant:'small',zIndex:8,theme:t},
     ...(location.tags.includes('coast')||location.tags.includes('harbor')?[{id:`${id}-pier`,kind:'pier' as const,x:86,y:70,width:8,height:20,rotation:2,variant:'wood',zIndex:11,theme:t}]:[]),
   ];
+  return profileInfrastructure(locationId,base);
 }
 
 export function getLanguageWorldInfrastructureNetworks(locationId:string):WorldInfrastructureNetwork[]{
@@ -35,11 +71,12 @@ export function getLanguageWorldInfrastructureNetworks(locationId:string):WorldI
   if(!location)return[];
   const t=theme(locationId);
   const id=location.id;
-  return [
+  const base:WorldInfrastructureNetwork[]=[
     {id:`${id}-main-road`,kind:'road',points:[{x:-5,y:63},{x:22,y:57},{x:50,y:56},{x:77,y:51},{x:105,y:48}],width:21,variant:'language-world',theme:t},
     {id:`${id}-local-road`,kind:'road',points:[{x:50,y:56},{x:43,y:40},{x:42,y:24}],width:14,variant:'language-world',theme:t},
     {id:`${id}-sidewalk`,kind:'sidewalk',points:[{x:18,y:61},{x:43,y:57},{x:67,y:54},{x:88,y:61}],width:7,variant:'paved',theme:t},
   ];
+  return profileNetworks(locationId,base);
 }
 
 export function getLanguageWorldTransport(locationId:string):WorldTransportDefinition[]{
