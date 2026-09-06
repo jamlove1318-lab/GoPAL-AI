@@ -15,6 +15,20 @@ export function LivingWorldViewport({ children, runtime }: { children: ReactNode
   const setPan = (x: number, y: number) => { current.current.x = clamp(x, -900, 900); current.current.y = clamp(y, -900, 900); translate.setValue({ x: current.current.x, y: current.current.y }); };
 
   useEffect(() => {
+    const translateListener = translate.addListener(({ value }) => {
+      current.current.x = value.x;
+      current.current.y = value.y;
+    });
+    const scaleListener = scale.addListener(({ value }) => {
+      current.current.scale = value;
+    });
+    return () => {
+      translate.removeListener(translateListener);
+      scale.removeListener(scaleListener);
+    };
+  }, [scale, translate]);
+
+  useEffect(() => {
     if (!runtime) return;
     let lastScenarioId: string | null = null;
     let cancelled = false;
