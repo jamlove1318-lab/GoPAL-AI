@@ -25,7 +25,7 @@ export const LIVING_WORLD_ENTRANCES: Record<string, WorldEntranceDefinition[]> =
     { id: 'cafe-door', kind: 'door', x: 50, y: 44, targetId: 'cafe-interior', targetType: 'interior', label: 'Enter Café', interactive: true },
     { id: 'library-door', kind: 'door', x: 76, y: 26, targetId: 'library-interior', targetType: 'interior', label: 'Enter Library', interactive: true },
     { id: 'market-gate', kind: 'gate', x: 82, y: 72, targetId: 'market-interior', targetType: 'interior', label: 'Enter Market', interactive: true },
-    { id: 'station-entrance', kind: 'entrance', x: 72, y: 76, targetId: 'emerald-rail-platform', targetType: 'location', label: 'Enter Station', interactive: true, tags: ['transport'] },
+    { id: 'station-entrance', kind: 'entrance', x: 72, y: 76, targetId: 'jp-tokyo-shibuya', targetType: 'location', label: 'Take the Valley Railway', interactive: true, tags: ['transport', 'world-travel'] },
   ],
   'learning-campus': [
     { id: 'academy-door', kind: 'door', x: 46, y: 31, targetId: 'academy-interior', targetType: 'interior', label: 'Enter Academy', interactive: true },
