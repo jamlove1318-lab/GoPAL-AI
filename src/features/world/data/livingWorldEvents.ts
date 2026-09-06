@@ -2,7 +2,7 @@ import type { WorldActionId } from './livingWorldActionSystem';
 
 export type WorldEventType =
   | 'interaction' | 'entered' | 'exited' | 'discovered' | 'collected' | 'learned'
-  | 'dialogue-started' | 'quest-started' | 'quest-completed' | 'travel-requested'
+  | 'dialogue-started' | 'dialogue-ended' | 'quest-started' | 'quest-completed' | 'travel-requested'
   | 'vehicle-boarded' | 'vehicle-ridden' | 'object-activated' | 'world-state-changed'
   | 'actor-spawned' | 'actor-despawned' | 'actor-arrived' | 'activity-started' | 'activity-completed'
   | 'game-started' | 'checkpoint-reached' | 'challenge-started' | 'challenge-completed' | 'game-completed' | 'game-failed'
