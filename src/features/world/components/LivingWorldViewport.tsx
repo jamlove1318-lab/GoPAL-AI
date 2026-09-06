@@ -1,6 +1,8 @@
 import React, { ReactNode, useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, PanResponder, View } from 'react-native';
 import { LivingWorldRuntime } from '../data/livingWorldRuntime';
+import { getLocationWorldObjects } from '../data/livingWorldObjectFactory';
+import { resolveCinematicTarget } from '../data/livingWorldObjects';
 
 /** World camera: manual exploration when idle, authored choreography during world scenarios. */
 export function LivingWorldViewport({ children, runtime }: { children: ReactNode; runtime?: LivingWorldRuntime }) {
@@ -21,10 +23,13 @@ export function LivingWorldViewport({ children, runtime }: { children: ReactNode
       lastScenarioId = scenario.id;
       cinematicAnimation.current?.stop();
       let shotIndex = 0;
+      const locationId = scenario.locationId || runtime.getLocation().id;
+      const objects = getLocationWorldObjects(locationId);
       const playShot = () => {
         if (cancelled || runtime.getActiveScenario()?.id !== scenario.id || shotIndex >= scenario.shots.length) return;
         const shot = scenario.shots[shotIndex++];
-        const target = cameraTarget(shot.focus, shot.motion);
+        const resolved = resolveCinematicTarget(objects, shot.focus);
+        const target = cameraTarget(resolved, shot.focus, shot.motion);
         cinematicAnimation.current = Animated.parallel([
           Animated.timing(translate, { toValue: { x: target.x, y: target.y }, duration: shot.durationMs, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }),
           Animated.timing(scale, { toValue: target.scale, duration: shot.durationMs, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }),
@@ -55,18 +60,12 @@ export function LivingWorldViewport({ children, runtime }: { children: ReactNode
   return <View className="absolute inset-0" {...responder.panHandlers}><Animated.View style={{ flex: 1, transform: [{ translateX: translate.x }, { translateY: translate.y }, { scale }] }}>{children}</Animated.View></View>;
 }
 
-function cameraTarget(focus: string, motion: string) {
-  const targets: Record<string, { x: number; y: number; scale: number }> = {
-    establishing: { x: 0, y: 0, scale: 1 },
-    landmark: { x: -90, y: -55, scale: 1.16 },
-    resident: { x: 75, y: 35, scale: 1.24 },
-    transport: { x: 0, y: -85, scale: 1.2 },
-    environment: { x: -55, y: 70, scale: 1.1 },
-    departure: { x: 100, y: 0, scale: 1.12 },
-  };
-  const base = targets[focus] ?? targets.establishing;
+function cameraTarget(target: { x: number; y: number; scale?: number }, focus: string, motion: string) {
+  const normalizedX = clamp((50 - target.x) * 7.5, -900, 900);
+  const normalizedY = clamp((50 - target.y) * 7.5, -900, 900);
+  const base = { x: normalizedX, y: normalizedY, scale: target.scale ?? (focus === 'resident' || focus === 'transport' ? 1.2 : 1.08) };
   if (motion === 'orbit') return { ...base, x: base.x + 45, y: base.y - 25 };
-  if (motion === 'push') return { ...base, scale: Math.min(1.35, base.scale + 0.08) };
+  if (motion === 'push') return { ...base, scale: Math.min(1.4, base.scale + 0.08) };
   if (motion === 'follow') return { ...base, x: base.x + 30 };
   if (motion === 'reveal') return { ...base, y: base.y - 30 };
   return base;
