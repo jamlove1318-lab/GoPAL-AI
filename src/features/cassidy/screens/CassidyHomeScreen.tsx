@@ -1,13 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Animated,
-  Dimensions,
-  Image,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { Animated, Dimensions, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { auth } from '../../../services/auth';
 import { livingWorldObjectsStore } from '../../../engines/world/livingWorldObjectsStore';
@@ -33,6 +25,8 @@ const THEME: Record<Period, { wall: string; sky: string; orb: string; orbRight: 
   night: { wall: '#241d38', sky: '#33406b', orb: '#dfe6ff', orbRight: 10, orbTop: 2, lamp: 0.5, word: 'night' },
 };
 
+// Real Cassidy artwork. This proof intentionally uses the authored companion image;
+// it does not pretend a flattened image contains independently animatable body parts.
 const CASSIDY_COMPANION = require('../../../../cassidy_canonical_companion.jpg');
 
 export function CassidyHomeScreen() {
@@ -138,7 +132,7 @@ export function CassidyHomeScreen() {
             <Animated.Image
               accessibilityLabel="Cassidy companion scene"
               source={CASSIDY_COMPANION}
-              resizeMode={Image.resolveAssetSource(CASSIDY_COMPANION).width >= Image.resolveAssetSource(CASSIDY_COMPANION).height ? 'cover' : 'contain'}
+              resizeMode="cover"
               style={{
                 width: artworkWidth,
                 height: artworkHeight,
@@ -150,7 +144,7 @@ export function CassidyHomeScreen() {
               className="absolute inset-0 bg-emerald-300"
               style={{ opacity: sceneGlowOpacity }}
             />
-            <View pointerEvents="none" className="absolute inset-0 border border-white/10 rounded-[28px]" />
+            <View pointerEvents="none" className="absolute inset-0 rounded-[28px] border border-white/10" />
           </View>
 
           <View className="absolute right-5 top-7 flex-row items-end gap-3 rounded-xl bg-[#5b4636]/90 px-3 py-2">
