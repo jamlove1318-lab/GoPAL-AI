@@ -17,9 +17,11 @@ export function LivingWorldVisualLayer({ theme='emerald', time='afternoon' }: { 
   const palette = WORLD_PALETTES[theme];
   const night = time === 'night';
   const evening = time === 'evening';
+  const morning = time === 'morning';
   return <View pointerEvents="none" style={StyleSheet.absoluteFill}>
     <Svg style={StyleSheet.absoluteFill} viewBox="0 0 400 800" preserveAspectRatio="none">
       <Path d="M0 0H400V800H0Z" fill={palette.groundDark} opacity={night ? .16 : evening ? .07 : .025} />
+      {morning && <Path d="M0 90Q105 34 205 82T400 62V0H0Z" fill="#f5d99b" opacity=".08" />}
       <Path d="M0 610Q85 565 160 612T315 600T400 615V800H0Z" fill={palette.groundDark} opacity=".22" />
       <Path d="M0 665Q80 620 145 667T275 656T400 675" fill="none" stroke={palette.accent} strokeWidth="26" opacity=".16" strokeLinecap="round" />
       {Array.from({ length: 24 }, (_, index) => {
