@@ -37,19 +37,30 @@ function expressionFor(mood: CassidyMood, context: CassidyPresenceContext): Cass
   return 'neutral';
 }
 
-function actionFor(activity: CassidyLifeActivity | undefined, context: CassidyPresenceContext): CassidyAction {
+function actionFor(
+  activity: CassidyLifeActivity | undefined,
+  context: CassidyPresenceContext,
+  anchor: CassidySceneAnchor,
+): CassidyAction {
+  // The scene-anchor engine is authoritative for explicitly staged contexts.
+  if (!activity || context !== 'life') return anchor.action;
   if (activity === 'wandering' || activity === 'adventure') return 'walking';
+  if (activity === 'storytelling' || activity === 'helping') return 'talking';
   if (activity === 'celebrating') return 'waving';
-  if (context === 'success') return 'waving';
-  return 'idle';
+  return anchor.action;
 }
 
-function charmFor(activity: CassidyLifeActivity | undefined, context: CassidyPresenceContext): CassidyCharmGlowState {
+function charmFor(
+  activity: CassidyLifeActivity | undefined,
+  context: CassidyPresenceContext,
+): CassidyCharmGlowState {
   if (context === 'success' || activity === 'celebrating') return 'celebration';
   if (context === 'learning' || activity === 'helping') return 'learning';
   if (activity === 'discovering' || activity === 'adventure') return 'discovery';
   if (context === 'confused') return 'important';
-  return activity === 'storytelling' ? 'memory' : activity === 'cafe' ? 'curious' : 'normal';
+  if (activity === 'storytelling') return 'memory';
+  if (activity === 'cafe') return 'curious';
+  return 'normal';
 }
 
 export function resolveCassidyPuppetState(input: {
@@ -60,7 +71,7 @@ export function resolveCassidyPuppetState(input: {
   speaking?: boolean;
 }): CassidyPuppetState {
   return {
-    action: actionFor(input.activity, input.context),
+    action: actionFor(input.activity, input.context, input.anchor),
     expression: expressionFor(input.mood, input.context),
     charmGlow: charmFor(input.activity, input.context),
     speaking: Boolean(input.speaking),
