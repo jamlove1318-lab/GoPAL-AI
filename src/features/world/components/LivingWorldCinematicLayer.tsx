@@ -11,9 +11,15 @@ export function LivingWorldCinematicLayer({runtime}:{runtime:LivingWorldRuntime}
   if(!scenario)return;
   progress.setValue(0);fade.setValue(1);
   const animation=Animated.timing(progress,{toValue:1,duration:scenario.durationMs,easing:Easing.inOut(Easing.cubic),useNativeDriver:true});
-  animation.start(({finished})=>{if(finished){Animated.timing(fade,{toValue:0,duration:450,easing:Easing.out(Easing.quad),useNativeDriver:true}).start();}});
+  animation.start(({finished})=>{
+   if(finished){
+    Animated.timing(fade,{toValue:0,duration:450,easing:Easing.out(Easing.quad),useNativeDriver:true}).start(({finished:fadeFinished})=>{
+     if(fadeFinished)runtime.advanceScenario();
+    });
+   }
+  });
   return()=>animation.stop();
- },[scenario,progress,fade]);
+ },[scenario,runtime,progress,fade]);
  if(!scenario)return null;
  const sweepX=progress.interpolate({inputRange:[0,.5,1],outputRange:[-220,40,220]});
  const reveal=progress.interpolate({inputRange:[0,.18,.45,.82,1],outputRange:[.92,.48,.18,.10,0]});
