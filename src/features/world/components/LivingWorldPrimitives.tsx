@@ -21,25 +21,74 @@ export function WorldBuilding({ building, theme = 'emerald' }: { building: World
   const scale = building.scale ?? 1;
   const width = 128 * scale;
   const height = 112 * scale;
+  const isTall = building.type === 'library' || building.type === 'school';
   return (
     <Pressable disabled={!building.onPress} onPress={building.onPress} style={{ position: 'absolute', left: `${building.x}%`, top: `${building.y}%`, zIndex: worldDepth(building.y, 20), width, height, marginLeft: -width / 2, marginTop: -height * 0.82 }}>
       <View style={{ position: 'absolute', left: width * .05, right: width * .05, bottom: 2 * scale, height: 15 * scale, borderRadius: 20, backgroundColor: '#0b1711', opacity: .32 }} />
       <Svg width={width} height={height} viewBox="0 0 128 112">
         <G>
-          <Polygon points="10,49 64,10 118,49" fill={art.roof} />
-          <Polygon points="18,48 64,17 110,48" fill={art.trim} opacity={.45} />
-          <Rect x="18" y="46" width="92" height="55" rx="7" fill={art.wall} />
-          <Rect x="25" y="54" width="22" height="19" rx="3" fill={art.window} stroke={art.trim} strokeWidth="2" />
-          <Rect x="81" y="54" width="22" height="19" rx="3" fill={art.window} stroke={art.trim} strokeWidth="2" />
-          <Path d="M54 101V70Q64 59 74 70V101Z" fill={art.accent} />
-          <Rect x="57" y="82" width="14" height="4" rx="2" fill={art.trim} opacity={.8} />
-          <Path d="M19 48H109" stroke="#24332b" strokeWidth="3" opacity={.5} />
-          <Circle cx="64" cy="31" r="7" fill={art.window} opacity={.45} />
-          {building.type === 'school' ? <G><Rect x="46" y="23" width="36" height="9" rx="3" fill={art.accent} /><Path d="M52 27H76" stroke={art.trim} strokeWidth="2" /></G> : null}
-          {building.type === 'library' ? <Path d="M34 78V50M45 78V50M83 78V50M94 78V50" stroke={art.trim} strokeWidth="3" opacity={.7} /> : null}
-          {building.type === 'market' ? <Path d="M18 48Q30 23 42 48Q54 23 66 48Q78 23 90 48Q102 23 110 48" fill="none" stroke={art.trim} strokeWidth="7" /> : null}
-          {building.type === 'railway-station' ? <G><Rect x="42" y="18" width="44" height="10" rx="2" fill={art.accent} /><Line x1="28" y1="95" x2="100" y2="95" stroke="#4a4944" strokeWidth="4" /><Line x1="25" y1="101" x2="103" y2="101" stroke="#4a4944" strokeWidth="4" /></G> : null}
-          {building.type === 'airport' ? <G><Rect x="48" y="18" width="32" height="22" rx="3" fill={art.accent} /><Line x1="64" y1="10" x2="64" y2="18" stroke={art.trim} strokeWidth="2" /><Circle cx="64" cy="8" r="3" fill={art.trim} /></G> : null}
+          {building.type === 'railway-station' ? <>
+            <Polygon points="8,48 64,12 120,48" fill={art.roof} />
+            <Rect x="15" y="45" width="98" height="53" rx="4" fill={art.wall} />
+            <Rect x="28" y="54" width="72" height="44" rx="3" fill={art.accent} opacity={.72} />
+            <Rect x="42" y="59" width="16" height="15" rx="2" fill={art.window} />
+            <Rect x="61" y="59" width="16" height="15" rx="2" fill={art.window} />
+            <Path d="M20 79H108" stroke={art.trim} strokeWidth="3" />
+            <Line x1="20" y1="96" x2="108" y2="96" stroke="#4a4944" strokeWidth="4" />
+            <Line x1="17" y1="102" x2="111" y2="102" stroke="#4a4944" strokeWidth="4" />
+            <Rect x="43" y="17" width="42" height="10" rx="2" fill={art.accent} />
+          </> : building.type === 'airport' ? <>
+            <Path d="M12 51Q28 22 64 16Q100 22 116 51V96H12Z" fill={art.wall} />
+            <Path d="M20 50Q30 30 64 23Q98 30 108 50" fill={art.roof} />
+            <Rect x="25" y="53" width="78" height="42" rx="4" fill={art.window} opacity={.9} />
+            <Line x1="42" y1="53" x2="42" y2="95" stroke={art.trim} strokeWidth="3" />
+            <Line x1="64" y1="53" x2="64" y2="95" stroke={art.trim} strokeWidth="3" />
+            <Line x1="86" y1="53" x2="86" y2="95" stroke={art.trim} strokeWidth="3" />
+            <Rect x="49" y="15" width="30" height="9" rx="2" fill={art.accent} />
+            <Line x1="64" y1="7" x2="64" y2="15" stroke={art.trim} strokeWidth="2" />
+            <Circle cx="64" cy="5" r="3" fill={art.trim} />
+          </> : building.type === 'market' ? <>
+            <Path d="M9 49L64 14L119 49Z" fill={art.roof} />
+            <Rect x="12" y="47" width="104" height="49" rx="3" fill={art.wall} />
+            <Path d="M12 48Q25 25 38 48Q51 25 64 48Q77 25 90 48Q103 25 116 48" fill="none" stroke={art.trim} strokeWidth="8" />
+            <Rect x="20" y="57" width="88" height="10" rx="3" fill={art.accent} />
+            <Rect x="24" y="72" width="18" height="20" rx="2" fill={art.window} />
+            <Rect x="55" y="72" width="18" height="20" rx="2" fill={art.window} />
+            <Rect x="86" y="72" width="18" height="20" rx="2" fill={art.window} />
+          </> : building.type === 'cafe' ? <>
+            <Polygon points="15,48 64,15 113,48" fill={art.roof} />
+            <Rect x="18" y="46" width="92" height="51" rx="10" fill={art.wall} />
+            <Rect x="25" y="54" width="28" height="27" rx="5" fill={art.window} stroke={art.trim} strokeWidth="2" />
+            <Rect x="75" y="54" width="28" height="27" rx="5" fill={art.window} stroke={art.trim} strokeWidth="2" />
+            <Path d="M54 97V68Q64 57 74 68V97Z" fill={art.accent} />
+            <Circle cx="64" cy="28" r="8" fill={art.accent} />
+            <Path d="M58 28H70M64 22V34" stroke={art.trim} strokeWidth="2" />
+            <Path d="M34 88Q39 82 44 88M84 88Q89 82 94 88" fill="none" stroke={art.trim} strokeWidth="2" />
+          </> : building.type === 'workshop' ? <>
+            <Polygon points="10,50 64,18 118,50" fill={art.roof} />
+            <Rect x="15" y="47" width="98" height="50" rx="3" fill={art.wall} />
+            <Rect x="24" y="58" width="29" height="28" rx="2" fill={art.window} />
+            <Rect x="58" y="57" width="44" height="39" rx="2" fill={art.accent} opacity={.65} />
+            <Path d="M68 66H92M68 75H92M68 84H92" stroke={art.trim} strokeWidth="3" />
+            <Path d="M19 49H109" stroke={art.trim} strokeWidth="4" />
+          </> : building.type === 'sanctuary' ? <>
+            <Path d="M13 49L64 12L115 49Z" fill={art.roof} />
+            <Rect x="17" y="46" width="94" height="52" rx="5" fill={art.wall} />
+            <Rect x="52" y="57" width="24" height="41" rx="12" fill={art.accent} />
+            <Circle cx="64" cy="25" r="8" fill={art.window} />
+            <Path d="M64 10V30M55 20H73" stroke={art.trim} strokeWidth="2" />
+            <Path d="M25 62Q32 51 39 62V78Q32 87 25 78Z" fill={art.window} />
+            <Path d="M89 62Q96 51 103 62V78Q96 87 89 78Z" fill={art.window} />
+          </> : <>
+            <Polygon points={isTall ? '18,42 64,8 110,42' : '10,49 64,10 118,49'} fill={art.roof} />
+            <Polygon points="18,48 64,17 110,48" fill={art.trim} opacity={.45} />
+            <Rect x={isTall ? 24 : 18} y="46" width={isTall ? 80 : 92} height={isTall ? 55 : 55} rx="7" fill={art.wall} />
+            <Rect x={isTall ? 30 : 25} y="54" width="22" height="19" rx="3" fill={art.window} stroke={art.trim} strokeWidth="2" />
+            <Rect x={isTall ? 76 : 81} y="54" width="22" height="19" rx="3" fill={art.window} stroke={art.trim} strokeWidth="2" />
+            <Path d={isTall ? 'M54 101V70Q64 59 74 70V101Z' : 'M54 101V70Q64 59 74 70V101Z'} fill={art.accent} />
+            {building.type === 'school' ? <G><Rect x="46" y="23" width="36" height="9" rx="3" fill={art.accent} /><Path d="M52 27H76" stroke={art.trim} strokeWidth="2" /></G> : null}
+            {building.type === 'library' ? <Path d="M34 78V50M45 78V50M83 78V50M94 78V50" stroke={art.trim} strokeWidth="3" opacity={.7} /> : null}
+          </>}
         </G>
       </Svg>
       {building.label ? <Text style={{ position: 'absolute', bottom: -14 * scale, left: 0, right: 0, textAlign: 'center', fontSize: 8 * scale, fontWeight: '800', color: '#fff', backgroundColor: 'rgba(15,23,42,.48)', paddingHorizontal: 5, borderRadius: 8 }}>{building.label}</Text> : null}
