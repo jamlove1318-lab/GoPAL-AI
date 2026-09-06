@@ -2,6 +2,7 @@ import { getLanguageWorld, getLanguageWorlds, LANGUAGE_WORLDS } from './livingLa
 import { getLanguageWorldLocation } from './livingLanguageWorldLocations';
 import { buildWorldLocation } from './livingWorldLocationFactory';
 import { getLivingLocationTemplate, LIVING_LOCATION_TEMPLATES } from './livingWorldCatalog';
+import { getWorldEntrances } from './livingWorldEntrances';
 
 export type UniverseWorldKind = 'home' | 'language' | 'fictional';
 export type UniverseWorldStatus = 'active' | 'planned';
@@ -110,6 +111,7 @@ export interface UniverseIntegrityReport {
   duplicateLocationIds: string[];
   missingWorlds: string[];
   buildFailures: string[];
+  invalidTravelTargets: string[];
 }
 
 export function validateUniverseIntegrity(): UniverseIntegrityReport {
@@ -120,16 +122,23 @@ export function validateUniverseIntegrity(): UniverseIntegrityReport {
     .filter(world => !UNIVERSE_WORLDS.some(item => item.id === world.id))
     .map(world => world.id);
   const buildFailures: string[] = [];
+  const invalidTravelTargets: string[] = [];
   for (const locationId of [...new Set(locationIds)]) {
     try {
       const location = buildWorldLocation(locationId);
       if (!location || location.id !== locationId) buildFailures.push(locationId);
+      for (const entrance of getWorldEntrances(locationId)) {
+        if ((entrance.targetType === 'location' || entrance.targetType === 'world') && entrance.targetId) {
+          const target = getLivingLocationTemplate(entrance.targetId);
+          if (target.id !== entrance.targetId) invalidTravelTargets.push(`${locationId}:${entrance.id}->${entrance.targetId}`);
+        }
+      }
     } catch {
       buildFailures.push(locationId);
     }
   }
   return {
-    ok: duplicates(worldIds).length === 0 && duplicates(locationIds).length === 0 && missingWorlds.length === 0 && buildFailures.length === 0,
+    ok: duplicates(worldIds).length === 0 && duplicates(locationIds).length === 0 && missingWorlds.length === 0 && buildFailures.length === 0 && invalidTravelTargets.length === 0,
     worldCount: UNIVERSE_WORLDS.length,
     activeWorldCount: UNIVERSE_WORLDS.filter(world => world.status === 'active').length,
     locationCount: new Set(locationIds).size,
@@ -137,6 +146,7 @@ export function validateUniverseIntegrity(): UniverseIntegrityReport {
     duplicateLocationIds: duplicates(locationIds),
     missingWorlds,
     buildFailures,
+    invalidTravelTargets,
   };
 }
 
