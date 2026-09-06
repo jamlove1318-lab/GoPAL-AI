@@ -3,6 +3,7 @@ import { Animated, Easing, PanResponder, View } from 'react-native';
 import { LivingWorldRuntime } from '../data/livingWorldRuntime';
 import { getLocationWorldObjects } from '../data/livingWorldObjectFactory';
 import { resolveCinematicTarget } from '../data/livingWorldObjects';
+import { resolveTravelCinematicPath } from '../data/livingWorldTravelCinematic';
 
 /** World camera: manual exploration when idle, authored choreography during world scenarios. */
 export function LivingWorldViewport({ children, runtime }: { children: ReactNode; runtime?: LivingWorldRuntime }) {
@@ -29,6 +30,25 @@ export function LivingWorldViewport({ children, runtime }: { children: ReactNode
       const playShot = () => {
         if (cancelled || runtime.getActiveScenario()?.id !== scenario.id || shotIndex >= scenario.shots.length) return;
         const shot = scenario.shots[shotIndex++];
+        if (scenario.kind === 'travel' && shot.id === 'journey') {
+          const modeValue = scenario.metadata?.mode;
+          const mode = modeValue === 'plane' || modeValue === 'magic' || modeValue === 'train' || modeValue === 'bus' || modeValue === 'car' || modeValue === 'walk' ? modeValue : 'train';
+          const sourceLocationId = typeof scenario.metadata?.sourceLocationId === 'string' ? scenario.metadata.sourceLocationId : runtime.getLocation().id;
+          const path = resolveTravelCinematicPath(sourceLocationId, mode);
+          const segmentDuration = Math.max(120, Math.round(shot.durationMs / Math.max(1, path.length - 1)));
+          const animations: Animated.CompositeAnimation[] = [];
+          for (let index = 1; index < path.length; index += 1) {
+            const point = path[index];
+            const target = cameraTarget(point, 'transport', 'follow');
+            animations.push(Animated.parallel([
+              Animated.timing(translate, { toValue: { x: target.x, y: target.y }, duration: segmentDuration, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }),
+              Animated.timing(scale, { toValue: target.scale, duration: segmentDuration, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }),
+            ]));
+          }
+          cinematicAnimation.current = Animated.sequence(animations);
+          cinematicAnimation.current.start(({ finished }) => { if (finished) playShot(); });
+          return;
+        }
         const resolved = resolveCinematicTarget(objects, shot.focus, location.cinematicAnchors);
         const target = cameraTarget(resolved, shot.focus, shot.motion);
         cinematicAnimation.current = Animated.parallel([
