@@ -24,11 +24,12 @@ export function LivingWorldViewport({ children, runtime }: { children: ReactNode
       cinematicAnimation.current?.stop();
       let shotIndex = 0;
       const locationId = scenario.locationId || runtime.getLocation().id;
+      const location = runtime.getLocation();
       const objects = getLocationWorldObjects(locationId);
       const playShot = () => {
         if (cancelled || runtime.getActiveScenario()?.id !== scenario.id || shotIndex >= scenario.shots.length) return;
         const shot = scenario.shots[shotIndex++];
-        const resolved = resolveCinematicTarget(objects, shot.focus);
+        const resolved = resolveCinematicTarget(objects, shot.focus, location.cinematicAnchors);
         const target = cameraTarget(resolved, shot.focus, shot.motion);
         cinematicAnimation.current = Animated.parallel([
           Animated.timing(translate, { toValue: { x: target.x, y: target.y }, duration: shot.durationMs, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }),
