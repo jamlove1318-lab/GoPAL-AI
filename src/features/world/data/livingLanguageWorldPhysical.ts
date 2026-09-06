@@ -81,7 +81,8 @@ export function getLanguageWorldInfrastructureNetworks(locationId:string):WorldI
 
 export function getLanguageWorldTransport(locationId:string):WorldTransportDefinition[]{
   const location=getLanguageWorldLocation(locationId);
-  if(!location)return[];
+  const profile=getPhysicalLocationProfile(locationId);
+  if(!location||!profile||!profile.infrastructure.includes('rail'))return[];
   const t=theme(locationId);
   const id=location.id;
   return [{id:`${id}-transit`,kind:'railway',theme:t,features:[
