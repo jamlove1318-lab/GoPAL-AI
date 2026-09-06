@@ -8,6 +8,7 @@ import{cassidyLifeStateEngine}from'../../../engines/cassidy/cassidyLifeStateEngi
 import{cassidyPresenceDirectorEngine}from'../../../engines/cassidy/cassidyPresenceDirectorEngine';
 import{resolveLanguageWorld}from'../../../engines/world/languageWorldEngine';
 import{getWorldPlaceHotspots}from'../../learning/components/worldPlaceHotspotCatalog';
+import{resolveCassidyPuppetState}from'../data/cassidyPuppetState';
 import{eventBus}from'../../../engines/events/eventBus';
 
 interface Props{languageCode?:string;context?:CassidyPresenceContext;locationLabel?:string;placeId?:string;}
@@ -60,11 +61,18 @@ export function LivingCassidyPresence({languageCode='ja',context='exploring',pla
  const presence=useMemo(()=>resolveCassidyWorldPresence(languageCode,effectiveContext,lifeActivity),[languageCode,effectiveContext,lifeActivity]);
  const physicalAnchor=useMemo(()=>physicalAnchorFor(placeId,lifeActivity),[placeId,lifeActivity]);
  const anchor=useMemo(()=>resolveCassidySceneAnchor(languageCode,effectiveContext,lifeActivity,physicalAnchor),[languageCode,effectiveContext,lifeActivity,physicalAnchor]);
+ const puppet=useMemo(()=>resolveCassidyPuppetState({
+  mood:presence.mood,
+  context:effectiveContext,
+  activity:lifeActivity,
+  anchor,
+  speaking:effectiveContext==='learning',
+ }),[presence.mood,effectiveContext,lifeActivity,anchor]);
  if(!presence.visible)return null;
- const flip=anchor.facing==='left'?[{scaleX:-1}]:undefined;
- return <Pressable accessibilityRole="button" accessibilityLabel={invitation?'Cassidy is inviting you':'Cassidy is in the world'} onPress={()=>eventBus.emit('cassidy:worldPresenceTapped',{activity:lifeActivity},'world')} className="absolute z-[35] items-center" style={{left:anchor.left as DimensionValue,top:anchor.top as DimensionValue}}>
+ const flip=puppet.facing==='left'?[{scaleX:-1}]:undefined;
+ return <Pressable accessibilityRole="button" accessibilityLabel={invitation?'Cassidy is inviting you':'Cassidy is in the world'} onPress={()=>eventBus.emit('cassidy:worldPresenceTapped',{activity:lifeActivity},'world')} className="absolute z-[35] items-center" style={{left:puppet.anchor.left as DimensionValue,top:puppet.anchor.top as DimensionValue}}>
   <View style={{transform:flip}}>
-   <CassidyCharacter height={anchor.height} action={anchor.action} speaking={false} expression={presence.mood}/>
+   <CassidyCharacter height={puppet.anchor.height} action={puppet.action} speaking={puppet.speaking} expression={presence.mood}/>
   </View>
   {invitation&&<View pointerEvents="none" className="absolute -right-1 top-2 h-2 w-2 rounded-full bg-emerald-300"/>}
  </Pressable>;
