@@ -55,5 +55,7 @@ const CASSIDY_VIDEO_ASSETS: Partial<Record<Cassidy2DAnimation, number>> = {
 export function getCassidy2DVideoAsset(
   animation: Cassidy2DAnimation,
 ): number | null {
-  return CASSIDY_VIDEO_ASSETS[animation] ?? CASSIDY_VIDEO_ASSETS['idle-breath'] ?? null;
+  // Never silently use an idle clip for another semantic animation. Each
+  // authored video must be explicitly mapped to the animation it represents.
+  return CASSIDY_VIDEO_ASSETS[animation] ?? null;
 }
