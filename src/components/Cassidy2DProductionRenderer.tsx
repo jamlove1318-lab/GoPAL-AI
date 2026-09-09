@@ -1,10 +1,13 @@
 import React from 'react';
+import { View } from 'react-native';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import { CassidyCharacter } from './CassidyCharacter';
 import {
   getCassidy2DProductionStatus,
 } from '../features/world/data/cassidy2dProductionContract';
 import {
   getCassidy2DProductionRenderer,
+  getCassidy2DVideoAsset,
 } from '../features/world/data/cassidy2dProductionRuntime';
 import type {
   Cassidy2DAnimation,
@@ -20,13 +23,38 @@ interface Props {
   speaking?: boolean;
 }
 
+function CassidyAuthoredVideo({
+  source,
+  height,
+}: {
+  source: number;
+  height: number;
+}) {
+  const player = useVideoPlayer(source, (instance) => {
+    instance.loop = true;
+    instance.muted = true;
+    instance.play();
+  });
+
+  return (
+    <View style={{ height, aspectRatio: 9 / 16, overflow: 'hidden' }}>
+      <VideoView
+        player={player}
+        style={{ width: '100%', height: '100%' }}
+        nativeControls={false}
+        contentFit="contain"
+      />
+    </View>
+  );
+}
+
 /**
  * Single visual boundary for Cassidy.
  *
- * Production builds never fall back to the legacy SVG approximation. During
- * local development only, the approximation remains visible so the rest of
- * the living-world systems can still be exercised before the authored pack is
- * delivered.
+ * Production builds never fall back to the legacy SVG approximation.
+ * Approved authored/generated Cassidy video clips are treated as production
+ * assets and are played directly while the complete layered 2D puppet pack
+ * is being assembled.
  */
 export function Cassidy2DProductionRenderer({
   height = 150,
@@ -37,6 +65,11 @@ export function Cassidy2DProductionRenderer({
 }: Props) {
   const status = getCassidy2DProductionStatus();
   const productionRenderer = getCassidy2DProductionRenderer();
+  const videoAsset = getCassidy2DVideoAsset(animation);
+
+  if (videoAsset) {
+    return <CassidyAuthoredVideo source={videoAsset} height={height} />;
+  }
 
   if (status.complete && productionRenderer) {
     return <>{productionRenderer({ height, animation, expression, charmState, speaking })}</>;
