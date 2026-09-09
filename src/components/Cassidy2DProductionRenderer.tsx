@@ -51,10 +51,15 @@ function CassidyAuthoredVideo({
 /**
  * Single visual boundary for Cassidy.
  *
- * Production builds never fall back to the legacy SVG approximation.
- * Approved authored/generated Cassidy video clips are treated as production
- * assets and are played directly while the complete layered 2D puppet pack
- * is being assembled.
+ * Priority order:
+ * 1. Explicit authored Cassidy video clips.
+ * 2. Complete human-approved layered 2D production pack.
+ * 3. Polished interim vector Cassidy while the final production pack is
+ *    being prepared.
+ *
+ * The interim visual is intentionally based on the canonical reference and
+ * is not registered as the final production pack, so it can be replaced
+ * later without changing the rest of the app architecture.
  */
 export function Cassidy2DProductionRenderer({
   height = 150,
@@ -75,26 +80,29 @@ export function Cassidy2DProductionRenderer({
     return <>{productionRenderer({ height, animation, expression, charmState, speaking })}</>;
   }
 
-  if (__DEV__) {
-    const legacyAction =
-      animation === 'walk' ? 'walking' :
-      animation === 'greeting' ? 'waving' :
-      animation === 'talk' || animation === 'explaining' ? 'talking' :
-      'idle';
-    const legacyExpression =
-      expression === 'thoughtful' ? 'thinking' :
-      expression === 'curious' || expression === 'excited' || expression === 'happy' ? 'happy' :
-      'warm';
+  // Temporary app-completion visual. This is deliberately inside the same
+  // Cassidy renderer boundary so the eventual approved layered puppet can
+  // replace it without creating a second character system.
+  const legacyAction =
+    animation === 'walk' ? 'walking' :
+    animation === 'greeting' ? 'waving' :
+    animation === 'talk' || animation === 'explaining' || animation === 'listening' || animation === 'encouraging'
+      ? 'talking'
+      : 'idle';
+  const legacyExpression =
+    expression === 'thoughtful' ? 'thinking' :
+    expression === 'curious' || expression === 'excited' || expression === 'happy' || expression === 'playful'
+      ? 'happy'
+      : expression === 'concerned'
+        ? 'warm'
+        : 'warm';
 
-    return (
-      <CassidyCharacter
-        height={height}
-        action={legacyAction}
-        speaking={speaking}
-        expression={legacyExpression}
-      />
-    );
-  }
-
-  return null;
+  return (
+    <CassidyCharacter
+      height={height}
+      action={legacyAction}
+      speaking={speaking}
+      expression={legacyExpression}
+    />
+  );
 }
