@@ -1,18 +1,41 @@
 import React, { useEffect, useRef } from 'react';
-import Svg, { G, Circle, Ellipse, Path, Rect, Line } from 'react-native-svg';
+import Svg, {
+  Circle,
+  Defs,
+  Ellipse,
+  G,
+  LinearGradient,
+  Line,
+  Path,
+  Rect,
+  Stop,
+} from 'react-native-svg';
 import { Animated, Easing } from 'react-native';
 import { CassidyAction, CassidyMood } from '../characters/cassidy';
 
 const AnimatedG = Animated.createAnimatedComponent(G);
 
-const SKIN = '#f4c9a3';
-const SKIN_SHADE = '#e7b489';
-const HAIR = '#5b3a29';
-const HAIR_HI = '#7a4f37';
-const SHIRT = '#10b981';
-const SHIRT_SHADE = '#0c9268';
-const PANTS = '#334155';
-const SHOE = '#1e293b';
+// Canonical Cassidy palette — intentionally derived from the locked reference.
+const SKIN = '#F1C7A5';
+const SKIN_LIGHT = '#FFDCC0';
+const SKIN_SHADE = '#DFA883';
+const HAIR = '#4A2D21';
+const HAIR_DARK = '#321E18';
+const HAIR_HI = '#704532';
+const EMERALD = '#087F5B';
+const EMERALD_DARK = '#075B45';
+const EMERALD_LIGHT = '#18A77D';
+const CREAM = '#FFF4DF';
+const CREAM_SHADE = '#E9D8BD';
+const LEATHER = '#70462E';
+const LEATHER_DARK = '#4C2C1F';
+const TROUSER = '#4A514F';
+const BOOT = '#5A3726';
+const GOLD = '#D9A441';
+const GOLD_LIGHT = '#FFE39A';
+const TEAL = '#36C7C0';
+const CORAL = '#E9897A';
+const EYE = '#2A211C';
 
 interface Props {
   height?: number;
@@ -21,165 +44,275 @@ interface Props {
   expression?: CassidyMood;
 }
 
-export function CassidyCharacter({ height = 150, action = 'idle', speaking = false, expression = 'warm' }: Props) {
+/**
+ * Polished interim 2D Cassidy.
+ *
+ * This is deliberately a temporary visual bridge for completing the app.
+ * It follows the canonical reference's identity anchors (dark warm eyes,
+ * chocolate side-braid hair, Emerald Valley explorer outfit and luminous
+ * Leaf-Star Compass charm) without replacing the future artist-authored pack.
+ *
+ * The approved Gemini Cassidy video remains a separate production asset and
+ * is still preferred by Cassidy2DProductionRenderer when mapped.
+ */
+export function CassidyCharacter({
+  height = 150,
+  action = 'idle',
+  speaking = false,
+  expression = 'warm',
+}: Props) {
   const breathe = useRef(new Animated.Value(0)).current;
   const bob = useRef(new Animated.Value(0)).current;
   const blink = useRef(new Animated.Value(1)).current;
-  const sway = useRef(new Animated.Value(0)).current;
-  const mouth = useRef(new Animated.Value(1)).current;
-  const arm = useRef(new Animated.Value(0)).current;
-  const legL = useRef(new Animated.Value(0)).current;
-  const legR = useRef(new Animated.Value(0)).current;
+  const hairSway = useRef(new Animated.Value(0)).current;
+  const mouth = useRef(new Animated.Value(0.15)).current;
+  const wave = useRef(new Animated.Value(0)).current;
+  const walk = useRef(new Animated.Value(0)).current;
+  const charmPulse = useRef(new Animated.Value(0)).current;
 
-  // Always-on life: breathing, gentle bob, blink, hair sway.
   useEffect(() => {
-    const loop = (v: Animated.Value, dur: number) =>
+    const loop = (value: Animated.Value, duration: number, toValue = 1) =>
       Animated.loop(
         Animated.sequence([
-          Animated.timing(v, { toValue: 1, duration: dur, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-          Animated.timing(v, { toValue: 0, duration: dur, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        ])
+          Animated.timing(value, {
+            toValue,
+            duration,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+          Animated.timing(value, {
+            toValue: 0,
+            duration,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+        ]),
       );
-    const anims = [
-      loop(breathe, 2600),
+
+    const animations = [
+      loop(breathe, 2400),
       loop(bob, 3200),
-      loop(sway, 4200),
-      // blink: stay open, snap shut, open — repeats ~every 3.4s
+      loop(hairSway, 4200),
+      loop(charmPulse, 1300),
       Animated.loop(
         Animated.sequence([
-          Animated.timing(blink, { toValue: 1, duration: 3000, useNativeDriver: true }),
-          Animated.timing(blink, { toValue: 0.1, duration: 90, useNativeDriver: true }),
-          Animated.timing(blink, { toValue: 1, duration: 110, useNativeDriver: true }),
-        ])
+          Animated.delay(2600),
+          Animated.timing(blink, { toValue: 0.08, duration: 75, useNativeDriver: true }),
+          Animated.timing(blink, { toValue: 1, duration: 120, useNativeDriver: true }),
+        ]),
       ),
     ];
-    anims.forEach((a) => a.start());
-    return () => anims.forEach((a) => a.stop());
-  }, [breathe, bob, sway, blink]);
 
-  // Speaking → mouth flaps.
-  useEffect(() => {
-    if (speaking) {
-      const a = Animated.loop(
-        Animated.sequence([
-          Animated.timing(mouth, { toValue: 2.1, duration: 160, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-          Animated.timing(mouth, { toValue: 1, duration: 160, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        ])
-      );
-      a.start();
-      return () => a.stop();
-    }
-    Animated.timing(mouth, { toValue: 1, duration: 200, useNativeDriver: true }).start();
-  }, [speaking, mouth]);
+    animations.forEach((animation) => animation.start());
+    return () => animations.forEach((animation) => animation.stop());
+  }, [blink, bob, breathe, charmPulse, hairSway]);
 
-  // Action-driven limbs.
   useEffect(() => {
-    const make = (v: Animated.Value, from: number, to: number, dur: number) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(v, { toValue: to, duration: dur, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-          Animated.timing(v, { toValue: from, duration: dur, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        ])
-      );
-    let a: ReturnType<typeof Animated.loop> | null = null;
-    if (action === 'waving') a = make(arm, -6, 26, 620);
-    else if (action === 'walking') {
-      a = Animated.loop(Animated.parallel([make(legL, -18, 18, 420), make(legR, 18, -18, 420)]));
-    }
-    if (a) a.start();
+    const animation = speaking
+      ? Animated.loop(
+          Animated.sequence([
+            Animated.timing(mouth, { toValue: 1, duration: 150, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+            Animated.timing(mouth, { toValue: 0.15, duration: 150, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+          ]),
+        )
+      : Animated.timing(mouth, { toValue: 0.15, duration: 180, useNativeDriver: true });
+    animation.start();
+    return () => animation.stop();
+  }, [mouth, speaking]);
+
+  useEffect(() => {
+    const animation =
+      action === 'waving'
+        ? Animated.loop(
+            Animated.sequence([
+              Animated.timing(wave, { toValue: 1, duration: 500, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+              Animated.timing(wave, { toValue: -1, duration: 500, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+            ]),
+          )
+        : action === 'walking'
+          ? Animated.loop(
+              Animated.sequence([
+                Animated.timing(walk, { toValue: 1, duration: 420, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+                Animated.timing(walk, { toValue: -1, duration: 420, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+              ]),
+            )
+          : null;
+
+    animation?.start();
     return () => {
-      a?.stop();
-      Animated.timing(arm, { toValue: 0, duration: 300, useNativeDriver: true }).start();
-      Animated.timing(legL, { toValue: 0, duration: 300, useNativeDriver: true }).start();
-      Animated.timing(legR, { toValue: 0, duration: 300, useNativeDriver: true }).start();
+      animation?.stop();
+      Animated.timing(wave, { toValue: 0, duration: 180, useNativeDriver: true }).start();
+      Animated.timing(walk, { toValue: 0, duration: 180, useNativeDriver: true }).start();
     };
-  }, [action, arm, legL, legR]);
+  }, [action, walk, wave]);
 
-  const bobY = bob.interpolate({ inputRange: [0, 1], outputRange: [-4, 4] });
-  const breathScale = breathe.interpolate({ inputRange: [0, 1], outputRange: [1, 1.03] });
-  const swayDeg = sway.interpolate({ inputRange: [0, 1], outputRange: [-3, 3] });
-  const mouthScale = mouth;
-  const armDeg = arm.interpolate({ inputRange: [-6, 26], outputRange: [-6, 26] });
-  const legLDeg = legL.interpolate({ inputRange: [-18, 18], outputRange: [-18, 18] });
-  const legRDeg = legR.interpolate({ inputRange: [-18, 18], outputRange: [-18, 18] });
+  const bobY = bob.interpolate({ inputRange: [0, 1], outputRange: [-2.5, 2.5] });
+  const bodyScale = breathe.interpolate({ inputRange: [0, 1], outputRange: [1, 1.018] });
+  const hairDeg = hairSway.interpolate({ inputRange: [0, 1], outputRange: [-1.8, 1.8] });
+  const waveDeg = wave.interpolate({ inputRange: [-1, 1], outputRange: [-12, 18] });
+  const legLeftDeg = walk.interpolate({ inputRange: [-1, 1], outputRange: [10, -10] });
+  const legRightDeg = walk.interpolate({ inputRange: [-1, 1], outputRange: [-10, 10] });
+  const charmScale = charmPulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.09] });
+  const mouthScale = mouth.interpolate({ inputRange: [0.15, 1], outputRange: [0.7, 1.45] });
+  const width = (height * 220) / 380;
 
-  const browY = expression === 'thinking' ? 1 : 0;
-  const width = (height * 200) / 340;
+  const browLift = expression === 'thinking' || expression === 'curious' || expression === 'surprised';
+  const smile = expression === 'happy' || expression === 'excited' || expression === 'gentle' || expression === 'warm';
+  const concerned = expression === 'concerned';
 
   return (
-    <Svg height={height} width={width} viewBox="0 0 200 340">
-      {/* whole figure bob */}
+    <Svg width={width} height={height} viewBox="0 0 220 380" accessibilityLabel="Cassidy">
+      <Defs>
+        <LinearGradient id="hair" x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0" stopColor={HAIR_HI} />
+          <Stop offset="0.45" stopColor={HAIR} />
+          <Stop offset="1" stopColor={HAIR_DARK} />
+        </LinearGradient>
+        <LinearGradient id="vest" x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0" stopColor={EMERALD_LIGHT} />
+          <Stop offset="0.48" stopColor={EMERALD} />
+          <Stop offset="1" stopColor={EMERALD_DARK} />
+        </LinearGradient>
+        <LinearGradient id="cream" x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0" stopColor="#FFFDF5" />
+          <Stop offset="1" stopColor={CREAM} />
+        </LinearGradient>
+        <LinearGradient id="leather" x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0" stopColor="#95613E" />
+          <Stop offset="1" stopColor={LEATHER_DARK} />
+        </LinearGradient>
+        <LinearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0" stopColor={GOLD_LIGHT} />
+          <Stop offset="0.5" stopColor={GOLD} />
+          <Stop offset="1" stopColor="#A66C20" />
+        </LinearGradient>
+      </Defs>
+
       <AnimatedG transform={[{ translateY: bobY }]}>
-        {/* upper body breathes around the hips (y=232) */}
-        <AnimatedG transform={[{ translateY: 232 }, { scaleY: breathScale }, { translateY: -232 }]}>
-
-          {/* HAIR (back) + sway — pivot at y=80 */}
-          <AnimatedG transform={[{ translateY: 80 }, { rotate: swayDeg }, { translateY: -80 }]}>
-            <Path d="M54 84 Q56 28 100 26 Q144 28 146 84 Q146 60 100 54 Q54 60 54 84 Z" fill={HAIR} />
-          </AnimatedG>
-
-          {/* HEAD */}
-          <Circle cx={100} cy={82} r={46} fill={SKIN} />
-          <Path d="M62 70 Q60 36 100 34 Q140 36 138 70 Q140 52 100 48 Q60 52 62 70 Z" fill={HAIR_HI} />
-
-          {/* EYES — blink pivot at y=82 */}
-          <AnimatedG transform={[{ translateY: 82 }, { scaleY: blink }, { translateY: -82 }]}>
-            {expression === 'thinking' ? (
-              <>
-                <Ellipse cx={84} cy={84} rx={5} ry={5} fill="#2b2b2b" />
-                <Ellipse cx={116} cy={84} rx={5} ry={5} fill="#2b2b2b" />
-              </>
-            ) : (
-              <>
-                <Circle cx={84} cy={84} r={8} fill="#fff" />
-                <Circle cx={116} cy={84} r={8} fill="#fff" />
-                <Circle cx={85} cy={85} r={4.2} fill="#3a2a1f" />
-                <Circle cx={117} cy={85} r={4.2} fill="#3a2a1f" />
-              </>
-            )}
-          </AnimatedG>
-
-          {/* BROWS */}
-          <Line x1={76} y1={70 - browY * 2} x2={92} y2={70 - browY * 4} stroke={HAIR} strokeWidth={3} strokeLinecap="round" />
-          <Line x1={108} y1={70 - browY * 4} x2={124} y2={70 - browY * 2} stroke={HAIR} strokeWidth={3} strokeLinecap="round" />
-
-          {/* CHEEKS */}
-          <Circle cx={72} cy={98} r={6} fill="#f6a98c" opacity={0.5} />
-          <Circle cx={128} cy={98} r={6} fill="#f6a98c" opacity={0.5} />
-
-          {/* MOUTH — talks pivot at y=104 */}
-          <AnimatedG transform={[{ translateY: 104 }, { scaleY: mouthScale }, { translateY: -104 }]}>
-            <Ellipse cx={100} cy={104} rx={9} ry={4} fill="#b5485a" />
-          </AnimatedG>
-
-          {/* NECK */}
-          <Rect x={92} y={120} width={16} height={18} fill={SKIN_SHADE} />
-
-          {/* TORSO / SHIRT */}
-          <Path d="M70 150 Q100 132 130 150 L136 232 L64 232 Z" fill={SHIRT} />
-          <Path d="M100 132 L100 232 L64 232 L70 150 Q84 140 100 138 Z" fill={SHIRT_SHADE} opacity={0.5} />
-
-          {/* LEFT ARM (resting) */}
-          <G>
-            <Path d="M72 152 Q56 180 60 210" stroke={SHIRT} strokeWidth={14} fill="none" strokeLinecap="round" />
-            <Circle cx={60} cy={212} r={8} fill={SKIN} />
-          </G>
-
-          {/* RIGHT ARM (waves) — pivot at shoulder (128,152) */}
-          <AnimatedG transform={[{ translateY: 152 }, { translateX: 128 }, { rotate: armDeg }, { translateX: -128 }, { translateY: -152 }]}>
-            <Path d="M128 152 Q146 178 140 208" stroke={SHIRT} strokeWidth={14} fill="none" strokeLinecap="round" />
-            <Circle cx={140} cy={210} r={8} fill={SKIN} />
-          </AnimatedG>
+        {/* Back hair silhouette and long side braid */}
+        <AnimatedG transform={[{ translateX: 108 }, { rotate: hairDeg }, { translateX: -108 }]}>
+          <Path
+            d="M51 92 C47 47 70 25 108 25 C147 25 170 49 166 94 C163 119 155 135 151 148 L62 148 C56 130 53 112 51 92Z"
+            fill="url(#hair)"
+          />
+          <Path d="M151 92 C177 112 180 143 165 164 C153 181 157 205 146 221 C137 234 118 225 124 210 C130 195 147 187 145 168 C143 151 155 137 151 119Z" fill="url(#hair)" />
+          <Circle cx={151} cy={221} r={10} fill={HAIR_DARK} />
+          <Circle cx={151} cy={238} r={9} fill={HAIR} />
+          <Circle cx={147} cy={254} r={8} fill={HAIR_DARK} />
+          <Path d="M143 264 Q151 271 159 264" fill="none" stroke={GOLD} strokeWidth={4} strokeLinecap="round" />
         </AnimatedG>
 
-        {/* LEGS (walk) — pivot at hips y=232 */}
-        <AnimatedG transform={[{ translateY: 232 }, { translateX: 86 }, { rotate: legLDeg }, { translateX: -86 }, { translateY: -232 }]}>
-          <Rect x={78} y={230} width={16} height={66} rx={7} fill={PANTS} />
-          <Ellipse cx={86} cy={300} rx={13} ry={8} fill={SHOE} />
+        {/* Hood behind head */}
+        <Path d="M61 105 Q58 55 108 43 Q158 55 159 105 L146 124 L70 124Z" fill={EMERALD_DARK} opacity={0.95} />
+        <Path d="M65 102 Q67 60 108 50 Q149 60 155 102" fill="none" stroke={GOLD} strokeWidth={2.5} opacity={0.55} />
+
+        {/* Face */}
+        <Path d="M72 65 Q108 39 145 65 L148 101 Q144 137 109 151 Q74 137 71 101Z" fill={SKIN_LIGHT} />
+        <Path d="M72 104 Q78 132 108 145 Q139 132 148 103 Q143 136 109 151 Q75 137 72 104Z" fill={SKIN_SHADE} opacity={0.55} />
+
+        {/* Front hair framing the face */}
+        <Path d="M65 83 Q58 52 89 36 Q120 20 151 43 Q169 58 157 91 Q147 74 135 67 Q122 57 106 60 Q84 61 65 83Z" fill="url(#hair)" />
+        <Path d="M69 76 Q66 52 93 39 Q117 28 142 43" fill="none" stroke={HAIR_HI} strokeWidth={4} strokeLinecap="round" opacity={0.7} />
+        <Path d="M75 75 Q66 94 73 111" fill="none" stroke={HAIR_DARK} strokeWidth={10} strokeLinecap="round" />
+        <Path d="M145 72 Q155 92 148 112" fill="none" stroke={HAIR_DARK} strokeWidth={10} strokeLinecap="round" />
+
+        {/* Eyes */}
+        <AnimatedG transform={[{ translateY: 91 }, { scaleY: blink }, { translateY: -91 }]}>
+          <Ellipse cx={91} cy={91} rx={13} ry={15} fill="#FFFDF8" />
+          <Ellipse cx={128} cy={91} rx={13} ry={15} fill="#FFFDF8" />
+          <Ellipse cx={93} cy={92} rx={6.2} ry={8.2} fill={EYE} />
+          <Ellipse cx={130} cy={92} rx={6.2} ry={8.2} fill={EYE} />
+          <Circle cx={95} cy={89} r={2.2} fill="#FFFDF8" />
+          <Circle cx={132} cy={89} r={2.2} fill="#FFFDF8" />
         </AnimatedG>
-        <AnimatedG transform={[{ translateY: 232 }, { translateX: 114 }, { rotate: legRDeg }, { translateX: -114 }, { translateY: -232 }]}>
-          <Rect x={106} y={230} width={16} height={66} rx={7} fill={PANTS} />
-          <Ellipse cx={114} cy={300} rx={13} ry={8} fill={SHOE} />
+
+        {/* Brows */}
+        <Path d={browLift ? 'M79 72 Q91 66 102 72' : concerned ? 'M79 73 Q91 79 102 72' : 'M79 73 Q91 68 102 72'} fill="none" stroke={HAIR_DARK} strokeWidth={4} strokeLinecap="round" />
+        <Path d={browLift ? 'M117 72 Q128 66 139 72' : concerned ? 'M117 72 Q128 79 139 73' : 'M117 72 Q128 68 139 72'} fill="none" stroke={HAIR_DARK} strokeWidth={4} strokeLinecap="round" />
+
+        {/* Nose + cheeks */}
+        <Path d="M108 91 Q103 105 109 108 Q114 108 116 104" fill="none" stroke={SKIN_SHADE} strokeWidth={2.5} strokeLinecap="round" />
+        <Ellipse cx={79} cy={108} rx={10} ry={5} fill={CORAL} opacity={0.24} />
+        <Ellipse cx={140} cy={108} rx={10} ry={5} fill={CORAL} opacity={0.24} />
+
+        {/* Mouth */}
+        {smile ? (
+          <Path d="M96 116 Q109 128 123 116" fill="none" stroke="#9B4D4B" strokeWidth={3.2} strokeLinecap="round" />
+        ) : concerned ? (
+          <Path d="M98 124 Q109 116 120 124" fill="none" stroke="#9B4D4B" strokeWidth={3.2} strokeLinecap="round" />
+        ) : (
+          <AnimatedG transform={[{ translateX: 109 }, { scaleY: mouthScale }, { translateX: -109 }]}>
+            <Ellipse cx={109} cy={119} rx={6.5} ry={3.2} fill="#9B4D4B" />
+          </AnimatedG>
+        )}
+
+        {/* Neck */}
+        <Path d="M94 139 L124 139 L127 164 L92 164Z" fill={SKIN_SHADE} />
+
+        {/* Legs behind torso */}
+        <AnimatedG transform={[{ translateX: 86 }, { rotate: legLeftDeg }, { translateX: -86 }]}>
+          <Path d="M76 275 L98 275 L97 335 L75 335Z" fill={TROUSER} />
+          <Path d="M72 327 Q85 321 99 331 L98 348 Q83 353 69 344Z" fill="url(#leather)" />
+          <Path d="M73 336 L96 339" stroke={GOLD} strokeWidth={2} opacity={0.6} />
+        </AnimatedG>
+        <AnimatedG transform={[{ translateX: 136 }, { rotate: legRightDeg }, { translateX: -136 }]}>
+          <Path d="M122 275 L144 275 L146 335 L124 335Z" fill={TROUSER} />
+          <Path d="M121 331 Q134 321 148 330 L151 345 Q137 354 123 346Z" fill="url(#leather)" />
+          <Path d="M124 338 L148 335" stroke={GOLD} strokeWidth={2} opacity={0.6} />
+        </AnimatedG>
+
+        {/* Blouse sleeves */}
+        <Path d="M79 165 Q62 160 53 181 Q48 198 60 212 L77 201 L88 174Z" fill="url(#cream)" />
+        <Path d="M139 165 Q156 160 167 181 Q172 198 160 212 L143 201 L130 174Z" fill="url(#cream)" />
+        <Path d="M56 180 Q65 190 76 190" fill="none" stroke={CREAM_SHADE} strokeWidth={3} opacity={0.8} />
+        <Path d="M164 180 Q155 190 144 190" fill="none" stroke={CREAM_SHADE} strokeWidth={3} opacity={0.8} />
+
+        {/* Torso */}
+        <AnimatedG transform={[{ translateY: 164 }, { scaleY: bodyScale }, { translateY: -164 }]}>
+          <Path d="M84 157 Q108 145 135 157 L151 273 Q109 287 69 273 L82 159Z" fill="url(#cream)" />
+
+          {/* Emerald vest */}
+          <Path d="M83 158 Q69 167 67 191 L73 267 Q88 276 103 274 L105 180 L96 157Z" fill="url(#vest)" />
+          <Path d="M133 157 Q147 167 150 191 L145 267 Q130 276 115 274 L113 180 L121 157Z" fill="url(#vest)" />
+          <Path d="M104 179 L109 273" stroke={GOLD} strokeWidth={2} opacity={0.55} />
+          <Circle cx={99} cy={190} r={3} fill={GOLD_LIGHT} />
+          <Circle cx={99} cy={207} r={3} fill={GOLD_LIGHT} />
+          <Circle cx={119} cy={190} r={3} fill={GOLD_LIGHT} />
+          <Circle cx={119} cy={207} r={3} fill={GOLD_LIGHT} />
+
+          {/* Belt */}
+          <Path d="M69 238 Q110 249 150 238 L151 259 Q109 270 68 259Z" fill="url(#leather)" />
+          <Rect x={101} y={246} width={17} height={17} rx={3} fill="url(#gold)" />
+          <Rect x={105} y={250} width={9} height={9} rx={1.5} fill={LEATHER_DARK} />
+
+          {/* Pouches */}
+          <Path d="M65 242 Q54 241 51 250 L54 268 Q62 273 73 267 L73 247Z" fill="url(#leather)" />
+          <Path d="M147 242 Q158 241 162 250 L159 268 Q151 273 140 267 L140 247Z" fill="url(#leather)" />
+          <Line x1={55} y1={250} x2={70} y2={249} stroke={GOLD} strokeWidth={2} opacity={0.65} />
+          <Line x1={143} y1={249} x2={158} y2={250} stroke={GOLD} strokeWidth={2} opacity={0.65} />
+        </AnimatedG>
+
+        {/* Arms + hands */}
+        <Path d="M77 174 Q61 195 61 221" fill="none" stroke={EMERALD} strokeWidth={15} strokeLinecap="round" />
+        <Circle cx={61} cy={224} r={9} fill={SKIN_LIGHT} />
+        <AnimatedG transform={[{ translateX: 141 }, { translateY: 174 }, { rotate: waveDeg }, { translateX: -141 }, { translateY: -174 }]}>
+          <Path d="M141 174 Q158 194 159 218" fill="none" stroke={EMERALD} strokeWidth={15} strokeLinecap="round" />
+          <Circle cx={159} cy={222} r={9} fill={SKIN_LIGHT} />
+          {action === 'waving' && (
+            <Path d="M159 219 Q170 207 171 195 M160 220 Q176 213 179 202" fill="none" stroke={SKIN_LIGHT} strokeWidth={5} strokeLinecap="round" />
+          )}
+        </AnimatedG>
+
+        {/* Necklace chain */}
+        <Path d="M90 145 Q109 166 129 145" fill="none" stroke={GOLD} strokeWidth={2.5} />
+        <Path d="M93 148 Q109 172 126 148" fill="none" stroke={GOLD_LIGHT} strokeWidth={1} opacity={0.7} />
+
+        {/* Leaf-Star Compass charm */}
+        <AnimatedG transform={[{ translateX: 109 }, { translateY: 167 }, { scale: charmScale }, { translateX: -109 }, { translateY: -167 }]}>
+          <Circle cx={109} cy={167} r={13} fill={TEAL} opacity={0.16} />
+          <Path d="M109 153 L112 162 L122 163 L114 169 L116 179 L109 173 L101 179 L103 169 L95 163 L105 162Z" fill="url(#gold)" stroke="#8A5A1C" strokeWidth={1.2} />
+          <Path d="M109 158 L112 166 L109 174 L106 166Z" fill={TEAL} />
+          <Circle cx={109} cy={166} r={3.5} fill={TEAL} stroke={GOLD_LIGHT} strokeWidth={1.2} />
         </AnimatedG>
       </AnimatedG>
     </Svg>
