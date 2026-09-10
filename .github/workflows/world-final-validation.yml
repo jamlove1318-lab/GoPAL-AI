@@ -75,3 +75,15 @@ jobs:
           npm audit --audit-level=high 2>&1 | tee /tmp/npm-audit.txt
       - name: World integrity smoke check
         run: node -e "console.log('World final validation reached runtime smoke-check stage')"
+      - name: Upload world pipeline evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gopal-world-pipeline-evidence
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            artifacts/external-world/**
+            /tmp/gopal-expo-config.json
+            /tmp/npm-audit.txt
+            /tmp/gopal-web-export/**
