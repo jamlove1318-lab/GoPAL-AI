@@ -17,6 +17,7 @@ export type WorldVisualPurpose =
   | 'map'
   | 'portrait'
   | 'effect';
+export type WorldVisualMobileTier = 'low' | 'medium' | 'high';
 
 export interface WorldVisualVariant {
   id: string;
@@ -29,6 +30,7 @@ export interface WorldVisualVariant {
   maxScreenPixels?: number;
   interactive?: boolean;
   animated?: boolean;
+  mobileTier?: WorldVisualMobileTier;
   validated?: boolean;
   notes?: string;
 }
@@ -45,6 +47,16 @@ export interface WorldVisualSelectionContext {
   interactive: boolean;
   screenPixels: number;
   performanceTier: 'high' | 'balanced' | 'low';
+}
+
+function mobileTierAllowed(
+  variantTier: WorldVisualMobileTier | undefined,
+  performanceTier: WorldVisualSelectionContext['performanceTier'],
+): boolean {
+  if (!variantTier) return true;
+  if (performanceTier === 'low') return variantTier === 'low';
+  if (performanceTier === 'balanced') return variantTier !== 'high';
+  return true;
 }
 
 /**
@@ -65,6 +77,7 @@ export function selectWorldVisual(
     if (variant.minDistance !== undefined && context.distance < variant.minDistance) return false;
     if (variant.maxDistance !== undefined && context.distance > variant.maxDistance) return false;
     if (variant.maxScreenPixels !== undefined && context.screenPixels > variant.maxScreenPixels) return false;
+    if (!mobileTierAllowed(variant.mobileTier, context.performanceTier)) return false;
 
     if (context.performanceTier === 'low' && variant.representation === '3d' && variant.purpose !== 'hero') {
       return false;
