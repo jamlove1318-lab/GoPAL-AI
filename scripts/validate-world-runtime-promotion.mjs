@@ -39,6 +39,14 @@ for (const asset of assets) {
     fail(`${asset.id}: validated-runtime requires a 64-character SHA-256 checksum`);
   }
 
+  if (!asset.license || !['CC0', 'clearly-commercial-safe'].includes(asset.license)) {
+    fail(`${asset.id}: validated-runtime requires an explicitly verified supported license`);
+  }
+
+  if (!asset.sourcePage || typeof asset.sourcePage !== 'string') {
+    fail(`${asset.id}: validated-runtime requires exact source provenance`);
+  }
+
   if (!asset.mobileValidation?.passed) {
     fail(`${asset.id}: mobileValidation.passed must be true before runtime promotion`);
   }
@@ -53,10 +61,6 @@ for (const asset of assets) {
 
   if (!asset.materialReview?.passed) {
     fail(`${asset.id}: materialReview.passed must be true before runtime promotion`);
-  }
-
-  if (asset.provider === 'quaternius' && asset.license !== 'CC0') {
-    fail(`${asset.id}: Quaternius runtime promotion requires the exact verified license recorded by the asset entry`);
   }
 
   const variants = asset.variants ?? [];
@@ -81,4 +85,4 @@ if (errors.length) {
 }
 
 console.log(`[OK] runtime promotion gate inspected ${promoted.length} validated-runtime asset(s)`);
-console.log('[OK] runtime promotion requires artifact, checksum, geometry/material review, mobile validation, and human visual approval');
+console.log('[OK] runtime promotion requires artifact, provenance/license, checksum, geometry/material review, mobile validation, and human visual approval');
