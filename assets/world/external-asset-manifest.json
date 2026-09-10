@@ -1,11 +1,13 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "world": "emerald-valley",
   "policy": {
     "qualityFirst": true,
     "licensePriority": ["CC0", "clearly-commercial-safe"],
     "redistributableStandaloneAssets": false,
-    "runtimeBrains": 1
+    "runtimeBrains": 1,
+    "mobileFirst": true,
+    "sourceOnlyUntilValidated": true
   },
   "assets": [
     {
@@ -15,7 +17,7 @@
       "sourcePage": "https://polyhaven.com/a/meadow",
       "license": "CC0",
       "status": "approved-source",
-      "notes": "Emerald Valley daylight reference/HDRI. Acquire an app-appropriate resolution; do not ship the full 16K source to mobile."
+      "notes": "Emerald Valley daylight/HDRI source; keep source resolution separate from mobile runtime resolution."
     },
     {
       "id": "polyhaven:grass_medium_01",
@@ -24,7 +26,7 @@
       "sourcePage": "https://polyhaven.com/a/grass_medium_01",
       "license": "CC0",
       "status": "approved-source",
-      "notes": "High-quality meadow grass source. Downsample/LOD before runtime use."
+      "notes": "Meadow ground-cover source; optimize aggressively before runtime."
     },
     {
       "id": "polyhaven:tree_small_02",
@@ -33,7 +35,7 @@
       "sourcePage": "https://polyhaven.com/a/tree_small_02",
       "license": "CC0",
       "status": "approved-source",
-      "notes": "Primary broadleaf tree candidate for close and mid-distance Emerald Valley dressing."
+      "notes": "Broadleaf tree source for close/mid-distance dressing."
     },
     {
       "id": "polyhaven:pine_tree_01",
@@ -42,7 +44,7 @@
       "sourcePage": "https://polyhaven.com/a/pine_tree_01",
       "license": "CC0",
       "status": "approved-source",
-      "notes": "Secondary tree silhouette for forest-edge variation. Must be LOD-reduced for mobile."
+      "notes": "Secondary tree silhouette for forest-edge variation."
     },
     {
       "id": "polyhaven:tree_stump_01",
@@ -51,7 +53,97 @@
       "sourcePage": "https://polyhaven.com/a/tree_stump_01",
       "license": "CC0",
       "status": "approved-source",
-      "notes": "Natural forest-floor prop for lived-in world detail."
+      "notes": "Natural forest-floor detail."
+    },
+    {
+      "id": "polyhaven:covered_car",
+      "role": "vehicle:car",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/covered_car",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Realistic vehicle/garage prop; mobile LOD required."
+    },
+    {
+      "id": "polyhaven:sofa_02",
+      "role": "furniture:sofa",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/sofa_02",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Interior furniture detail."
+    },
+    {
+      "id": "polyhaven:shelf_01",
+      "role": "furniture:shelf",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/Shelf_01",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Low-triangle interior prop candidate."
+    },
+    {
+      "id": "polyhaven:side_table_01",
+      "role": "furniture:table",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/side_table_01",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Interior prop candidate."
+    },
+    {
+      "id": "polyhaven:woodentable_01",
+      "role": "furniture:table",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/WoodenTable_01",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Table/desk candidate."
+    },
+    {
+      "id": "polyhaven:classicnightstand_01",
+      "role": "furniture:nightstand",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/ClassicNightstand_01",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Bedroom/interior detail."
+    },
+    {
+      "id": "polyhaven:modular_urban_apartments_facade",
+      "role": "building:residential",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/modular_urban_apartments_facade",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Urban residential facade source; inspect triangle/material cost before runtime use."
+    },
+    {
+      "id": "polyhaven:modular_factory_facade",
+      "role": "building:industrial",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/modular_factory_facade",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Industrial/warehouse facade source; source package is intentionally not shipped directly to mobile."
+    },
+    {
+      "id": "polyhaven:modular_fire_escape",
+      "role": "building:detail",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/modular_fire_escape",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Urban building detail."
+    },
+    {
+      "id": "polyhaven:ladder_sectioned_01",
+      "role": "prop:utility",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/ladder_sectioned_01",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Workshop/maintenance prop."
     },
     {
       "id": "quaternius:universal-base-characters",
@@ -60,16 +152,151 @@
       "sourcePage": "https://quaternius.com/packs/universalbasecharacters.html",
       "license": "CC0",
       "status": "candidate",
-      "notes": "Temporary rigged human base only. Never treat this as Cassidy identity. Cassidy's authored identity remains replaceable behind the existing runtime contract."
+      "notes": "Temporary human base only. Never treat as Cassidy identity. Existing Cassidy resolver remains the replacement boundary."
     },
     {
       "id": "quaternius:universal-animation-library-2",
       "role": "animation:humanoid-retarget-source",
       "provider": "quaternius",
-      "sourcePage": "https://quaternius.com/",
+      "sourcePage": "https://quaternius.com/packs/universalanimationlibrary2.html",
       "license": "CC0",
       "status": "candidate",
-      "notes": "Retarget source for walk/run/idle/contextual motion. Validate every clip against the runtime semantic animation contract before use."
+      "notes": "130+ humanoid animations; validate clips against GoPAL semantic animation vocabulary before use."
+    },
+    {
+      "id": "quaternius:downtown-city-megakit",
+      "role": "building:city-environment",
+      "provider": "quaternius",
+      "sourcePage": "https://quaternius.com/packs/downtowncitymegakit.html",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "300+ modular city/street pieces; strong candidate for future town/transport districts."
+    },
+    {
+      "id": "quaternius:ultimate-buildings-pack",
+      "role": "building:modular-houses",
+      "provider": "quaternius",
+      "sourcePage": "https://quaternius.com/packs/ultimatetexturedbuildings.html",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Modular building source for houses and town structures."
+    },
+    {
+      "id": "quaternius:buildings-pack",
+      "role": "building:general",
+      "provider": "quaternius",
+      "sourcePage": "https://quaternius.com/packs/buildings.html",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Nine-building supplemental source."
+    },
+    {
+      "id": "quaternius:modular-train-pack",
+      "role": "vehicle:train",
+      "provider": "quaternius",
+      "sourcePage": "https://quaternius.com/packs/modulartrain.html",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Train source; use for station/rail district when integrated."
+    },
+    {
+      "id": "quaternius:public-transport-pack",
+      "role": "vehicle:public-transport",
+      "provider": "quaternius",
+      "sourcePage": "https://quaternius.com/packs/publictransport.html",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Bus/train/ambulance-style public transport source."
+    },
+    {
+      "id": "quaternius:cars-pack",
+      "role": "vehicle:cars",
+      "provider": "quaternius",
+      "sourcePage": "https://quaternius.com/packs/cars.html",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Eight-car supplemental source."
+    },
+    {
+      "id": "kenney:city-kit-commercial",
+      "role": "building:commercial",
+      "provider": "kenney",
+      "sourcePage": "https://kenney.nl/assets/city-kit-commercial",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "50-piece commercial city kit; useful as a modular low-cost visual layer."
+    },
+    {
+      "id": "kenney:city-kit-suburban",
+      "role": "building:suburban",
+      "provider": "kenney",
+      "sourcePage": "https://kenney.nl/assets/city-kit-suburban",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "40-piece suburban building source."
+    },
+    {
+      "id": "kenney:city-kit-industrial",
+      "role": "building:industrial",
+      "provider": "kenney",
+      "sourcePage": "https://kenney.nl/assets/city-kit-industrial",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Industrial buildings/factory/warehouse source."
+    },
+    {
+      "id": "kenney:city-kit-roads",
+      "role": "environment:roads",
+      "provider": "kenney",
+      "sourcePage": "https://kenney.nl/assets/city-kit-roads",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "90-piece road/street source with signs and traffic lights."
+    },
+    {
+      "id": "kenney:building-kit",
+      "role": "building:general",
+      "provider": "kenney",
+      "sourcePage": "https://kenney.nl/assets/building-kit",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "80-piece building/structure source."
+    },
+    {
+      "id": "kenney:modular-buildings",
+      "role": "building:modular",
+      "provider": "kenney",
+      "sourcePage": "https://kenney.nl/assets/modular-buildings",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "100-piece modular town/building source."
+    },
+    {
+      "id": "kenney:nature-kit",
+      "role": "environment:nature",
+      "provider": "kenney",
+      "sourcePage": "https://kenney.nl/assets/nature-kit",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "330-piece nature source for trees, rocks and foliage."
+    },
+    {
+      "id": "kenney:train-kit",
+      "role": "vehicle:train-and-rail",
+      "provider": "kenney",
+      "sourcePage": "https://kenney.nl/assets/train-kit",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "100-piece train/tram/trolley/track source."
+    },
+    {
+      "id": "kenney:car-kit",
+      "role": "vehicle:cars",
+      "provider": "kenney",
+      "sourcePage": "https://kenney.nl/assets/car-kit",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Additional low-cost road vehicle source."
     }
   ]
 }
