@@ -18,7 +18,7 @@ const ids = new Set();
 const allowedLicenses = new Set(['CC0', 'clearly-commercial-safe']);
 const allowedStatuses = new Set(['approved-source', 'candidate', 'validated-runtime']);
 const allowedRepresentations = new Set(['2d', '2.5d', '3d']);
-const allowedProviders = new Set(['polyhaven', 'quaternius', 'kenney']);
+const allowedProviders = new Set(['polyhaven', 'quaternius', 'kenney', 'sketchfab', 'opengameart']);
 
 if (manifest.schemaVersion < 3) fail('asset manifest is from an older schema');
 if (manifest.policy?.runtimeBrains !== 1) fail('external asset policy must declare exactly one runtime brain');
@@ -36,8 +36,29 @@ for (const asset of manifest.assets) {
   if (!allowedStatuses.has(asset.status)) fail(`${asset.id}: unsupported status ${asset.status}`);
   if (!allowedProviders.has(asset.provider)) fail(`${asset.id}: unsupported provider ${asset.provider}`);
   if (!asset.sourcePage?.startsWith('https://')) fail(`${asset.id}: sourcePage must be HTTPS`);
-  if (!allowedRepresentations.has(asset.representation)) fail(`${asset.id}: invalid representation ${asset.representation}`);
+
+  const variants = asset.variants ?? asset.representations;
+  if (variants !== undefined) {
+    if (!Array.isArray(variants) || variants.length === 0) fail(`${asset.id}: variants must be a non-empty array`);
+    for (const variant of variants ?? []) {
+      if (!allowedRepresentations.has(variant.representation)) fail(`${asset.id}: invalid representation ${variant.representation}`);
+      if (variant.minDistance !== undefined && variant.maxDistance !== undefined && variant.minDistance > variant.maxDistance) {
+        fail(`${asset.id}: invalid visual distance range`);
+      }
+    }
+  } else if (!allowedRepresentations.has(asset.representation)) {
+    fail(`${asset.id}: invalid representation ${asset.representation}`);
+  }
+
   if (asset.status === 'validated-runtime' && !asset.runtimePath) fail(`${asset.id}: validated-runtime requires runtimePath`);
+
+  // Sketchfab/OpenGameArt are discovery providers, not blanket license grants.
+  // A future entry must carry an exact per-asset license and provenance record.
+  if ((asset.provider === 'sketchfab' || asset.provider === 'opengameart') && asset.status === 'approved-source') {
+    if (!asset.sourceAssetId || !asset.licenseVerifiedAt) {
+      fail(`${asset.id}: discovery provider requires exact asset id and license verification timestamp`);
+    }
+  }
 }
 
 const treeRoles = manifest.assets.filter((asset) => asset.role === 'environment:tree');
@@ -76,5 +97,5 @@ if (process.exitCode) {
   console.log(`[OK] validated ${manifest.assets.length} external asset entries`);
   console.log('[OK] 2D / 2.5D / 3D best-fit representation policy preserved');
   console.log('[OK] one-runtime-brain policy preserved');
-  console.log('[OK] external sources remain replaceable and provenance-tracked');
+  console.log('[OK] discovery-only providers remain fail-closed until exact license provenance is recorded');
 }
