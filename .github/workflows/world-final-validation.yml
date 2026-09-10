@@ -45,6 +45,8 @@ jobs:
         run: npm run validate:world-visuals
       - name: World runtime promotion gate
         run: npm run validate:world-runtime-promotion
+      - name: End-to-end world asset pipeline report
+        run: npm run report:world-asset-pipeline
       - name: TypeScript validation
         run: npm run typecheck
       - name: Expo dependency alignment check
