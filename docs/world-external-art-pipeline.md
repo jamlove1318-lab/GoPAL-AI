@@ -8,9 +8,9 @@ Free external art is first-class production material when it is better than hand
 
 The world runtime remains the only source of behavior. External art never becomes a second simulation system.
 
-## Quality rule
+## Quality-first reusable asset library
 
-We do **not** equate "free" with "good enough". A source is only promoted when it improves the world and passes:
+We do **not** equate "free" with "good enough". A source is promoted only when it improves the world and passes:
 
 1. license/provenance validation
 2. visual quality review
@@ -20,52 +20,86 @@ We do **not** equate "free" with "good enough". A source is only promoted when i
 6. runtime loading validation
 7. human visual approval
 
-High-resolution source files are staging material. Mobile receives optimized LODs, compressed textures, simplified materials, and only the geometry that earns its place in the world.
+The source library is reusable. Runtime exports are optimized derivatives, so one source can dress many locations without duplicating the asset or changing world behavior.
 
-## Current curated sources
+### Environment and nature
 
-### Environment
+- HDRIs / skies / lighting references
+- terrain and ground-cover materials
+- grass, flowers, crops and foliage
+- broadleaf and conifer trees
+- rocks, logs, stumps and natural debris
+- roads, paths, bridges, signs and street furniture
+- weather/environment dressing
 
-- Poly Haven Meadow — daylight/HDRI reference for Emerald Valley.
-- Poly Haven Grass Medium 01 — meadow ground cover.
-- Poly Haven Tree Small 02 — broadleaf tree candidate.
-- Poly Haven Pine Tree 01 — forest-edge variation.
-- Poly Haven Tree Stump 01 — natural forest-floor storytelling prop.
-- Kenney Nature Kit — additional CC0 nature/foliage source.
+Poly Haven is the preferred realistic source when a suitable asset exists. Its assets are CC0 and its current API is free for commercial use; live API use follows the provider's current attribution/User-Agent requirements. citeturn0search8turn0search19
 
-Poly Haven's current API is free for use and its assets are CC0; when using the live API, follow its current attribution/User-Agent requirements. citeturn0search6turn0search3
+### Buildings and places
 
-### Buildings / places
+- houses and suburban buildings
+- apartments and urban facades
+- commercial buildings
+- industrial/factory/warehouse structures
+- modular building parts
+- roofs, windows, doors and stairs
+- utility structures and architectural details
+- train/transport-station pieces
+- interiors and reusable architectural modules
+- furniture and household props
 
-The acquisition catalog now covers residential, commercial, industrial, modular buildings, roads and city pieces through curated Quaternius and Kenney sources. Quaternius currently lists a 300+ piece Downtown City MegaKit, modular building packs and other environment packs as CC0. Kenney's City Kits, Building Kit and Modular Buildings are also CC0. citeturn1search19turn2search13turn3search0turn3search17
+Quaternius currently lists a 300+ piece Downtown City MegaKit, while Kenney provides CC0 City Kits and Modular Buildings. These are strong reusable source libraries, not automatic runtime imports. citeturn0search10turn0search15turn0search16turn1search1
 
-These are **source candidates**, not automatic runtime imports. Airport/station districts will be assembled from the best validated building/transport pieces first; specialized aircraft/airport art remains a separate acquisition target rather than inserting a weak placeholder just to fill a category.
+### Vehicles and transportation
 
-### Transport
-
-The catalog includes:
-
-- cars
+- cars and road vehicles
 - public transport
-- trains and rail pieces
-- road systems
-- future station/terminal pieces
+- trains, trams and rail pieces
+- station infrastructure
+- boats/watercraft where useful
+- specialized airport/aircraft sources only after license, mobile-cost and visual-quality review
 
-Quaternius currently provides a Cars Pack, Modular Train Pack and Public Transport Pack, while Kenney provides a 100-piece Train Kit with tracks. citeturn2search0turn2search1turn2search2turn3search12
+Quaternius currently provides a Cars Pack, and Kenney provides a 100-piece Train Kit with train/tram/trolley/rail pieces. citeturn0search3turn0search7
 
-### Furniture / interiors
+### Characters, animals and animation
 
-Poly Haven furniture candidates now include sofas, shelving, tables and bedroom furniture. These are useful for the Study Room, homes, shops, stations and future interior locations. Poly Haven examples such as Sofa 02 and Shelf 01 are CC0 and expose mobile-relevant geometry information that can be evaluated before export. citeturn1search10turn1search8
+- reusable humanoid bases
+- NPC variants
+- ambient animals/wildlife
+- retargetable locomotion
+- idle, talk, gesture, inspect, sit, interact and contextual animation clips
+- temporary Cassidy candidates, always behind the existing Cassidy resolver
 
-### Characters / animation
+Quaternius' current Universal Base Characters provide six game-ready humanoid bases with animation-friendly topology, humanoid retargeting and glTF/FBX exports. Its Universal Animation Library 2 provides 130+ retargetable humanoid animations. citeturn0search2turn0search11
 
-- Quaternius Universal Base Characters — temporary humanoid candidate for Cassidy only.
-- Quaternius Universal Animation Library 2 — retarget source for humanoid movement and contextual actions.
-- Additional NPC packs may be evaluated later, but Cassidy's authored identity remains the canonical character.
+Quaternius' current license permits incorporating its assets into commercial products but prohibits redistributing the assets themselves as standalone packs. Therefore source packs remain acquisition inputs; only approved optimized assets are promoted into the shipped GoPAL runtime. citeturn0search0
 
-The Universal Base Characters pack currently provides six game-ready humanoid bases averaging about 13k triangles, with a humanoid rig and glTF/FBX exports. Universal Animation Library 2 provides 130+ humanoid animations. citeturn0search0turn0search13
+### Furniture and interiors
 
-These remain candidates until downloaded, inspected, retargeted, and visually approved.
+Furniture is treated as a reusable vocabulary rather than one-off decoration: sofas, tables, shelves, beds, lamps, kitchen pieces, desks, study objects, shop fixtures and station furnishings can be reused across multiple locations after optimization.
+
+### Additional source families
+
+Kenney's catalog also provides CC0 nature, city, building, transport, furniture and other reusable packs. The current Nature Kit contains 330 assets, Modular Buildings contains 100, and the Car Kit contains 45. citeturn1search2turn1search1turn1search0
+
+## Acquisition rule
+
+"Download everything useful" means **catalog every useful category and acquire reusable source packs where the license and deterministic download path allow it**, not blindly put every source file into the mobile bundle.
+
+For every acquired source we record:
+
+- provider and source page
+- license
+- acquisition timestamp
+- provider checksum where available
+- source format
+- dependency/package structure
+- intended semantic role
+- expected LOD tiers
+- texture/material budget
+- geometry budget
+- validation state
+
+The acquisition script must fail closed when a provider package contains unresolved dependencies or a download cannot be verified. It must never silently substitute a different file.
 
 ## Acquisition
 
@@ -75,15 +109,15 @@ Run:
 npm run acquire:world-assets
 ```
 
-The acquisition script now understands Poly Haven's dependency-aware glTF file trees instead of assuming every model is a self-contained `.glb`. It verifies file sizes/checksums and records every acquired dependency in `artifacts/external-world/acquisition-report.json`.
+The acquisition layer retrieves provider-approved files through official download/API mechanisms, verifies checksums where supplied, and writes them under `artifacts/external-world/` locally. Poly Haven's API explicitly exposes metadata, hashes, sizes and dependency-aware file information for this purpose. citeturn0search8
 
-The script intentionally does **not** pretend that Quaternius/Kenney web pages are direct binary APIs. Their catalog entries are provenance-tracked candidates; actual package downloads are kept separate until a deterministic download source is verified.
+Quaternius and Kenney catalog entries are provenance-tracked until a deterministic direct download is available to the acquisition environment. We do not pretend a web catalog page itself is a binary package endpoint.
 
 ## Runtime boundary
 
 `src/engines/world/worldExternalAssetRegistry.ts` is metadata only. It does not load provider pages at runtime.
 
-Approved runtime exports should eventually be placed behind the existing world/art asset boundary and referenced by stable IDs. Large source packages should stay outside the TypeScript bundle and should not be committed to Git merely because they are free.
+Approved runtime exports are placed behind stable local asset IDs. Large source packages stay outside the TypeScript bundle and should not be committed to Git merely because they are free.
 
 ## One runtime brain
 
