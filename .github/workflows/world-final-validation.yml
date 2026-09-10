@@ -49,6 +49,16 @@ jobs:
         run: npm run validate:world-runtime-promotion
       - name: End-to-end world asset pipeline report
         run: npm run report:world-asset-pipeline
+      - name: Independent glTF/GLB validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t glbs < <(find assets artifacts -type f -name '*.glb' -not -path './node_modules/*' 2>/dev/null | sort)
+          if [ "${#glbs[@]}" -eq 0 ]; then
+            echo "[INFO] No generated/runtime GLB files are present yet; gate remains fail-closed for promotion."
+          else
+            npm run validate:world-glb -- "${glbs[@]}"
+          fi
       - name: TypeScript validation
         run: npm run typecheck
       - name: Expo dependency alignment check
