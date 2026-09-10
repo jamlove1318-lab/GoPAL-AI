@@ -37,7 +37,8 @@
     "typecheck": "tsc --noEmit",
     "validate:cassidy-2d": "node scripts/validate-cassidy-2d-manifest.mjs",
     "acquire:world-assets": "node scripts/acquire-world-assets.mjs",
-    "validate:world-assets": "node scripts/validate-world-assets.mjs"
+    "validate:world-assets": "node scripts/validate-world-assets.mjs",
+    "validate:world-visuals": "node scripts/validate-world-visual-representations.mjs"
   },
   "private": true
 }
