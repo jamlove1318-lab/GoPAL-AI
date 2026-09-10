@@ -13,27 +13,45 @@ const allowedRepresentations = new Set(['2d', '2.5d', '3d']);
 const allowedSources = new Set(['blender', 'spine', 'rive', 'godot', 'native']);
 const allowedPurposes = new Set(['hero', 'interactive', 'near', 'mid', 'far', 'background', 'map', 'portrait', 'effect']);
 
+const inferPurpose = (asset) => {
+  if (asset.role?.startsWith('character:')) return 'hero';
+  if (asset.role?.startsWith('building:')) return 'near';
+  if (asset.role?.startsWith('vehicle:')) return 'near';
+  if (asset.role?.startsWith('environment:')) return 'background';
+  if (asset.role?.startsWith('map:')) return 'map';
+  if (asset.role?.startsWith('vfx:')) return 'effect';
+  return 'mid';
+};
+
 for (const asset of manifest.assets ?? []) {
-  const variants = asset.variants ?? asset.representations ?? [];
-  if (!Array.isArray(variants) || variants.length === 0) {
-    errors.push(`${asset.id}: reusable asset must declare at least one visual variant`);
+  const declaredVariants = asset.variants ?? asset.representations;
+  const variants = Array.isArray(declaredVariants) && declaredVariants.length
+    ? declaredVariants
+    : asset.representation
+      ? [{ representation: asset.representation, source: 'native', purpose: inferPurpose(asset), validated: asset.status === 'validated-runtime', assetUri: asset.runtimePath }]
+      : [];
+
+  if (!variants.length) {
+    errors.push(`${asset.id}: reusable asset must declare a visual representation`);
     continue;
   }
 
   const seen = new Set();
   for (const variant of variants) {
-    const key = `${variant.representation}:${variant.source}:${variant.purpose}`;
+    const source = variant.source ?? 'native';
+    const purpose = variant.purpose ?? inferPurpose(asset);
+    const key = `${variant.representation}:${source}:${purpose}`;
     if (seen.has(key)) errors.push(`${asset.id}: duplicate visual variant ${key}`);
     seen.add(key);
 
     if (!allowedRepresentations.has(variant.representation)) {
       errors.push(`${asset.id}: unsupported representation ${variant.representation}`);
     }
-    if (!allowedSources.has(variant.source)) {
-      errors.push(`${asset.id}: unsupported visual source ${variant.source}`);
+    if (!allowedSources.has(source)) {
+      errors.push(`${asset.id}: unsupported visual source ${source}`);
     }
-    if (!allowedPurposes.has(variant.purpose)) {
-      errors.push(`${asset.id}: unsupported visual purpose ${variant.purpose}`);
+    if (!allowedPurposes.has(purpose)) {
+      errors.push(`${asset.id}: unsupported visual purpose ${purpose}`);
     }
     if (variant.validated && !variant.assetUri) {
       errors.push(`${asset.id}: validated variant ${key} has no runtime assetUri`);
@@ -50,7 +68,7 @@ for (const asset of manifest.assets ?? []) {
   if (asset.heroAllowed && !representations.has('3d')) {
     errors.push(`${asset.id}: heroAllowed asset must expose a 3d representation`);
   }
-  if (asset.kind === 'character' && !variants.some(variant => variant.interactive === true)) {
+  if (asset.role?.startsWith('character:') && !variants.some(variant => variant.interactive === true)) {
     console.warn(`[WARN] ${asset.id}: character has no interactive visual variant yet`);
   }
 }
