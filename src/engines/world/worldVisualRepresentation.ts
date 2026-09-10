@@ -26,7 +26,7 @@ export interface WorldVisualVariant {
   assetUri?: string;
   minDistance?: number;
   maxDistance?: number;
-  maxPixelRatio?: number;
+  maxScreenPixels?: number;
   interactive?: boolean;
   animated?: boolean;
   validated?: boolean;
@@ -57,10 +57,15 @@ export function selectWorldVisual(
 ): WorldVisualVariant | undefined {
   const eligible = set.variants.filter(variant => {
     if (!variant.validated) return false;
-    if (variant.interactive && !context.interactive) return false;
+    if (context.interactive && variant.interactive === false) return false;
+    if (!context.interactive && variant.interactive) return false;
     if (variant.minDistance !== undefined && context.distance < variant.minDistance) return false;
     if (variant.maxDistance !== undefined && context.distance > variant.maxDistance) return false;
-    if (variant.maxPixelRatio !== undefined && context.screenPixels > variant.maxPixelRatio) return false;
+    if (variant.maxScreenPixels !== undefined && context.screenPixels > variant.maxScreenPixels) return false;
+
+    if (context.performanceTier === 'low' && variant.representation === '3d' && variant.purpose !== 'hero') {
+      return false;
+    }
     return true;
   });
 
@@ -80,9 +85,25 @@ export function selectWorldVisual(
     native: 1,
   };
 
+  const purposeRank: Record<WorldVisualPurpose, number> = {
+    interactive: context.interactive ? 5 : 1,
+    hero: 4,
+    near: 4,
+    mid: 3,
+    far: 2,
+    background: 2,
+    map: 1,
+    portrait: 1,
+    effect: 1,
+  };
+
   return [...eligible].sort((a, b) => {
+    const purpose = purposeRank[b.purpose] - purposeRank[a.purpose];
+    if (purpose) return purpose;
     const representation = representationRank[b.representation] - representationRank[a.representation];
     if (representation) return representation;
+    const animation = Number(b.animated === true) - Number(a.animated === true);
+    if (animation) return animation;
     return sourceRank[b.source] - sourceRank[a.source];
   })[0];
 }
