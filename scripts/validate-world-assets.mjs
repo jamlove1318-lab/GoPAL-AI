@@ -16,7 +16,8 @@ const fail = (message) => {
 
 const manifest = JSON.parse(await readFile(MANIFEST_PATH, 'utf8'));
 const miniGameManifest = JSON.parse(await readFile(MINI_GAME_MANIFEST_PATH, 'utf8'));
-const ids = new Set();
+const worldIds = new Set();
+const miniGameIds = new Set();
 const allowedLicenses = new Set(['CC0', 'clearly-commercial-safe']);
 const allowedStatuses = new Set(['approved-source', 'candidate', 'validated-runtime']);
 const allowedRepresentations = new Set(['2d', '2.5d', '3d']);
@@ -30,8 +31,8 @@ if (!Array.isArray(manifest.policy?.allowedRepresentations) || manifest.policy.a
 if (!Array.isArray(manifest.assets) || manifest.assets.length === 0) fail('asset manifest is empty');
 
 for (const asset of manifest.assets) {
-  if (!asset.id || ids.has(asset.id)) fail(`duplicate or missing asset id: ${asset.id ?? '<missing>'}`);
-  ids.add(asset.id);
+  if (!asset.id || worldIds.has(asset.id)) fail(`duplicate or missing world asset id: ${asset.id ?? '<missing>'}`);
+  worldIds.add(asset.id);
   if (!allowedLicenses.has(asset.license)) fail(`${asset.id}: unsupported license ${asset.license}`);
   if (!allowedStatuses.has(asset.status)) fail(`${asset.id}: unsupported status ${asset.status}`);
   if (!allowedProviders.has(asset.provider)) fail(`${asset.id}: unsupported provider ${asset.provider}`);
@@ -61,8 +62,8 @@ if (miniGameManifest.policy?.noWeaponContent !== true) fail('mini-game asset pol
 if (!Array.isArray(miniGameManifest.assets) || miniGameManifest.assets.length === 0) fail('mini-game asset manifest is empty');
 
 for (const asset of miniGameManifest.assets) {
-  if (!asset.id || ids.has(asset.id)) fail(`duplicate or missing mini-game asset id: ${asset.id ?? '<missing>'}`);
-  ids.add(asset.id);
+  if (!asset.id || miniGameIds.has(asset.id)) fail(`duplicate or missing mini-game asset id: ${asset.id ?? '<missing>'}`);
+  miniGameIds.add(asset.id);
   if (!allowedLicenses.has(asset.license)) fail(`${asset.id}: unsupported license ${asset.license}`);
   if (!allowedStatuses.has(asset.status)) fail(`${asset.id}: unsupported status ${asset.status}`);
   if (!allowedProviders.has(asset.provider)) fail(`${asset.id}: unsupported provider ${asset.provider}`);
@@ -111,6 +112,7 @@ if (process.exitCode) {
 } else {
   console.log(`[OK] validated ${manifest.assets.length} external world asset entries`);
   console.log(`[OK] validated ${miniGameManifest.assets.length} mini-game asset sources`);
+  console.log(`[OK] world namespace=${worldIds.size}; mini-game namespace=${miniGameIds.size}`);
   console.log('[OK] 2D / 2.5D / 3D best-fit representation policy preserved');
   console.log('[OK] one-runtime-brain policy preserved across world and mini-games');
   console.log('[OK] discovery-only providers remain fail-closed until exact license provenance is recorded');
