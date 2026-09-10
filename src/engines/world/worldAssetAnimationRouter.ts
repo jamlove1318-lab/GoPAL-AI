@@ -1,7 +1,7 @@
-import type { WorldAnimationName } from './worldAnimationContract';
+import type { WorldAnimationAction } from './worldAnimationContract';
 
 /** Maps one shared world animation vocabulary onto common authored clip names. */
-const CLIP_ALIASES: Readonly<Record<WorldAnimationName, readonly string[]>> = {
+const CLIP_ALIASES: Readonly<Record<WorldAnimationAction, readonly string[]>> = {
   idle: ['idle', 'Idle', 'IDLE'],
   breathe: ['breathe', 'breathing', 'idle'],
   look: ['look', 'look_left', 'look_right'],
@@ -24,7 +24,7 @@ const CLIP_ALIASES: Readonly<Record<WorldAnimationName, readonly string[]>> = {
 };
 
 export function resolveWorldAnimationClip(
-  animation: WorldAnimationName,
+  animation: WorldAnimationAction,
   availableClips: readonly string[],
 ): string | undefined {
   const normalized = new Map(availableClips.map(clip => [clip.toLowerCase(), clip]));
