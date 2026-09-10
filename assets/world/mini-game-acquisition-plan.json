@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "mode": "official-page-discovery",
+  "policy": {
+    "onlyOfficialSourcePages": true,
+    "allowRedirectsOnlyWithinAllowlistedHosts": true,
+    "recordSha256AfterAcquisition": true,
+    "failClosedWhenPackageCannotBeResolved": true,
+    "skipPaidVariants": true
+  },
+  "assets": [
+    {
+      "id": "kenney:new-platformer-pack",
+      "sourcePage": "https://kenney.nl/assets/new-platformer-pack",
+      "allowedHosts": ["kenney.nl"],
+      "filenameContains": "kenney_new-platformer-pack",
+      "priority": "P0"
+    },
+    {
+      "id": "kenney:pixel-platformer",
+      "sourcePage": "https://kenney-assets.itch.io/pixel-platformer",
+      "allowedHosts": ["kenney-assets.itch.io"],
+      "filenameContains": "kenney_pixel-platformer",
+      "priority": "P0"
+    },
+    {
+      "id": "kenney:platformer-kit",
+      "sourcePage": "https://kenney.nl/assets/platformer-kit",
+      "allowedHosts": ["kenney.nl"],
+      "filenameContains": "kenney_platformer-kit",
+      "priority": "P0"
+    },
+    {
+      "id": "kenney:letter-tiles",
+      "sourcePage": "https://kenney.nl/assets/letter-tiles",
+      "allowedHosts": ["kenney.nl"],
+      "filenameContains": "kenney_letter-tiles",
+      "priority": "P0"
+    },
+    {
+      "id": "kenney:puzzle-pack-2",
+      "sourcePage": "https://kenney.nl/assets/puzzle-pack-2",
+      "allowedHosts": ["kenney.nl"],
+      "filenameContains": "kenney_puzzle-pack-2",
+      "priority": "P0"
+    },
+    {
+      "id": "kenney:particle-pack",
+      "sourcePage": "https://kenney.nl/assets/particle-pack",
+      "allowedHosts": ["kenney.nl"],
+      "filenameContains": "kenney_particle-pack",
+      "priority": "P0"
+    },
+    {
+      "id": "kenney:ui-pack",
+      "sourcePage": "https://kenney-assets.itch.io/ui-pack",
+      "allowedHosts": ["kenney-assets.itch.io"],
+      "filenameContains": "kenney_ui-pack",
+      "priority": "P0"
+    },
+    {
+      "id": "kenney:input-prompts",
+      "sourcePage": "https://kenney.nl/assets/input-prompts",
+      "allowedHosts": ["kenney.nl"],
+      "filenameContains": "kenney_input-prompts",
+      "priority": "P0"
+    },
+    {
+      "id": "quaternius:universal-animation-library",
+      "sourcePage": "https://quaternius.itch.io/universal-animation-library",
+      "allowedHosts": ["quaternius.itch.io"],
+      "filenameContains": "Universal Animation Library[Standard].zip",
+      "priority": "P0"
+    },
+    {
+      "id": "quaternius:universal-base-characters",
+      "sourcePage": "https://quaternius.itch.io/universal-base-characters",
+      "allowedHosts": ["quaternius.itch.io"],
+      "filenameContains": "Universal Base Characters[Standard].zip",
+      "priority": "P0"
+    }
+  ]
+}
