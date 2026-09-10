@@ -39,7 +39,8 @@
     "validate:cassidy-2d": "node scripts/validate-cassidy-2d-manifest.mjs",
     "acquire:world-assets": "node scripts/acquire-world-assets.mjs",
     "validate:world-assets": "node scripts/validate-world-assets.mjs",
-    "validate:world-visuals": "node scripts/validate-world-visual-representations.mjs"
+    "validate:world-visuals": "node scripts/validate-world-visual-representations.mjs",
+    "validate:world-runtime-promotion": "node scripts/validate-world-runtime-promotion.mjs"
   },
   "private": true
 }
