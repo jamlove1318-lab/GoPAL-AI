@@ -11,7 +11,7 @@
     "expo-gl": "~57.0.2",
     "expo-status-bar": "~57.0.1",
     "expo-video": "~57.0.3",
-    "lucide-react-native": "^1.33.0",
+    "lucide-react-native": "^4.0.1",
     "nativewind": "^4.0.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -41,7 +41,8 @@
     "validate:world-assets": "node scripts/validate-world-assets.mjs",
     "validate:world-visuals": "node scripts/validate-world-visual-representations.mjs",
     "validate:world-runtime-promotion": "node scripts/validate-world-runtime-promotion.mjs",
-    "report:world-asset-pipeline": "node scripts/build-world-asset-pipeline-report.mjs"
+    "report:world-asset-pipeline": "node scripts/build-world-asset-pipeline-report.mjs",
+    "normalize:world-asset": "node scripts/normalize-world-asset.mjs"
   },
   "private": true
 }
