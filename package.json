@@ -42,6 +42,7 @@
     "validate:world-visuals": "node scripts/validate-world-visual-representations.mjs",
     "validate:world-runtime-promotion": "node scripts/validate-world-runtime-promotion.mjs",
     "report:world-asset-pipeline": "node scripts/build-world-asset-pipeline-report.mjs",
+    "validate:mini-game-assets": "node scripts/validate-mini-game-asset-catalog.mjs",
     "normalize:world-asset": "node scripts/normalize-world-asset.mjs"
   },
   "private": true
