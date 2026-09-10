@@ -26,22 +26,27 @@ function RuntimeModel({ binding, animation, scale }: { binding: WorldVisualRunti
   );
 
   useEffect(() => {
-    mixer.current = new THREE.AnimationMixer(root);
+    const nextMixer = new THREE.AnimationMixer(root);
+    mixer.current = nextMixer;
     return () => {
-      mixer.current?.stopAllAction();
-      mixer.current?.uncacheRoot(root);
-      mixer.current = null;
+      nextMixer.stopAllAction();
+      nextMixer.uncacheRoot(root);
+      if (mixer.current === nextMixer) mixer.current = null;
       action.current = null;
     };
   }, [root]);
 
   useEffect(() => {
-    if (!mixer.current || !clip) return;
-    const next = mixer.current.clipAction(gltf.animations.find(item => item.name === clip)!);
+    if (!mixer.current || !clip) return undefined;
+    const resolvedClip = gltf.animations.find(item => item.name === clip);
+    if (!resolvedClip) return undefined;
+    const next = mixer.current.clipAction(resolvedClip);
     next.reset().fadeIn(0.16).play();
     action.current?.fadeOut(0.16);
     action.current = next;
-    return () => next.fadeOut(0.12);
+    return () => {
+      next.fadeOut(0.12);
+    };
   }, [clip, gltf.animations]);
 
   useFrame((_, delta) => mixer.current?.update(delta));
