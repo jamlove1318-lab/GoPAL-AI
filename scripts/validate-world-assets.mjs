@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const MANIFEST_PATH = path.join(ROOT, 'assets/world/external-asset-manifest.json');
+const MINI_GAME_MANIFEST_PATH = path.join(ROOT, 'assets/world/mini-game-asset-manifest.json');
 const REPORT_PATH = path.join(ROOT, 'artifacts/external-world/acquisition-report.json');
 
 const fail = (message) => {
@@ -14,6 +15,7 @@ const fail = (message) => {
 };
 
 const manifest = JSON.parse(await readFile(MANIFEST_PATH, 'utf8'));
+const miniGameManifest = JSON.parse(await readFile(MINI_GAME_MANIFEST_PATH, 'utf8'));
 const ids = new Set();
 const allowedLicenses = new Set(['CC0', 'clearly-commercial-safe']);
 const allowedStatuses = new Set(['approved-source', 'candidate', 'validated-runtime']);
@@ -24,9 +26,7 @@ if (manifest.schemaVersion < 3) fail('asset manifest is from an older schema');
 if (manifest.policy?.runtimeBrains !== 1) fail('external asset policy must declare exactly one runtime brain');
 if (manifest.policy?.redistributableStandaloneAssets !== false) fail('external source policy must default to non-redistributable standalone assets');
 if (manifest.policy?.representationStrategy !== 'best-fit-per-scene') fail('representation strategy must remain best-fit-per-scene');
-if (!Array.isArray(manifest.policy?.allowedRepresentations) || manifest.policy.allowedRepresentations.length !== 3) {
-  fail('manifest must allow 2d, 2.5d and 3d representations');
-}
+if (!Array.isArray(manifest.policy?.allowedRepresentations) || manifest.policy.allowedRepresentations.length !== 3) fail('manifest must allow 2d, 2.5d and 3d representations');
 if (!Array.isArray(manifest.assets) || manifest.assets.length === 0) fail('asset manifest is empty');
 
 for (const asset of manifest.assets) {
@@ -42,22 +42,39 @@ for (const asset of manifest.assets) {
     if (!Array.isArray(variants) || variants.length === 0) fail(`${asset.id}: variants must be a non-empty array`);
     for (const variant of variants ?? []) {
       if (!allowedRepresentations.has(variant.representation)) fail(`${asset.id}: invalid representation ${variant.representation}`);
-      if (variant.minDistance !== undefined && variant.maxDistance !== undefined && variant.minDistance > variant.maxDistance) {
-        fail(`${asset.id}: invalid visual distance range`);
-      }
+      if (variant.minDistance !== undefined && variant.maxDistance !== undefined && variant.minDistance > variant.maxDistance) fail(`${asset.id}: invalid visual distance range`);
     }
   } else if (!allowedRepresentations.has(asset.representation)) {
     fail(`${asset.id}: invalid representation ${asset.representation}`);
   }
 
   if (asset.status === 'validated-runtime' && !asset.runtimePath) fail(`${asset.id}: validated-runtime requires runtimePath`);
-
-  // Sketchfab/OpenGameArt are discovery providers, not blanket license grants.
-  // A future entry must carry an exact per-asset license and provenance record.
   if ((asset.provider === 'sketchfab' || asset.provider === 'opengameart') && asset.status === 'approved-source') {
-    if (!asset.sourceAssetId || !asset.licenseVerifiedAt) {
-      fail(`${asset.id}: discovery provider requires exact asset id and license verification timestamp`);
-    }
+    if (!asset.sourceAssetId || !asset.licenseVerifiedAt) fail(`${asset.id}: discovery provider requires exact asset id and license verification timestamp`);
+  }
+}
+
+if (miniGameManifest.schemaVersion < 1) fail('mini-game asset manifest is from an older schema');
+if (miniGameManifest.policy?.sharedRuntimeBrain !== true) fail('mini-game assets must use the shared world/game runtime brain');
+if (miniGameManifest.policy?.sourceOnlyUntilValidated !== true) fail('mini-game assets must remain source-only until validated');
+if (miniGameManifest.policy?.noWeaponContent !== true) fail('mini-game asset policy must exclude weapon content');
+if (!Array.isArray(miniGameManifest.assets) || miniGameManifest.assets.length === 0) fail('mini-game asset manifest is empty');
+
+for (const asset of miniGameManifest.assets) {
+  if (!asset.id || ids.has(asset.id)) fail(`duplicate or missing mini-game asset id: ${asset.id ?? '<missing>'}`);
+  ids.add(asset.id);
+  if (!allowedLicenses.has(asset.license)) fail(`${asset.id}: unsupported license ${asset.license}`);
+  if (!allowedStatuses.has(asset.status)) fail(`${asset.id}: unsupported status ${asset.status}`);
+  if (!allowedProviders.has(asset.provider)) fail(`${asset.id}: unsupported provider ${asset.provider}`);
+  if (!asset.sourcePage?.startsWith('https://')) fail(`${asset.id}: sourcePage must be HTTPS`);
+  if (!['visual', 'audio', 'font', 'data'].includes(asset.assetType)) fail(`${asset.id}: unsupported assetType ${asset.assetType}`);
+  if (!allowedRepresentations.has(asset.representation)) fail(`${asset.id}: invalid representation ${asset.representation}`);
+  if (!Array.isArray(asset.roles) || asset.roles.length === 0) fail(`${asset.id}: roles must be non-empty`);
+  if (!Array.isArray(asset.families) || asset.families.length === 0) fail(`${asset.id}: families must be non-empty`);
+  if (!Array.isArray(asset.usedBy) || asset.usedBy.length === 0) fail(`${asset.id}: usedBy must be non-empty`);
+  if (asset.downloadStrategy !== 'official-page') fail(`${asset.id}: acquisition must use an official source page`);
+  if ((asset.provider === 'sketchfab' || asset.provider === 'opengameart') && asset.status === 'approved-source') {
+    if (!asset.sourceAssetId || !asset.licenseVerifiedAt) fail(`${asset.id}: discovery provider requires exact asset id and license verification timestamp`);
   }
 }
 
@@ -80,9 +97,7 @@ try {
       if (!file.md5 || !file.sourceMd5) fail(`${item.id}: acquired file is missing checksum provenance`);
     }
   }
-  for (const item of report.failures ?? []) {
-    console.warn(`[WARN] acquisition failure recorded for ${item.id}: ${item.error}`);
-  }
+  for (const item of report.failures ?? []) console.warn(`[WARN] acquisition failure recorded for ${item.id}: ${item.error}`);
 } catch {
   console.warn('[WARN] no acquisition report yet; run npm run acquire:world-assets before source validation');
 }
@@ -92,10 +107,11 @@ for (const sourcePage of manifest.assets.map((asset) => asset.sourcePage)) {
 }
 
 if (process.exitCode) {
-  console.error('[ABORT] external world asset policy validation failed');
+  console.error('[ABORT] external world + mini-game asset policy validation failed');
 } else {
-  console.log(`[OK] validated ${manifest.assets.length} external asset entries`);
+  console.log(`[OK] validated ${manifest.assets.length} external world asset entries`);
+  console.log(`[OK] validated ${miniGameManifest.assets.length} mini-game asset sources`);
   console.log('[OK] 2D / 2.5D / 3D best-fit representation policy preserved');
-  console.log('[OK] one-runtime-brain policy preserved');
+  console.log('[OK] one-runtime-brain policy preserved across world and mini-games');
   console.log('[OK] discovery-only providers remain fail-closed until exact license provenance is recorded');
 }
