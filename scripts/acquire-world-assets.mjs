@@ -4,13 +4,15 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { acquire3DAssetsPacks } from './world-asset-providers/3dassets-dev.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const MANIFEST = path.join(ROOT, 'assets/world/external-asset-manifest.json');
 const MINI_GAME_MANIFEST = path.join(ROOT, 'assets/world/mini-game-asset-manifest.json');
 const MINI_GAME_PLAN = path.join(ROOT, 'assets/world/mini-game-acquisition-plan.json');
+const SCENARIO_PLAN = path.join(ROOT, 'assets/world/world-scenario-acquisition-plan.json');
 const OUT = path.join(ROOT, 'artifacts/external-world');
-const USER_AGENT = 'GoPAL-AI-world-asset-acquirer/2.3';
+const USER_AGENT = 'GoPAL-AI-world-asset-acquirer/3.0';
 const MAX_SOURCE_BYTES = Number(process.env.GOPAL_ASSET_MAX_BYTES ?? 250_000_000);
 
 const wantedPolyHaven = [
@@ -150,6 +152,7 @@ await mkdir(OUT, { recursive: true });
 const manifest = JSON.parse(await readFile(MANIFEST, 'utf8'));
 const miniGameManifest = JSON.parse(await readFile(MINI_GAME_MANIFEST, 'utf8'));
 const miniGamePlan = JSON.parse(await readFile(MINI_GAME_PLAN, 'utf8'));
+const scenarioPlan = JSON.parse(await readFile(SCENARIO_PLAN, 'utf8'));
 const acquired = [];
 const failures = [];
 const miniGameAcquired = [];
@@ -188,6 +191,8 @@ for (const planEntry of miniGamePlan.assets) {
   }
 }
 
+const scenarioAcquisition = await acquire3DAssetsPacks({ root: ROOT, plan: scenarioPlan });
+
 const plannedIds = new Set(miniGamePlan.assets.map((asset) => asset.id));
 const miniGameSources = miniGameManifest.assets.map((asset) => ({
   id: asset.id,
@@ -205,7 +210,7 @@ const miniGameSources = miniGameManifest.assets.map((asset) => ({
 }));
 
 const report = {
-  schemaVersion: 7,
+  schemaVersion: 8,
   generatedAt: new Date().toISOString(),
   sourcePolicy: manifest.policy,
   maxSourceBytes: MAX_SOURCE_BYTES,
@@ -224,6 +229,7 @@ const report = {
     remainingApprovedSources: miniGameSources.filter((asset) => asset.status === 'approved-source' && !plannedIds.has(asset.id)).map((asset) => asset.id),
     nextStep: 'Validate acquired archives, normalize selected runtime assets, perform mobile validation and human visual approval, then promote only validated-runtime assets.',
   },
+  scenarioAcquisition,
   manualCandidates: manifest.assets.filter((asset) => asset.status === 'candidate'),
   nextStep: 'Validate source packages in Blender, generate mobile LODs/material atlases, review visually, then promote only approved runtime-ready assets.',
 };
@@ -231,4 +237,5 @@ const report = {
 await writeFile(path.join(OUT, 'acquisition-report.json'), `${JSON.stringify(report, null, 2)}\n`);
 console.log(`[OK] wrote ${path.relative(ROOT, path.join(OUT, 'acquisition-report.json'))}`);
 console.log(`[OK] acquired ${miniGameAcquired.length}/${miniGamePlan.assets.length} selected mini-game package(s)`);
-if (failures.length || miniGameFailures.length) process.exitCode = 1;
+console.log(`[OK] acquired ${scenarioAcquisition.acquiredCount}/${scenarioAcquisition.plannedCount} 3DAssets.dev scenario pack(s)`);
+if (failures.length || miniGameFailures.length || scenarioAcquisition.failedCount) process.exitCode = 1;
