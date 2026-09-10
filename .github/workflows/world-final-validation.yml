@@ -13,6 +13,7 @@ on:
       - "index.ts"
       - "assets/**"
       - "scripts/**"
+      - "tools/blender/**"
       - "package.json"
       - "tsconfig.json"
       - "app.json"
@@ -40,6 +41,8 @@ jobs:
         run: npm install --legacy-peer-deps
       - name: External world asset policy validation
         run: npm run validate:world-assets
+      - name: World visual representation validation
+        run: npm run validate:world-visuals
       - name: TypeScript validation
         run: npm run typecheck
       - name: Expo dependency alignment check
