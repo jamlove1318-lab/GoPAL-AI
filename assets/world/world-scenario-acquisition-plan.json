@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "world": "emerald-valley",
   "mode": "tiered-official-acquisition",
   "goal": "Build a deep reusable scenario library without turning every provider into a second runtime or duplicating asset families.",
@@ -57,8 +57,42 @@
       "target": "Weather, lighting, sky, vegetation detail, distant scenery and subtle environmental motion."
     }
   ],
+  "scenarioPacks": [
+    {
+      "id": "3dassets-airfield",
+      "slug": "aircraft-fleet-and-airfield",
+      "priority": "P0",
+      "families": ["airport-and-travel", "vehicles", "public-spaces"],
+      "license": "CC0 1.0 Universal",
+      "sourcePage": "https://3dassets.dev/packs/aircraft-fleet-and-airfield"
+    },
+    {
+      "id": "3dassets-cave-crystal",
+      "slug": "cave-and-crystal-networks",
+      "priority": "P1",
+      "families": ["terrain", "interiors", "atmosphere"],
+      "license": "CC0 1.0 Universal",
+      "sourcePage": "https://3dassets.dev/packs/cave-and-crystal-networks"
+    },
+    {
+      "id": "3dassets-viking-longhouse",
+      "slug": "viking-age-longhouse-and-longship",
+      "priority": "P1",
+      "families": ["buildings", "interiors", "vehicles", "public-spaces"],
+      "license": "CC0 1.0 Universal",
+      "sourcePage": "https://3dassets.dev/packs/viking-age-longhouse-and-longship"
+    },
+    {
+      "id": "3dassets-bicycle-shop",
+      "slug": "bicycle-shop-and-repair-cafe",
+      "priority": "P1",
+      "families": ["buildings", "interiors", "furniture", "props", "public-spaces"],
+      "license": "CC0 1.0 Universal",
+      "sourcePage": "https://3dassets.dev/packs/bicycle-shop-and-repair-cafe"
+    }
+  ],
   "providerNotes": {
-    "3dassets-dev": "Use official API/CDN and pack manifests where available; retain source URL and checksum for every downloaded file.",
+    "3dassets-dev": "Use official API/CDN and pack manifests where available; retain source URL, manifest URL and checksum for every downloaded file. Complete verified packs are preferred because their pieces share scale, palette and LOD intent.",
     "fab": "Treat every product as a separate license/EULA decision. Free availability is not itself a CC0 signal.",
     "polyhaven": "Prefer API-backed acquisition with checksum verification; source packages go through the existing Blender normalization path.",
     "blendkit": "Authenticated downloads remain outside automatic acquisition unless exact license and permitted distribution are recorded.",
