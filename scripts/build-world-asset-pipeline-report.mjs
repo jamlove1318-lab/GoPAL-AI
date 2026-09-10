@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -11,18 +11,9 @@ const outputPath = path.join(ROOT, 'artifacts/external-world/asset-pipeline-repo
 const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
 const assets = Array.isArray(manifest.assets) ? manifest.assets : [];
 const stages = [
-  'source',
-  'license',
-  'provenance',
-  'acquisition',
-  'normalization',
-  'optimization',
-  'runtimeExport',
-  'visualBinding',
-  'animationBinding',
-  'mobileValidation',
-  'humanVisualApproval',
-  'runtimePromotion',
+  'source', 'license', 'provenance', 'acquisition', 'normalization', 'optimization',
+  'runtimeExport', 'visualBinding', 'animationBinding', 'mobileValidation',
+  'humanVisualApproval', 'runtimePromotion',
 ];
 
 const stageValue = (asset, stage) => {
@@ -61,6 +52,7 @@ const report = {
   assets: rows,
 };
 
+await mkdir(path.dirname(outputPath), { recursive: true });
 await writeFile(outputPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
 console.log(`[OK] wrote ${path.relative(ROOT, outputPath)}`);
 console.log(`[OK] inventoried ${rows.length} asset record(s); ${promoted} validated-runtime`);
