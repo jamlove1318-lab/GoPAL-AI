@@ -8,14 +8,26 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const MANIFEST = path.join(ROOT, 'assets/world/external-asset-manifest.json');
 const OUT = path.join(ROOT, 'artifacts/external-world');
-const USER_AGENT = 'GoPAL-AI-world-asset-acquirer/1.2';
+const USER_AGENT = 'GoPAL-AI-world-asset-acquirer/2.0';
 
+// Curated, mobile-minded first wave. We deliberately keep the source tier broad,
+// but the runtime tier is still gated by Blender validation + LOD generation.
 const wantedPolyHaven = [
   { id: 'meadow', kind: 'hdri', role: 'lighting', resolutions: ['2k', '1k'] },
   { id: 'grass_medium_01', kind: 'model', role: 'ground-cover', resolutions: ['2k', '1k'] },
   { id: 'tree_small_02', kind: 'model', role: 'tree', resolutions: ['2k', '1k'] },
   { id: 'pine_tree_01', kind: 'model', role: 'tree', resolutions: ['2k', '1k'] },
   { id: 'tree_stump_01', kind: 'model', role: 'prop', resolutions: ['2k', '1k'] },
+  { id: 'covered_car', kind: 'model', role: 'vehicle:car', resolutions: ['2k', '1k'] },
+  { id: 'sofa_02', kind: 'model', role: 'furniture:sofa', resolutions: ['2k', '1k'] },
+  { id: 'shelf_01', kind: 'model', role: 'furniture:shelf', resolutions: ['2k', '1k'] },
+  { id: 'side_table_01', kind: 'model', role: 'furniture:table', resolutions: ['2k', '1k'] },
+  { id: 'woodentable_01', kind: 'model', role: 'furniture:table', resolutions: ['2k', '1k'] },
+  { id: 'classicnightstand_01', kind: 'model', role: 'furniture:nightstand', resolutions: ['2k', '1k'] },
+  { id: 'modular_urban_apartments_facade', kind: 'model', role: 'building:residential', resolutions: ['2k', '1k'] },
+  { id: 'modular_factory_facade', kind: 'model', role: 'building:industrial', resolutions: ['2k', '1k'] },
+  { id: 'modular_fire_escape', kind: 'model', role: 'building:detail', resolutions: ['2k', '1k'] },
+  { id: 'ladder_sectioned_01', kind: 'model', role: 'prop:utility', resolutions: ['2k', '1k'] },
 ];
 
 async function getJson(url) {
@@ -24,36 +36,72 @@ async function getJson(url) {
   return response.json();
 }
 
-function selectModelGlb(files, resolutions) {
+function firstPresent(...values) {
+  return values.find((value) => value && typeof value === 'object' && value.url);
+}
+
+function selectModelPackage(files, resolutions) {
   for (const resolution of resolutions) {
-    const candidate = files?.gltf?.[resolution];
-    const glb = candidate?.glb;
-    if (glb?.url && glb?.md5) return { resolution, format: 'glb', ...glb };
+    const gltfEntry = files?.gltf?.[resolution];
+    const gltfFile = firstPresent(gltfEntry?.gltf, gltfEntry?.glb, gltfEntry);
+    if (gltfFile?.url && gltfFile?.md5) return { resolution, format: 'gltf', file: gltfFile };
   }
-  throw new Error('no self-contained GLB package found; refusing to download a dependency-incomplete glTF');
+  throw new Error('no checksum-backed glTF/GLB model package found');
 }
 
 function selectHdri(files, resolutions) {
   for (const resolution of resolutions) {
-    const candidate = files?.hdri?.[resolution]?.hdr;
-    if (candidate?.url && candidate?.md5) return { resolution, format: 'hdr', ...candidate };
+    const hdr = firstPresent(
+      files?.hdri?.[resolution]?.hdr,
+      files?.hdri?.[resolution],
+    );
+    if (hdr?.url && hdr?.md5) return { resolution, format: 'hdr', file: hdr };
   }
   throw new Error('no checksum-backed HDR file found');
 }
 
-async function download(url, destination, expectedMd5, expectedSize) {
-  const response = await fetch(url, { headers: { 'User-Agent': USER_AGENT } });
-  if (!response.ok) throw new Error(`${response.status} ${response.statusText}: ${url}`);
+async function downloadFile(file, destination) {
+  const response = await fetch(file.url, { headers: { 'User-Agent': USER_AGENT } });
+  if (!response.ok) throw new Error(`${response.status} ${response.statusText}: ${file.url}`);
   const bytes = Buffer.from(await response.arrayBuffer());
-  if (expectedSize && bytes.length !== expectedSize) {
-    throw new Error(`size mismatch for ${destination}: expected ${expectedSize}, got ${bytes.length}`);
+  if (file.size && bytes.length !== file.size) {
+    throw new Error(`size mismatch for ${destination}: expected ${file.size}, got ${bytes.length}`);
   }
   const md5 = createHash('md5').update(bytes).digest('hex');
-  if (expectedMd5 && md5 !== expectedMd5) {
-    throw new Error(`checksum mismatch for ${destination}: expected ${expectedMd5}, got ${md5}`);
+  if (file.md5 && md5 !== file.md5) {
+    throw new Error(`checksum mismatch for ${destination}: expected ${file.md5}, got ${md5}`);
   }
+  await mkdir(path.dirname(destination), { recursive: true });
   await writeFile(destination, bytes);
   return { bytes: bytes.length, md5 };
+}
+
+function safeRelativePath(value) {
+  const normalized = String(value || 'dependency.bin').replaceAll('\\', '/');
+  const safe = path.posix.normalize(normalized).replace(/^\/+/, '');
+  if (safe.startsWith('../') || safe === '..') return `dependency-${Date.now()}.bin`;
+  return safe;
+}
+
+async function acquireFileTree(node, destination, records = []) {
+  if (!node || typeof node !== 'object') return records;
+  if (node.url) {
+    const result = await downloadFile(node, destination);
+    records.push({
+      path: path.relative(ROOT, destination),
+      url: node.url,
+      md5: result.md5,
+      sourceMd5: node.md5 ?? null,
+      bytes: result.bytes,
+    });
+  }
+
+  if (node.include && typeof node.include === 'object') {
+    for (const [relativeName, child] of Object.entries(node.include)) {
+      await acquireFileTree(child, path.join(path.dirname(destination), safeRelativePath(relativeName)), records);
+    }
+  }
+  return records;
 }
 
 await mkdir(OUT, { recursive: true });
@@ -69,11 +117,13 @@ for (const asset of wantedPolyHaven) {
 
     const files = await getJson(`https://api.polyhaven.com/files/${asset.id}`);
     const selected = asset.kind === 'model'
-      ? selectModelGlb(files, asset.resolutions)
+      ? selectModelPackage(files, asset.resolutions)
       : selectHdri(files, asset.resolutions);
 
-    const destination = path.join(OUT, `${asset.id}.${selected.format}`);
-    const downloaded = await download(selected.url, destination, selected.md5, selected.size);
+    const extension = selected.format === 'gltf' ? 'gltf' : 'hdr';
+    const destination = path.join(OUT, `${asset.id}-${selected.resolution}.${extension}`);
+    const records = await acquireFileTree(selected.file, destination);
+
     acquired.push({
       id: `polyhaven:${asset.id}`,
       role: asset.role,
@@ -81,12 +131,10 @@ for (const asset of wantedPolyHaven) {
       license: 'CC0',
       resolution: selected.resolution,
       format: selected.format,
-      path: path.relative(ROOT, destination),
-      bytes: downloaded.bytes,
-      md5: downloaded.md5,
-      sourceMd5: selected.md5,
+      files: records,
+      sourceFileTree: `https://api.polyhaven.com/files/${asset.id}`,
     });
-    console.log(`[OK] ${asset.id} -> ${path.relative(ROOT, destination)} (${downloaded.bytes} bytes)`);
+    console.log(`[OK] ${asset.id} -> ${records.length} file(s)`);
   } catch (error) {
     failures.push({ id: asset.id, error: error instanceof Error ? error.message : String(error) });
     console.error(`[FAIL] ${asset.id}: ${failures.at(-1).error}`);
@@ -94,13 +142,13 @@ for (const asset of wantedPolyHaven) {
 }
 
 const report = {
-  schemaVersion: 3,
+  schemaVersion: 4,
   generatedAt: new Date().toISOString(),
   sourcePolicy: manifest.policy,
   acquired,
   failures,
-  manualCandidates: manifest.assets.filter(asset => asset.status === 'candidate'),
-  nextStep: 'Validate acquired sources in Blender, generate mobile LODs, and export only approved runtime-ready assets. Source downloads stay outside runtime unless explicitly approved.',
+  manualCandidates: manifest.assets.filter((asset) => asset.status === 'candidate'),
+  nextStep: 'Validate source packages in Blender, generate mobile LODs/material atlases, review visually, then promote only approved runtime-ready assets.',
 };
 
 await writeFile(path.join(OUT, 'acquisition-report.json'), `${JSON.stringify(report, null, 2)}\n`);
