@@ -46,7 +46,8 @@
     "validate:world-pipeline": "node scripts/validate-world-pipeline.mjs",
     "report:world-asset-pipeline": "node scripts/build-world-asset-pipeline-report.mjs",
     "validate:mini-game-assets": "node scripts/validate-mini-game-assets.mjs",
-    "normalize:world-asset": "node scripts/normalize-world-asset.mjs"
+    "normalize:world-asset": "node scripts/normalize-world-asset.mjs",
+    "validate:world-audio": "node scripts/validate-world-audio.mjs"
   },
   "private": true
 }
