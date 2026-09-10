@@ -50,6 +50,10 @@ export interface WorldVisualSelectionContext {
 /**
  * Selects an already-validated visual variant. It never downloads, mutates,
  * schedules, or creates world state.
+ *
+ * Non-interactive scenes may still use an interactive-capable asset. We only
+ * require interactivity when the current scene actually needs interaction;
+ * otherwise a richer interactive asset remains a valid visual fallback.
  */
 export function selectWorldVisual(
   set: WorldVisualSet,
@@ -57,8 +61,7 @@ export function selectWorldVisual(
 ): WorldVisualVariant | undefined {
   const eligible = set.variants.filter(variant => {
     if (!variant.validated) return false;
-    if (context.interactive && variant.interactive === false) return false;
-    if (!context.interactive && variant.interactive) return false;
+    if (context.interactive && variant.interactive !== true) return false;
     if (variant.minDistance !== undefined && context.distance < variant.minDistance) return false;
     if (variant.maxDistance !== undefined && context.distance > variant.maxDistance) return false;
     if (variant.maxScreenPixels !== undefined && context.screenPixels > variant.maxScreenPixels) return false;
