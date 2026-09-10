@@ -8,10 +8,9 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const MANIFEST = path.join(ROOT, 'assets/world/external-asset-manifest.json');
 const OUT = path.join(ROOT, 'artifacts/external-world');
-const USER_AGENT = 'GoPAL-AI-world-asset-acquirer/2.0';
+const USER_AGENT = 'GoPAL-AI-world-asset-acquirer/2.1';
+const MAX_SOURCE_BYTES = Number(process.env.GOPAL_ASSET_MAX_BYTES ?? 250_000_000);
 
-// Curated, mobile-minded first wave. We deliberately keep the source tier broad,
-// but the runtime tier is still gated by Blender validation + LOD generation.
 const wantedPolyHaven = [
   { id: 'meadow', kind: 'hdri', role: 'lighting', resolutions: ['2k', '1k'] },
   { id: 'grass_medium_01', kind: 'model', role: 'ground-cover', resolutions: ['2k', '1k'] },
@@ -42,28 +41,29 @@ function firstPresent(...values) {
 
 function selectModelPackage(files, resolutions) {
   for (const resolution of resolutions) {
-    const gltfEntry = files?.gltf?.[resolution];
-    const gltfFile = firstPresent(gltfEntry?.gltf, gltfEntry?.glb, gltfEntry);
-    if (gltfFile?.url && gltfFile?.md5) return { resolution, format: 'gltf', file: gltfFile };
+    const entry = files?.gltf?.[resolution];
+    const file = firstPresent(entry?.gltf, entry?.glb, entry);
+    if (file?.url && file?.md5) return { resolution, format: entry?.glb?.url ? 'glb' : 'gltf', file };
   }
   throw new Error('no checksum-backed glTF/GLB model package found');
 }
 
 function selectHdri(files, resolutions) {
   for (const resolution of resolutions) {
-    const hdr = firstPresent(
-      files?.hdri?.[resolution]?.hdr,
-      files?.hdri?.[resolution],
-    );
-    if (hdr?.url && hdr?.md5) return { resolution, format: 'hdr', file: hdr };
+    const file = firstPresent(files?.hdri?.[resolution]?.hdr, files?.hdri?.[resolution]);
+    if (file?.url && file?.md5) return { resolution, format: 'hdr', file };
   }
   throw new Error('no checksum-backed HDR file found');
 }
 
 async function downloadFile(file, destination) {
+  if (file.size && file.size > MAX_SOURCE_BYTES) {
+    throw new Error(`source file exceeds ${MAX_SOURCE_BYTES} byte safety limit: ${file.size}`);
+  }
   const response = await fetch(file.url, { headers: { 'User-Agent': USER_AGENT } });
   if (!response.ok) throw new Error(`${response.status} ${response.statusText}: ${file.url}`);
   const bytes = Buffer.from(await response.arrayBuffer());
+  if (bytes.length > MAX_SOURCE_BYTES) throw new Error(`download exceeds ${MAX_SOURCE_BYTES} byte safety limit`);
   if (file.size && bytes.length !== file.size) {
     throw new Error(`size mismatch for ${destination}: expected ${file.size}, got ${bytes.length}`);
   }
@@ -76,10 +76,10 @@ async function downloadFile(file, destination) {
   return { bytes: bytes.length, md5 };
 }
 
-function safeRelativePath(value) {
-  const normalized = String(value || 'dependency.bin').replaceAll('\\', '/');
+function safeRelativePath(value, fallback = 'dependency.bin') {
+  const normalized = String(value || fallback).replaceAll('\\', '/');
   const safe = path.posix.normalize(normalized).replace(/^\/+/, '');
-  if (safe.startsWith('../') || safe === '..') return `dependency-${Date.now()}.bin`;
+  if (safe.startsWith('../') || safe === '..' || safe.includes('/../')) return fallback;
   return safe;
 }
 
@@ -95,7 +95,6 @@ async function acquireFileTree(node, destination, records = []) {
       bytes: result.bytes,
     });
   }
-
   if (node.include && typeof node.include === 'object') {
     for (const [relativeName, child] of Object.entries(node.include)) {
       await acquireFileTree(child, path.join(path.dirname(destination), safeRelativePath(relativeName)), records);
@@ -120,8 +119,8 @@ for (const asset of wantedPolyHaven) {
       ? selectModelPackage(files, asset.resolutions)
       : selectHdri(files, asset.resolutions);
 
-    const extension = selected.format === 'gltf' ? 'gltf' : 'hdr';
-    const destination = path.join(OUT, `${asset.id}-${selected.resolution}.${extension}`);
+    const extension = selected.format === 'hdr' ? 'hdr' : selected.format;
+    const destination = path.join(OUT, asset.id, `${asset.id}-${selected.resolution}.${extension}`);
     const records = await acquireFileTree(selected.file, destination);
 
     acquired.push({
@@ -131,6 +130,10 @@ for (const asset of wantedPolyHaven) {
       license: 'CC0',
       resolution: selected.resolution,
       format: selected.format,
+      filesHash: info.files_hash ?? null,
+      polycount: info.polycount ?? null,
+      dimensions: info.dimensions ?? null,
+      hasLods: info.lods ?? false,
       files: records,
       sourceFileTree: `https://api.polyhaven.com/files/${asset.id}`,
     });
@@ -142,9 +145,10 @@ for (const asset of wantedPolyHaven) {
 }
 
 const report = {
-  schemaVersion: 4,
+  schemaVersion: 5,
   generatedAt: new Date().toISOString(),
   sourcePolicy: manifest.policy,
+  maxSourceBytes: MAX_SOURCE_BYTES,
   acquired,
   failures,
   manualCandidates: manifest.assets.filter((asset) => asset.status === 'candidate'),
