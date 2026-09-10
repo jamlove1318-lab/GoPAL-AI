@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const MANIFEST = path.join(ROOT, 'assets/world/external-asset-manifest.json');
 const OUT = path.join(ROOT, 'artifacts/external-world');
-const USER_AGENT = 'GoPAL-AI-world-asset-acquirer/1.1';
+const USER_AGENT = 'GoPAL-AI-world-asset-acquirer/1.2';
 
 const wantedPolyHaven = [
   { id: 'meadow', kind: 'hdri', role: 'lighting', resolutions: ['2k', '1k'] },
@@ -24,36 +24,36 @@ async function getJson(url) {
   return response.json();
 }
 
-function selectModelPackage(files, resolutions) {
+function selectModelGlb(files, resolutions) {
   for (const resolution of resolutions) {
     const candidate = files?.gltf?.[resolution];
-    if (!candidate) continue;
-    const glb = candidate.glb ?? candidate.gltf;
-    if (glb?.url) return { resolution, format: glb === candidate.glb ? 'glb' : 'gltf', ...glb };
+    const glb = candidate?.glb;
+    if (glb?.url && glb?.md5) return { resolution, format: 'glb', ...glb };
   }
-  return null;
+  throw new Error('no self-contained GLB package found; refusing to download a dependency-incomplete glTF');
 }
 
 function selectHdri(files, resolutions) {
   for (const resolution of resolutions) {
     const candidate = files?.hdri?.[resolution]?.hdr;
-    if (candidate?.url) return { resolution, format: 'hdr', ...candidate };
+    if (candidate?.url && candidate?.md5) return { resolution, format: 'hdr', ...candidate };
   }
-  return null;
+  throw new Error('no checksum-backed HDR file found');
 }
 
-async function download(url, destination, expectedMd5) {
+async function download(url, destination, expectedMd5, expectedSize) {
   const response = await fetch(url, { headers: { 'User-Agent': USER_AGENT } });
   if (!response.ok) throw new Error(`${response.status} ${response.statusText}: ${url}`);
   const bytes = Buffer.from(await response.arrayBuffer());
-  if (expectedMd5) {
-    const md5 = createHash('md5').update(bytes).digest('hex');
-    if (md5 !== expectedMd5) {
-      throw new Error(`checksum mismatch for ${destination}: expected ${expectedMd5}, got ${md5}`);
-    }
+  if (expectedSize && bytes.length !== expectedSize) {
+    throw new Error(`size mismatch for ${destination}: expected ${expectedSize}, got ${bytes.length}`);
+  }
+  const md5 = createHash('md5').update(bytes).digest('hex');
+  if (expectedMd5 && md5 !== expectedMd5) {
+    throw new Error(`checksum mismatch for ${destination}: expected ${expectedMd5}, got ${md5}`);
   }
   await writeFile(destination, bytes);
-  return bytes.length;
+  return { bytes: bytes.length, md5 };
 }
 
 await mkdir(OUT, { recursive: true });
@@ -69,13 +69,11 @@ for (const asset of wantedPolyHaven) {
 
     const files = await getJson(`https://api.polyhaven.com/files/${asset.id}`);
     const selected = asset.kind === 'model'
-      ? selectModelPackage(files, asset.resolutions)
+      ? selectModelGlb(files, asset.resolutions)
       : selectHdri(files, asset.resolutions);
-    if (!selected) throw new Error('no suitable complete runtime file found');
 
-    const extension = selected.format;
-    const destination = path.join(OUT, `${asset.id}.${extension}`);
-    const size = await download(selected.url, destination, selected.md5);
+    const destination = path.join(OUT, `${asset.id}.${selected.format}`);
+    const downloaded = await download(selected.url, destination, selected.md5, selected.size);
     acquired.push({
       id: `polyhaven:${asset.id}`,
       role: asset.role,
@@ -84,10 +82,11 @@ for (const asset of wantedPolyHaven) {
       resolution: selected.resolution,
       format: selected.format,
       path: path.relative(ROOT, destination),
-      bytes: size,
-      md5: selected.md5 ?? null,
+      bytes: downloaded.bytes,
+      md5: downloaded.md5,
+      sourceMd5: selected.md5,
     });
-    console.log(`[OK] ${asset.id} -> ${path.relative(ROOT, destination)}`);
+    console.log(`[OK] ${asset.id} -> ${path.relative(ROOT, destination)} (${downloaded.bytes} bytes)`);
   } catch (error) {
     failures.push({ id: asset.id, error: error instanceof Error ? error.message : String(error) });
     console.error(`[FAIL] ${asset.id}: ${failures.at(-1).error}`);
@@ -95,13 +94,13 @@ for (const asset of wantedPolyHaven) {
 }
 
 const report = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   generatedAt: new Date().toISOString(),
   sourcePolicy: manifest.policy,
   acquired,
   failures,
   manualCandidates: manifest.assets.filter(asset => asset.status === 'candidate'),
-  nextStep: 'Validate acquired sources in Blender, generate mobile LODs, and export only approved runtime-ready assets. Do not commit large source downloads by default.',
+  nextStep: 'Validate acquired sources in Blender, generate mobile LODs, and export only approved runtime-ready assets. Source downloads stay outside runtime unless explicitly approved.',
 };
 
 await writeFile(path.join(OUT, 'acquisition-report.json'), `${JSON.stringify(report, null, 2)}\n`);
