@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { access, readFile, stat } from 'node:fs/promises';
+import { access, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import crypto from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,7 +14,6 @@ const REPORT_PATH = path.join(REPORT_DIR, 'world-pipeline-validation.json');
 const VALID_REPRESENTATIONS = new Set(['2d', '2.5d', '3d']);
 const VALID_PROVIDERS = new Set(['polyhaven', 'quaternius', 'kenney']);
 const VALID_STATUSES = new Set(['candidate', 'approved-source', 'validated-runtime']);
-const GLB_EXTENSIONS = new Set(['.glb']);
 
 const failures = [];
 const warnings = [];
@@ -66,31 +65,47 @@ const validateAssetRecord = (asset, scope) => {
   if (scope === 'mini-games') recordCheck(`${prefix} families are non-empty`, Array.isArray(asset?.families) && asset.families.length > 0);
 
   if (asset?.status !== 'validated-runtime') return;
-
   const runtimePath = asset.runtimePath ? resolveRoot(asset.runtimePath) : null;
   recordCheck(`${prefix} promoted asset declares runtimePath`, Boolean(runtimePath));
-  if (!runtimePath) return;
-  recordCheck(`${prefix} runtimePath uses GLB`, GLB_EXTENSIONS.has(path.extname(runtimePath).toLowerCase()), runtimePath);
-  recordCheck(`${prefix} runtime artifact exists`, false, 'checked asynchronously below');
+  if (runtimePath) recordCheck(`${prefix} promoted runtime uses GLB`, path.extname(runtimePath).toLowerCase() === '.glb', runtimePath);
 };
 
 worldAssets.forEach((asset) => validateAssetRecord(asset, 'world'));
 miniAssets.forEach((asset) => validateAssetRecord(asset, 'mini-games'));
 
-const promoted = [...worldAssets.map((asset) => ({ asset, scope: 'world' })), ...miniAssets.map((asset) => ({ asset, scope: 'mini-games' }))]
-  .filter(({ asset }) => asset.status === 'validated-runtime');
+const promoted = [
+  ...worldAssets.map((asset) => ({ asset, scope: 'world' })),
+  ...miniAssets.map((asset) => ({ asset, scope: 'mini-games' })),
+].filter(({ asset }) => asset.status === 'validated-runtime');
 
 for (const { asset, scope } of promoted) {
   const prefix = `${scope}:${asset.id}`;
   const runtime = resolveRoot(asset.runtimePath);
   const runtimeExists = await exists(runtime);
-  checks.pop(); // remove the placeholder check inserted above
-  recordCheck(`${prefix} runtime artifact exists`, runtimeExists, runtimeExists ? '' : runtime);
+  recordCheck(`${prefix} runtime artifact exists`, runtimeExists, runtime);
   if (!runtimeExists) continue;
 
   const digest = await sha256(runtime);
   recordCheck(`${prefix} runtime SHA-256 is declared`, typeof asset.runtimeSha256 === 'string' && /^[a-f0-9]{64}$/i.test(asset.runtimeSha256));
   if (asset.runtimeSha256) recordCheck(`${prefix} runtime SHA-256 matches artifact`, digest === asset.runtimeSha256.toLowerCase(), `actual=${digest}`);
+  recordCheck(`${prefix} runtime artifact is non-empty`, (await stat(runtime)).size > 0);
+
+  // Validate the actual runtime bytes. A sidecar report is evidence, not the validator itself.
+  try {
+    const bytes = await readFile(runtime);
+    const gltfReport = await validator.validateBytes(new Uint8Array(bytes), {
+      uri: path.relative(ROOT, runtime),
+      format: 'glb',
+      writeTimestamp: false,
+      maxIssues: 0,
+    });
+    const validatorPath = `${runtime}.gltf-validator.json`;
+    await writeFile(validatorPath, `${JSON.stringify(gltfReport, null, 2)}\n`, 'utf8');
+    const errors = Number(gltfReport.issues?.numErrors ?? -1);
+    recordCheck(`${prefix} direct glTF validation has zero errors`, errors === 0, `errors=${errors}`);
+  } catch (error) {
+    recordCheck(`${prefix} direct glTF validation executes`, false, error instanceof Error ? error.message : String(error));
+  }
 
   const normalizationPath = `${runtime}.normalization.json`;
   const validatorPath = `${runtime}.gltf-validator.json`;
@@ -104,30 +119,27 @@ for (const { asset, scope } of promoted) {
     ['optimization evidence', optimizationPath],
     ['mobile validation evidence', mobilePath],
     ['human visual approval evidence', approvalPath],
-  ]) {
-    recordCheck(`${prefix} has ${label}`, await exists(file), file);
-  }
+  ]) recordCheck(`${prefix} has ${label}`, await exists(file), file);
 
   if (await exists(normalizationPath)) {
     const evidence = await readJson(normalizationPath);
     recordCheck(`${prefix} normalization evidence is observed`, evidence.observed?.outputArtifact === true && evidence.observed?.geometry === true && evidence.normalized === true);
-    recordCheck(`${prefix} normalization evidence checksum matches runtime`, evidence.outputSha256 === digest, 'normalization evidence must describe this exact GLB');
+    recordCheck(`${prefix} normalization evidence checksum matches runtime`, evidence.outputSha256 === digest, 'evidence must describe this exact GLB');
     recordCheck(`${prefix} normalization geometry is non-empty`, Number(evidence.stats?.meshObjects) > 0 && Number(evidence.stats?.vertices) > 0 && Number(evidence.stats?.trianglesEstimated) > 0);
     recordCheck(`${prefix} normalization dimensions are finite`, Array.isArray(evidence.stats?.dimensions) && evidence.stats.dimensions.length === 3 && evidence.stats.dimensions.every(Number.isFinite));
   }
 
   if (await exists(validatorPath)) {
     const evidence = await readJson(validatorPath);
-    recordCheck(`${prefix} glTF validator evidence has zero errors`, Number(evidence.issues?.numErrors ?? -1) === 0);
-    recordCheck(`${prefix} glTF validator evidence is for GLB`, evidence.info?.version !== undefined || evidence.asset !== undefined || evidence.issues !== undefined);
+    recordCheck(`${prefix} validator sidecar has zero errors`, Number(evidence.issues?.numErrors ?? -1) === 0);
   }
 
   if (await exists(optimizationPath)) {
     const evidence = await readJson(optimizationPath);
     recordCheck(`${prefix} optimization evidence is observed`, evidence.observed === true || evidence.status === 'observed');
     recordCheck(`${prefix} optimization evidence references exact runtime`, evidence.outputSha256 === digest || evidence.runtimeSha256 === digest);
-    if (Number.isFinite(evidence.triangles)) warn(`${prefix} optimization budget`, `triangles=${evidence.triangles}`);
-    if (Number.isFinite(evidence.textureBytes)) warn(`${prefix} optimization texture budget`, `textureBytes=${evidence.textureBytes}`);
+    if (Number.isFinite(evidence.triangles)) warn(`${prefix} optimization triangles`, String(evidence.triangles));
+    if (Number.isFinite(evidence.textureBytes)) warn(`${prefix} optimization textureBytes`, String(evidence.textureBytes));
   }
 
   if (await exists(mobilePath)) {
@@ -141,21 +153,19 @@ for (const { asset, scope } of promoted) {
     recordCheck(`${prefix} human approval is explicit`, evidence.approvedByHuman === true && typeof evidence.approvedAt === 'string' && evidence.approvedAt.length > 0);
     recordCheck(`${prefix} human approval references exact runtime`, evidence.outputSha256 === digest || evidence.runtimeSha256 === digest);
   }
-
-  const bytes = (await stat(runtime)).size;
-  recordCheck(`${prefix} runtime artifact is non-empty`, bytes > 0, `bytes=${bytes}`);
 }
 
-// Source-only records are intentionally allowed to remain incomplete; that is the point of the pipeline.
-const sourceOnlyCount = [...worldAssets, ...miniAssets].filter((asset) => asset.status !== 'validated-runtime').length;
-if (sourceOnlyCount > 0) warn('source-only inventory', `${sourceOnlyCount} asset records remain intentionally unpromoted until evidence exists`);
+const allAssets = [...worldAssets, ...miniAssets];
+const sourceOnlyCount = allAssets.filter((asset) => asset.status !== 'validated-runtime').length;
+if (sourceOnlyCount > 0) warn('source-only inventory', `${sourceOnlyCount} assets remain intentionally unpromoted until runtime evidence exists`);
 if (promoted.length === 0) warn('runtime promotion', 'no assets are currently validated-runtime; fail-closed state is healthy');
 
-await (await import('node:fs/promises')).mkdir(REPORT_DIR, { recursive: true });
-await (await import('node:fs/promises')).writeFile(REPORT_PATH, `${JSON.stringify({
-  schemaVersion: 1,
+await mkdir(REPORT_DIR, { recursive: true });
+await writeFile(REPORT_PATH, `${JSON.stringify({
+  schemaVersion: 2,
   generatedAt: new Date().toISOString(),
   policy: 'fail-closed',
+  evidencePolicy: 'observed-runtime-bytes-over-manifest-claims',
   worldAssetCount: worldAssets.length,
   miniGameAssetCount: miniAssets.length,
   promotedCount: promoted.length,
