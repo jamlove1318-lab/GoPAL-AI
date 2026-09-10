@@ -136,7 +136,6 @@ export function Cassidy3DScene({
     <Canvas
       style={StyleSheet.flatten(style)}
       camera={{ position: cameraPosition, fov: cameraFov, near: 0.05, far: 100 }}
-      dpr={1}
       frameloop="always"
     >
       {canRenderProduction ? (
