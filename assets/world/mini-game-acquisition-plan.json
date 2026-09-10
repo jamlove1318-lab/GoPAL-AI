@@ -66,13 +66,6 @@
       "priority": "P0"
     },
     {
-      "id": "quaternius:universal-animation-library",
-      "sourcePage": "https://quaternius.itch.io/universal-animation-library",
-      "allowedHosts": ["quaternius.itch.io"],
-      "filenameContains": "Universal Animation Library[Standard].zip",
-      "priority": "P0"
-    },
-    {
       "id": "quaternius:universal-base-characters",
       "sourcePage": "https://quaternius.itch.io/universal-base-characters",
       "allowedHosts": ["quaternius.itch.io"],
