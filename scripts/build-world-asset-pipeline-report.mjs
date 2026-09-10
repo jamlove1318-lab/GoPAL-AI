@@ -19,56 +19,106 @@ const stages = [
   'humanVisualApproval', 'runtimePromotion',
 ];
 
-const stageValue = (asset, stage) => {
-  if (stage === 'source') return Boolean(asset.sourcePage || asset.provider);
-  if (stage === 'license') return Boolean(asset.license);
-  if (stage === 'provenance') return Boolean(asset.sourcePage);
-  if (stage === 'acquisition') return Boolean(asset.runtimePath || asset.sourcePath || asset.status === 'approved-source');
-  if (stage === 'normalization') return Boolean(asset.geometryReview?.passed || asset.normalization?.passed);
-  if (stage === 'optimization') return Boolean(asset.materialReview?.passed || asset.optimization?.passed);
-  if (stage === 'runtimeExport') return Boolean(asset.runtimePath && asset.runtimeFormat);
-  if (stage === 'visualBinding') return Array.isArray(asset.variants) && asset.variants.some(variant => variant.runtimePath || variant.representation);
-  if (stage === 'animationBinding') return Array.isArray(asset.animationActions) && asset.animationActions.length > 0;
-  if (stage === 'mobileValidation') return asset.mobileValidation?.passed === true;
-  if (stage === 'humanVisualApproval') return Boolean(asset.visualApproval?.approvedByHuman && asset.visualApproval?.approvedAt);
-  if (stage === 'runtimePromotion') return asset.status === 'validated-runtime';
-  return false;
+const stageEvidence = (asset, stage) => {
+  switch (stage) {
+    case 'source':
+      return asset.sourcePage || asset.provider ? { state: 'metadata', basis: asset.sourcePage ? 'sourcePage' : 'provider' } : { state: 'missing' };
+    case 'license':
+      return asset.license ? { state: 'metadata', basis: 'license' } : { state: 'missing' };
+    case 'provenance':
+      return asset.sourcePage ? { state: 'metadata', basis: 'sourcePage' } : { state: 'missing' };
+    case 'acquisition':
+      return asset.runtimePath || asset.sourcePath
+        ? { state: 'observed', basis: asset.runtimePath ? 'runtimePath' : 'sourcePath' }
+        : asset.status === 'approved-source'
+          ? { state: 'declared', basis: 'approved-source' }
+          : { state: 'missing' };
+    case 'normalization':
+      return asset.normalization?.evidencePath
+        ? { state: 'observed', basis: 'normalization.evidencePath' }
+        : asset.geometryReview?.passed || asset.normalization?.passed
+          ? { state: 'declared', basis: 'geometryReview/normalization' }
+          : { state: 'missing' };
+    case 'optimization':
+      return asset.optimization?.evidencePath
+        ? { state: 'observed', basis: 'optimization.evidencePath' }
+        : asset.materialReview?.passed || asset.optimization?.passed
+          ? { state: 'declared', basis: 'materialReview/optimization' }
+          : { state: 'missing' };
+    case 'runtimeExport':
+      return asset.runtimePath && asset.runtimeFormat
+        ? { state: 'observed', basis: 'runtimePath + runtimeFormat' }
+        : { state: 'missing' };
+    case 'visualBinding':
+      return Array.isArray(asset.variants) && asset.variants.some((variant) => variant.runtimePath || variant.representation)
+        ? { state: 'declared', basis: 'variants' }
+        : { state: 'missing' };
+    case 'animationBinding':
+      return Array.isArray(asset.animationActions) && asset.animationActions.length > 0
+        ? { state: 'declared', basis: 'animationActions' }
+        : { state: 'missing' };
+    case 'mobileValidation':
+      return asset.mobileValidation?.evidencePath
+        ? { state: 'observed', basis: 'mobileValidation.evidencePath' }
+        : asset.mobileValidation?.passed === true
+          ? { state: 'declared', basis: 'mobileValidation.passed' }
+          : { state: 'missing' };
+    case 'humanVisualApproval':
+      return asset.visualApproval?.evidencePath
+        ? { state: 'observed', basis: 'visualApproval.evidencePath' }
+        : asset.visualApproval?.approvedByHuman && asset.visualApproval?.approvedAt
+          ? { state: 'declared', basis: 'visualApproval' }
+          : { state: 'missing' };
+    case 'runtimePromotion':
+      return asset.status === 'validated-runtime'
+        ? { state: 'declared', basis: 'status=validated-runtime' }
+        : { state: 'missing' };
+    default:
+      return { state: 'missing' };
+  }
 };
 
-const rows = assets.map(asset => ({
-  scope: 'world',
-  id: asset.id,
-  provider: asset.provider,
-  status: asset.status,
-  stages: Object.fromEntries(stages.map(stage => [stage, stageValue(asset, stage)])),
-}));
+const toRow = (asset, scope) => {
+  const evidence = Object.fromEntries(stages.map((stage) => [stage, stageEvidence(asset, stage)]));
+  const observedStages = stages.filter((stage) => evidence[stage].state === 'observed').length;
+  const declaredStages = stages.filter((stage) => evidence[stage].state === 'declared').length;
+  const metadataStages = stages.filter((stage) => evidence[stage].state === 'metadata').length;
+  return {
+    scope,
+    id: asset.id,
+    provider: asset.provider,
+    status: asset.status,
+    evidenceSummary: { observedStages, declaredStages, metadataStages, totalStages: stages.length },
+    stages: Object.fromEntries(stages.map((stage) => [stage, evidence[stage].state !== 'missing'])),
+    evidence,
+  };
+};
 
-const miniGameRows = miniGameAssets.map(asset => ({
-  scope: 'mini-games',
-  id: asset.id,
-  provider: asset.provider,
-  status: asset.status,
+const rows = assets.map((asset) => toRow(asset, 'world'));
+const miniGameRows = miniGameAssets.map((asset) => ({
+  ...toRow(asset, 'mini-games'),
   assetType: asset.assetType,
   representation: asset.representation,
   families: asset.families,
   usedBy: asset.usedBy,
-  stages: Object.fromEntries(stages.map(stage => [stage, stage === 'source' || stage === 'license' || stage === 'provenance'])),
-  runtimePromotion: false,
 }));
 
-const promoted = rows.filter(row => row.status === 'validated-runtime').length;
+const promoted = rows.filter((row) => row.status === 'validated-runtime').length;
 const report = {
+  schemaVersion: 2,
   generatedAt: new Date().toISOString(),
   policy: 'fail-closed',
+  evidencePolicy: 'metadata-never-equals-observed',
   sourceManifest: 'assets/world/external-asset-manifest.json',
   miniGameSourceManifest: 'assets/world/mini-game-asset-manifest.json',
   stageOrder: stages,
+  stageStates: ['missing', 'metadata', 'declared', 'observed'],
   assetCount: rows.length,
   promotedCount: promoted,
-  candidateCount: rows.filter(row => row.status === 'candidate').length,
-  approvedSourceCount: rows.filter(row => row.status === 'approved-source').length,
+  candidateCount: rows.filter((row) => row.status === 'candidate').length,
+  approvedSourceCount: rows.filter((row) => row.status === 'approved-source').length,
   miniGameAssetCount: miniGameRows.length,
-  miniGameApprovedSourceCount: miniGameRows.filter(row => row.status === 'approved-source').length,
+  miniGameApprovedSourceCount: miniGameRows.filter((row) => row.status === 'approved-source').length,
   miniGameRuntimePromotionCount: 0,
   acquisitionStrategy: 'one-batch-world-and-mini-game-inventory',
   assets: [...rows, ...miniGameRows],
@@ -79,5 +129,5 @@ await writeFile(outputPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
 console.log(`[OK] wrote ${path.relative(ROOT, outputPath)}`);
 console.log(`[OK] inventoried ${rows.length} world asset record(s) + ${miniGameRows.length} mini-game source(s)`);
 console.log(`[OK] ${promoted} world asset(s) currently validated-runtime`);
-console.log('[OK] mini-game sources remain fail-closed until exact download provenance and runtime validation exist');
-if (promoted === 0) console.log('[INFO] no world asset is promoted yet; the pipeline remains fail-closed until evidence exists');
+console.log('[OK] evidence states distinguish metadata, declared, and observed pipeline work');
+if (promoted === 0) console.log('[INFO] no world asset is promoted yet; promotion remains fail-closed until runtime evidence and human approval exist');
