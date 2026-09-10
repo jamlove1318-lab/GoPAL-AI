@@ -8,8 +8,9 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const MANIFEST = path.join(ROOT, 'assets/world/external-asset-manifest.json');
 const MINI_GAME_MANIFEST = path.join(ROOT, 'assets/world/mini-game-asset-manifest.json');
+const MINI_GAME_PLAN = path.join(ROOT, 'assets/world/mini-game-acquisition-plan.json');
 const OUT = path.join(ROOT, 'artifacts/external-world');
-const USER_AGENT = 'GoPAL-AI-world-asset-acquirer/2.2';
+const USER_AGENT = 'GoPAL-AI-world-asset-acquirer/2.3';
 const MAX_SOURCE_BYTES = Number(process.env.GOPAL_ASSET_MAX_BYTES ?? 250_000_000);
 
 const wantedPolyHaven = [
@@ -34,6 +35,12 @@ async function getJson(url) {
   const response = await fetch(url, { headers: { 'User-Agent': USER_AGENT } });
   if (!response.ok) throw new Error(`${response.status} ${response.statusText}: ${url}`);
   return response.json();
+}
+
+async function getText(url) {
+  const response = await fetch(url, { headers: { 'User-Agent': USER_AGENT } });
+  if (!response.ok) throw new Error(`${response.status} ${response.statusText}: ${url}`);
+  return response.text();
 }
 
 function firstPresent(...values) {
@@ -66,9 +73,10 @@ async function downloadFile(file, destination) {
   if (file.size && bytes.length !== file.size) throw new Error(`size mismatch for ${destination}: expected ${file.size}, got ${bytes.length}`);
   const md5 = createHash('md5').update(bytes).digest('hex');
   if (file.md5 && md5 !== file.md5) throw new Error(`checksum mismatch for ${destination}: expected ${file.md5}, got ${md5}`);
+  const sha256 = createHash('sha256').update(bytes).digest('hex');
   await mkdir(path.dirname(destination), { recursive: true });
   await writeFile(destination, bytes);
-  return { bytes: bytes.length, md5 };
+  return { bytes: bytes.length, md5, sha256 };
 }
 
 function safeRelativePath(value, fallback = 'dependency.bin') {
@@ -82,7 +90,7 @@ async function acquireFileTree(node, destination, records = []) {
   if (!node || typeof node !== 'object') return records;
   if (node.url) {
     const result = await downloadFile(node, destination);
-    records.push({ path: path.relative(ROOT, destination), url: node.url, md5: result.md5, sourceMd5: node.md5 ?? null, bytes: result.bytes });
+    records.push({ path: path.relative(ROOT, destination), url: node.url, md5: result.md5, sha256: result.sha256, sourceMd5: node.md5 ?? null, bytes: result.bytes });
   }
   if (node.include && typeof node.include === 'object') {
     for (const [relativeName, child] of Object.entries(node.include)) {
@@ -92,11 +100,60 @@ async function acquireFileTree(node, destination, records = []) {
   return records;
 }
 
+function extractZipLinks(html, pageUrl) {
+  const links = new Set();
+  const pattern = /(?:href|data-download-url)=["']([^"']+\.zip(?:\?[^"']*)?)["']/gi;
+  for (const match of html.matchAll(pattern)) {
+    try {
+      links.add(new URL(match[1], pageUrl).toString());
+    } catch {
+      // Ignore malformed links; acquisition remains fail-closed.
+    }
+  }
+  return [...links];
+}
+
+function assertAllowedHost(url, allowedHosts) {
+  const hostname = new URL(url).hostname.toLowerCase();
+  return allowedHosts.some((allowed) => hostname === allowed || hostname.endsWith(`.${allowed}`));
+}
+
+async function resolveOfficialPackage(planEntry) {
+  const html = await getText(planEntry.sourcePage);
+  const candidates = extractZipLinks(html, planEntry.sourcePage)
+    .filter((url) => assertAllowedHost(url, planEntry.allowedHosts))
+    .filter((url) => new URL(url).pathname.toLowerCase().endsWith('.zip'))
+    .filter((url) => new URL(url).pathname.toLowerCase().includes(planEntry.filenameContains.toLowerCase()));
+  if (!candidates.length) {
+    throw new Error(`no allowlisted ZIP matching ${planEntry.filenameContains} was discoverable from ${planEntry.sourcePage}`);
+  }
+  return candidates[0];
+}
+
+async function acquireMiniGamePackage(planEntry) {
+  const url = await resolveOfficialPackage(planEntry);
+  const fileName = path.basename(new URL(url).pathname);
+  const destination = path.join(OUT, 'mini-games', planEntry.id.replace(':', '__'), fileName);
+  const result = await downloadFile({ url }, destination);
+  return {
+    id: planEntry.id,
+    priority: planEntry.priority,
+    sourcePage: planEntry.sourcePage,
+    resolvedUrl: url,
+    fileName,
+    bytes: result.bytes,
+    sha256: result.sha256,
+  };
+}
+
 await mkdir(OUT, { recursive: true });
 const manifest = JSON.parse(await readFile(MANIFEST, 'utf8'));
 const miniGameManifest = JSON.parse(await readFile(MINI_GAME_MANIFEST, 'utf8'));
+const miniGamePlan = JSON.parse(await readFile(MINI_GAME_PLAN, 'utf8'));
 const acquired = [];
 const failures = [];
+const miniGameAcquired = [];
+const miniGameFailures = [];
 
 for (const asset of wantedPolyHaven) {
   try {
@@ -116,6 +173,22 @@ for (const asset of wantedPolyHaven) {
   }
 }
 
+for (const planEntry of miniGamePlan.assets) {
+  try {
+    const catalogEntry = miniGameManifest.assets.find((asset) => asset.id === planEntry.id);
+    if (!catalogEntry) throw new Error('acquisition plan references an asset missing from mini-game manifest');
+    if (catalogEntry.license !== 'CC0') throw new Error(`catalog license is not CC0: ${catalogEntry.license}`);
+    const result = await acquireMiniGamePackage(planEntry);
+    miniGameAcquired.push(result);
+    console.log(`[OK] mini-game ${planEntry.id} -> ${result.fileName} (${result.sha256.slice(0, 12)}…)`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    miniGameFailures.push({ id: planEntry.id, priority: planEntry.priority, error: message });
+    console.error(`[FAIL] mini-game ${planEntry.id} -> ${message}`);
+  }
+}
+
+const plannedIds = new Set(miniGamePlan.assets.map((asset) => asset.id));
 const miniGameSources = miniGameManifest.assets.map((asset) => ({
   id: asset.id,
   provider: asset.provider,
@@ -127,11 +200,12 @@ const miniGameSources = miniGameManifest.assets.map((asset) => ({
   families: asset.families,
   usedBy: asset.usedBy,
   downloadStrategy: asset.downloadStrategy,
-  acquiredAutomatically: false,
+  acquisitionPlanned: plannedIds.has(asset.id),
+  acquiredAutomatically: miniGameAcquired.some((item) => item.id === asset.id),
 }));
 
 const report = {
-  schemaVersion: 6,
+  schemaVersion: 7,
   generatedAt: new Date().toISOString(),
   sourcePolicy: manifest.policy,
   maxSourceBytes: MAX_SOURCE_BYTES,
@@ -139,10 +213,16 @@ const report = {
   failures,
   miniGameSources,
   miniGameAcquisition: {
-    mode: 'single-batch-manifest',
-    status: 'planned',
-    reason: 'Mini-game sources intentionally remain on official source pages until their downloadable package URL and checksum are captured. This prevents scraping or silently trusting mutable third-party download endpoints.',
-    nextStep: 'Capture verified download URLs/checksums for approved mini-game sources, then acquire them in this same command and report.',
+    mode: miniGamePlan.mode,
+    status: miniGameFailures.length ? 'partial-failure' : 'acquired',
+    policy: miniGamePlan.policy,
+    planCount: miniGamePlan.assets.length,
+    acquiredCount: miniGameAcquired.length,
+    failedCount: miniGameFailures.length,
+    acquired: miniGameAcquired,
+    failures: miniGameFailures,
+    remainingApprovedSources: miniGameSources.filter((asset) => asset.status === 'approved-source' && !plannedIds.has(asset.id)).map((asset) => asset.id),
+    nextStep: 'Validate acquired archives, normalize selected runtime assets, perform mobile validation and human visual approval, then promote only validated-runtime assets.',
   },
   manualCandidates: manifest.assets.filter((asset) => asset.status === 'candidate'),
   nextStep: 'Validate source packages in Blender, generate mobile LODs/material atlases, review visually, then promote only approved runtime-ready assets.',
@@ -150,5 +230,5 @@ const report = {
 
 await writeFile(path.join(OUT, 'acquisition-report.json'), `${JSON.stringify(report, null, 2)}\n`);
 console.log(`[OK] wrote ${path.relative(ROOT, path.join(OUT, 'acquisition-report.json'))}`);
-console.log(`[OK] inventoried ${miniGameSources.length} mini-game asset source(s) in the same batch report`);
-if (failures.length) process.exitCode = 1;
+console.log(`[OK] acquired ${miniGameAcquired.length}/${miniGamePlan.assets.length} selected mini-game package(s)`);
+if (failures.length || miniGameFailures.length) process.exitCode = 1;
