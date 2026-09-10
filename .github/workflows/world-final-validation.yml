@@ -15,6 +15,7 @@ on:
       - "scripts/**"
       - "tools/blender/**"
       - "package.json"
+      - "package-lock.json"
       - "tsconfig.json"
       - "app.json"
       - "babel.config.js"
@@ -37,6 +38,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: npm
       - name: Install dependencies
         run: npm install --legacy-peer-deps
       - name: External world asset policy validation
@@ -45,20 +47,22 @@ jobs:
         run: npm run validate:mini-game-assets
       - name: World visual representation validation
         run: npm run validate:world-visuals
-      - name: World runtime promotion gate
-        run: npm run validate:world-runtime-promotion
-      - name: End-to-end world asset pipeline report
-        run: npm run report:world-asset-pipeline
       - name: Independent glTF/GLB validation
         shell: bash
         run: |
           set -euo pipefail
           mapfile -t glbs < <(find assets artifacts -type f -name '*.glb' -not -path './node_modules/*' 2>/dev/null | sort)
           if [ "${#glbs[@]}" -eq 0 ]; then
-            echo "[INFO] No generated/runtime GLB files are present yet; gate remains fail-closed for promotion."
+            echo "[INFO] No generated/runtime GLB files are present yet; promotion remains fail-closed."
           else
             npm run validate:world-glb -- "${glbs[@]}"
           fi
+      - name: Complete fail-closed world pipeline gate
+        run: npm run validate:world-pipeline
+      - name: End-to-end world asset pipeline report
+        run: npm run report:world-asset-pipeline
+      - name: World runtime promotion gate
+        run: npm run validate:world-runtime-promotion
       - name: TypeScript validation
         run: npm run typecheck
       - name: Expo dependency alignment check
@@ -94,6 +98,7 @@ jobs:
           if-no-files-found: warn
           path: |
             artifacts/external-world/**
+            artifacts/**/*.json
             /tmp/gopal-expo-config.json
             /tmp/npm-audit.txt
             /tmp/gopal-web-export/**
