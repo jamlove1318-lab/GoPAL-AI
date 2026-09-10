@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "world": "emerald-valley",
+  "policy": {
+    "qualityFirst": true,
+    "licensePriority": ["CC0", "clearly-commercial-safe"],
+    "redistributableStandaloneAssets": false,
+    "runtimeBrains": 1
+  },
+  "assets": [
+    {
+      "id": "polyhaven:meadow",
+      "role": "environment:lighting",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/meadow",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Emerald Valley daylight reference/HDRI. Acquire an app-appropriate resolution; do not ship the full 16K source to mobile."
+    },
+    {
+      "id": "polyhaven:grass_medium_01",
+      "role": "environment:ground-cover",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/grass_medium_01",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "High-quality meadow grass source. Downsample/LOD before runtime use."
+    },
+    {
+      "id": "polyhaven:tree_small_02",
+      "role": "environment:tree",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/tree_small_02",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Primary broadleaf tree candidate for close and mid-distance Emerald Valley dressing."
+    },
+    {
+      "id": "polyhaven:pine_tree_01",
+      "role": "environment:tree",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/pine_tree_01",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Secondary tree silhouette for forest-edge variation. Must be LOD-reduced for mobile."
+    },
+    {
+      "id": "polyhaven:tree_stump_01",
+      "role": "environment:prop",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/tree_stump_01",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Natural forest-floor prop for lived-in world detail."
+    },
+    {
+      "id": "quaternius:universal-base-characters",
+      "role": "character:temporary-cassidy-candidate",
+      "provider": "quaternius",
+      "sourcePage": "https://quaternius.com/packs/universalbasecharacters.html",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Temporary rigged human base only. Never treat this as Cassidy identity. Cassidy's authored identity remains replaceable behind the existing runtime contract."
+    },
+    {
+      "id": "quaternius:universal-animation-library-2",
+      "role": "animation:humanoid-retarget-source",
+      "provider": "quaternius",
+      "sourcePage": "https://quaternius.com/",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Retarget source for walk/run/idle/contextual motion. Validate every clip against the runtime semantic animation contract before use."
+    }
+  ]
+}
