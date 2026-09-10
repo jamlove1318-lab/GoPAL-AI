@@ -40,6 +40,7 @@ function toVisualVariant(asset: ExternalWorldAsset, variant: ExternalAssetVarian
     maxDistance: variant.maxDistance,
     interactive: variant.interactive,
     animated: Boolean(asset.animationActions?.length),
+    mobileTier: variant.mobileTier,
     validated: runtimeValidated,
     notes: variant.notes ?? asset.notes,
   };
