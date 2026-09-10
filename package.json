@@ -11,6 +11,7 @@
     "expo-gl": "~57.0.2",
     "expo-status-bar": "~57.0.1",
     "expo-video": "~57.0.3",
+    "gltf-validator": "2.0.0-dev.3.10",
     "lucide-react-native": "^1.33.0",
     "nativewind": "^4.0.1",
     "react": "19.2.3",
@@ -41,6 +42,7 @@
     "validate:world-assets": "node scripts/validate-world-assets.mjs",
     "validate:world-visuals": "node scripts/validate-world-visual-representations.mjs",
     "validate:world-runtime-promotion": "node scripts/validate-world-runtime-promotion.mjs",
+    "validate:world-glb": "node scripts/validate-world-glb.mjs",
     "report:world-asset-pipeline": "node scripts/build-world-asset-pipeline-report.mjs",
     "validate:mini-game-assets": "node scripts/validate-mini-game-assets.mjs",
     "normalize:world-asset": "node scripts/normalize-world-asset.mjs"
