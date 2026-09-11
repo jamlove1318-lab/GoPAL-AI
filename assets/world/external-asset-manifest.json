@@ -1,0 +1,363 @@
+{
+  "schemaVersion": 3,
+  "world": "emerald-valley",
+  "policy": {
+    "qualityFirst": true,
+    "licensePriority": ["CC0", "clearly-commercial-safe"],
+    "redistributableStandaloneAssets": false,
+    "runtimeBrains": 1,
+    "mobileFirst": true,
+    "sourceOnlyUntilValidated": true,
+    "representationStrategy": "best-fit-per-scene",
+    "allowedRepresentations": ["2d", "2.5d", "3d"]
+  },
+  "selectionRules": {
+    "prefer3dWhen": ["close_interaction", "free_camera", "spatial_occlusion", "reusable_modular_world"] ,
+    "prefer2_5dWhen": ["parallax_background", "map_landmark", "distant_building", "decorative_depth"],
+    "prefer2dWhen": ["icons", "sprites", "portraits", "small_particles", "far_background", "low_cost_decoration"],
+    "neverForceOneRepresentation": true,
+    "reuseAcrossRepresentations": true
+  },
+  "assets": [
+    {
+      "id": "polyhaven:meadow",
+      "role": "environment:lighting",
+      "representation": "3d",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/meadow",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Emerald Valley daylight/HDRI source; keep source resolution separate from mobile runtime resolution."
+    },
+    {
+      "id": "polyhaven:grass_medium_01",
+      "role": "environment:ground-cover",
+      "representation": "3d",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/grass_medium_01",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Meadow ground-cover source; optimize aggressively before runtime."
+    },
+    {
+      "id": "polyhaven:tree_small_02",
+      "role": "environment:tree",
+      "representation": "3d",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/tree_small_02",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Broadleaf tree source for close/mid-distance dressing."
+    },
+    {
+      "id": "polyhaven:pine_tree_01",
+      "role": "environment:tree",
+      "representation": "3d",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/pine_tree_01",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Secondary tree silhouette for forest-edge variation."
+    },
+    {
+      "id": "polyhaven:tree_stump_01",
+      "role": "environment:prop",
+      "representation": "3d",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/tree_stump_01",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Natural forest-floor detail."
+    },
+    {
+      "id": "polyhaven:covered_car",
+      "role": "vehicle:car",
+      "representation": "3d",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/covered_car",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Realistic vehicle/garage prop; mobile LOD required."
+    },
+    {
+      "id": "polyhaven:sofa_02",
+      "role": "furniture:sofa",
+      "representation": "3d",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/sofa_02",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Interior furniture detail."
+    },
+    {
+      "id": "polyhaven:shelf_01",
+      "role": "furniture:shelf",
+      "representation": "3d",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/Shelf_01",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Low-triangle interior prop candidate."
+    },
+    {
+      "id": "polyhaven:side_table_01",
+      "role": "furniture:table",
+      "representation": "3d",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/side_table_01",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Interior prop candidate."
+    },
+    {
+      "id": "polyhaven:woodentable_01",
+      "role": "furniture:table",
+      "representation": "3d",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/WoodenTable_01",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Table/desk candidate."
+    },
+    {
+      "id": "polyhaven:classicnightstand_01",
+      "role": "furniture:nightstand",
+      "representation": "3d",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/ClassicNightstand_01",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Bedroom/interior detail."
+    },
+    {
+      "id": "polyhaven:modular_urban_apartments_facade",
+      "role": "building:residential",
+      "representation": "3d",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/modular_urban_apartments_facade",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Urban residential facade source; inspect triangle/material cost before runtime use."
+    },
+    {
+      "id": "polyhaven:modular_factory_facade",
+      "role": "building:industrial",
+      "representation": "3d",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/modular_factory_facade",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Industrial/warehouse facade source; source package is intentionally not shipped directly to mobile."
+    },
+    {
+      "id": "polyhaven:modular_fire_escape",
+      "role": "building:detail",
+      "representation": "3d",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/modular_fire_escape",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Urban building detail."
+    },
+    {
+      "id": "polyhaven:ladder_sectioned_01",
+      "role": "prop:utility",
+      "representation": "3d",
+      "provider": "polyhaven",
+      "sourcePage": "https://polyhaven.com/a/ladder_sectioned_01",
+      "license": "CC0",
+      "status": "approved-source",
+      "notes": "Workshop/maintenance prop."
+    },
+    {
+      "id": "quaternius:universal-base-characters",
+      "role": "character:temporary-cassidy-candidate",
+      "representation": "3d",
+      "provider": "quaternius",
+      "sourcePage": "https://quaternius.com/packs/universalbasecharacters.html",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Temporary human base only. Never treat as Cassidy identity. Existing Cassidy resolver remains the replacement boundary."
+    },
+    {
+      "id": "quaternius:universal-animation-library-2",
+      "role": "animation:humanoid-retarget-source",
+      "representation": "3d",
+      "provider": "quaternius",
+      "sourcePage": "https://quaternius.com/packs/universalanimationlibrary2.html",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Humanoid animation source; validate clips against GoPAL semantic animation vocabulary before use."
+    },
+    {
+      "id": "quaternius:downtown-city-megakit",
+      "role": "building:city-environment",
+      "representation": "3d",
+      "provider": "quaternius",
+      "sourcePage": "https://quaternius.com/packs/downtowncitymegakit.html",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Modular city/street source for reusable districts."
+    },
+    {
+      "id": "quaternius:ultimate-buildings-pack",
+      "role": "building:modular-houses",
+      "representation": "3d",
+      "provider": "quaternius",
+      "sourcePage": "https://quaternius.com/packs/ultimatetexturedbuildings.html",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Modular building source for houses and town structures."
+    },
+    {
+      "id": "quaternius:modular-train-pack",
+      "role": "vehicle:train",
+      "representation": "3d",
+      "provider": "quaternius",
+      "sourcePage": "https://quaternius.com/packs/modulartrain.html",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Train source for rail districts and stations."
+    },
+    {
+      "id": "quaternius:public-transport-pack",
+      "role": "vehicle:public-transport",
+      "representation": "3d",
+      "provider": "quaternius",
+      "sourcePage": "https://quaternius.com/packs/publictransport.html",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Reusable public-transport source."
+    },
+    {
+      "id": "quaternius:cars-pack",
+      "role": "vehicle:cars",
+      "representation": "3d",
+      "provider": "quaternius",
+      "sourcePage": "https://quaternius.com/packs/cars.html",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Reusable vehicle source."
+    },
+    {
+      "id": "kenney:city-kit-commercial",
+      "role": "building:commercial",
+      "representation": "3d",
+      "provider": "kenney",
+      "sourcePage": "https://kenney.nl/assets/city-kit-commercial",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Reusable modular commercial city pieces."
+    },
+    {
+      "id": "kenney:city-kit-suburban",
+      "role": "building:suburban",
+      "representation": "3d",
+      "provider": "kenney",
+      "sourcePage": "https://kenney.nl/assets/city-kit-suburban",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Reusable suburban pieces."
+    },
+    {
+      "id": "kenney:city-kit-industrial",
+      "role": "building:industrial",
+      "representation": "3d",
+      "provider": "kenney",
+      "sourcePage": "https://kenney.nl/assets/city-kit-industrial",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Reusable industrial/factory pieces."
+    },
+    {
+      "id": "kenney:city-kit-roads",
+      "role": "environment:roads",
+      "representation": "3d",
+      "provider": "kenney",
+      "sourcePage": "https://kenney.nl/assets/city-kit-roads",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Reusable roads, signs and traffic infrastructure."
+    },
+    {
+      "id": "kenney:nature-kit",
+      "role": "environment:nature",
+      "representation": "3d",
+      "provider": "kenney",
+      "sourcePage": "https://kenney.nl/assets/nature-kit",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Reusable nature source."
+    },
+    {
+      "id": "kenney:train-kit",
+      "role": "vehicle:train-and-rail",
+      "representation": "3d",
+      "provider": "kenney",
+      "sourcePage": "https://kenney.nl/assets/train-kit",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Reusable train, tram, trolley and rail pieces."
+    },
+    {
+      "id": "kenney:car-kit",
+      "role": "vehicle:cars",
+      "representation": "3d",
+      "provider": "kenney",
+      "sourcePage": "https://kenney.nl/assets/car-kit",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Reusable road vehicle source."
+    },
+    {
+      "id": "kenney:generic-items",
+      "role": "prop:general",
+      "representation": "2d",
+      "provider": "kenney",
+      "sourcePage": "https://kenney.nl/assets/generic-items",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "Large 2D household/tool/item source for portraits, inventory, decoration and low-cost world details."
+    },
+    {
+      "id": "kenney:background-elements",
+      "role": "environment:background",
+      "representation": "2.5d",
+      "provider": "kenney",
+      "sourcePage": "https://kenney.nl/assets/background-elements",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "2D background elements can be layered with depth/parallax instead of forcing distant scenery into full 3D."
+    },
+    {
+      "id": "kenney:map-pack",
+      "role": "map:world-layer",
+      "representation": "2d",
+      "provider": "kenney",
+      "sourcePage": "https://kenney.nl/assets/map-pack",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "2D map/tile source for maps, discovery views and lightweight world previews."
+    },
+    {
+      "id": "kenney:flag-pack",
+      "role": "prop:flags",
+      "representation": "2d",
+      "provider": "kenney",
+      "sourcePage": "https://kenney.nl/assets/flag-pack",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "2D decorative layer; can be animated through existing world motion systems."
+    },
+    {
+      "id": "kenney:light-masks",
+      "role": "vfx:light-masks",
+      "representation": "2d",
+      "provider": "kenney",
+      "sourcePage": "https://kenney.nl/assets/light-masks",
+      "license": "CC0",
+      "status": "candidate",
+      "notes": "2D VFX source for glows, light shaping and atmospheric detail."
+    }
+  ]
+}

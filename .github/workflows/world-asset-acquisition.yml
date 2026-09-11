@@ -1,0 +1,60 @@
+name: World Asset Acquisition
+
+on:
+  push:
+    branches:
+      - world-first-shell-next4
+    paths:
+      - 'assets/world/**'
+      - 'scripts/acquire-world-assets.mjs'
+      - '.github/workflows/world-asset-acquisition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gopal-world-asset-acquisition
+  cancel-in-progress: false
+
+jobs:
+  acquire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Acquire official world and mini-game sources
+        id: acquisition
+        continue-on-error: true
+        env:
+          GOPAL_ASSET_MAX_BYTES: 250000000
+        run: node scripts/acquire-world-assets.mjs
+
+      - name: Upload acquisition evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gopal-world-asset-acquisition-${{ github.sha }}
+          path: artifacts/external-world/**
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Acquisition summary
+        if: always()
+        run: |
+          echo '=== GoPAL world asset acquisition ==='
+          if [ -f artifacts/external-world/acquisition-report.json ]; then
+            node -e "const r=require('./artifacts/external-world/acquisition-report.json'); console.log(JSON.stringify({acquired:r.acquired?.length??0, worldFailures:r.failures?.length??0, miniGameAcquired:r.miniGameAcquisition?.acquiredCount??0, miniGameFailures:r.miniGameAcquisition?.failedCount??0}, null, 2))"
+          else
+            echo '[WARN] acquisition-report.json was not produced'
+          fi
+          if [ '${{ steps.acquisition.outcome }}' != 'success' ]; then
+            echo '[WARN] acquisition was partial or failed; inspect the uploaded acquisition report.'
+          fi

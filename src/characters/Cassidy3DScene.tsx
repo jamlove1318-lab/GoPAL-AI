@@ -1,7 +1,8 @@
 import React, { Suspense, useEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber/native';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import * as THREE from 'three';
+import { StyleSheet } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import type { CassidyVisualCommand } from './cassidyVisualResolver';
 import {
@@ -25,7 +26,7 @@ function LoadedCassidyModel({ command }: Cassidy3DModelProps) {
   const actionRef = useRef<THREE.AnimationAction | null>(null);
 
   const clipsByName = useMemo(
-    () => new Map(gltf.animations.map(clip => [clip.name, clip])),
+    () => new Map<string, THREE.AnimationClip>(gltf.animations.map(clip => [clip.name, clip])),
     [gltf.animations],
   );
 
@@ -33,7 +34,7 @@ function LoadedCassidyModel({ command }: Cassidy3DModelProps) {
     const nodeNames: string[] = [];
     const morphNames: string[] = [];
 
-    root.traverse(object => {
+    root.traverse((object: THREE.Object3D) => {
       nodeNames.push(object.name);
       const mesh = object as THREE.Mesh;
       if (!mesh.morphTargetDictionary) return;
@@ -41,7 +42,7 @@ function LoadedCassidyModel({ command }: Cassidy3DModelProps) {
     });
 
     return validateCassidyRuntimeModel({
-      animationNames: gltf.animations.map(clip => clip.name),
+      animationNames: gltf.animations.map((clip: THREE.AnimationClip) => clip.name),
       morphNames,
       nodeNames,
     });
@@ -80,12 +81,14 @@ function LoadedCassidyModel({ command }: Cassidy3DModelProps) {
   useEffect(() => {
     if (!runtimeValidation.valid) return;
 
-    root.traverse(object => {
+    root.traverse((object: THREE.Object3D) => {
       if (!(object instanceof THREE.Mesh) || !object.morphTargetDictionary || !object.morphTargetInfluences) {
         return;
       }
 
       const activeMorph = CASSIDY_RUNTIME_MORPHS[command.expression];
+      if (!activeMorph) return;
+
       for (const [name, index] of Object.entries(object.morphTargetDictionary)) {
         object.morphTargetInfluences[index] = name === activeMorph ? 1 : 0;
       }
@@ -131,9 +134,8 @@ export function Cassidy3DScene({
 
   return (
     <Canvas
-      style={style}
+      style={StyleSheet.flatten(style)}
       camera={{ position: cameraPosition, fov: cameraFov, near: 0.05, far: 100 }}
-      dpr={1}
       frameloop="always"
     >
       {canRenderProduction ? (

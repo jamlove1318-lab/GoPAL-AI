@@ -7,12 +7,8 @@ import {
   CASSIDY_PRODUCTION_ASSET_MANIFEST,
   type CassidyProductionAssetManifest,
 } from './cassidyProductionAssetRegistry';
-import {
-  isCassidyProductionRuntimeReady,
-} from './cassidyVisualResolver';
-import {
-  isCassidyCanonicalReferenceVisuallyApproved,
-} from './cassidyCanonicalReferenceIntake';
+import { isCassidyProductionRuntimeReady } from './cassidyVisualResolver';
+import { isCassidyCanonicalReferenceVisuallyApproved } from './cassidyCanonicalReferenceIntake';
 import { canCassidyProductionBegin } from './cassidyReferencePackage';
 
 export interface CassidyProductionIntegrationGateResult {
@@ -40,8 +36,9 @@ export function validateCassidyProductionIntegrationGate(
     errors.push('Canonical Cassidy reference has not passed real visual inspection approval.');
   }
 
-  const referenceErrors = canCassidyProductionBegin();
-  errors.push(...referenceErrors);
+  if (!canCassidyProductionBegin()) {
+    errors.push('Cassidy reference package is not fully approved for production integration.');
+  }
 
   const packageResult = validateCassidyProductionPackage(productionPackage);
   errors.push(...packageResult.errors);

@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 2,
+  "world": "emerald-valley",
+  "mode": "tiered-official-acquisition",
+  "goal": "Build a deep reusable scenario library without turning every provider into a second runtime or duplicating asset families.",
+  "policy": {
+    "downloadFullVerifiedPacks": true,
+    "sourceOnlyUntilValidated": true,
+    "preferFreeAndClearLicense": true,
+    "verifyExactLicense": true,
+    "preserveProvenance": true,
+    "neverBypassAuthentication": true,
+    "neverBypassEula": true,
+    "mobileFirst": true,
+    "noDuplicateLibraries": true,
+    "safeWorldContentOnly": true
+  },
+  "batches": [
+    {
+      "id": "scenario-core",
+      "priority": "P0",
+      "families": ["terrain", "nature", "buildings", "streets", "props", "furniture"],
+      "providers": ["polyhaven", "3dassets-dev", "kenney", "quaternius", "kaykit"],
+      "acquisition": "automated-where-officially-supported",
+      "target": "Enough coherent reusable environment pieces to build multiple districts, interiors and outdoor scenes."
+    },
+    {
+      "id": "travel-world",
+      "priority": "P0",
+      "families": ["rail", "stations", "vehicles", "airport-and-travel", "public-spaces"],
+      "providers": ["kenney", "quaternius", "3dassets-dev", "fab", "blendkit", "sketchfab"],
+      "acquisition": "mixed-automatic-and-authenticated",
+      "target": "Railway and travel locations first; airport/aircraft content is acquired only when an exact licensed runtime source is verified."
+    },
+    {
+      "id": "living-interiors",
+      "priority": "P0",
+      "families": ["interiors", "furniture", "props", "materials"],
+      "providers": ["polyhaven", "blendkit", "kaykit", "3dassets-dev", "fab"],
+      "acquisition": "mixed-automatic-and-authenticated",
+      "target": "Homes, cafes, libraries, study rooms, stations and other places that can become persistent world locations."
+    },
+    {
+      "id": "character-foundation",
+      "priority": "P1",
+      "families": ["characters", "humanoid-animation"],
+      "providers": ["quaternius", "kaykit", "mixamo"],
+      "acquisition": "official-source-or-authenticated-export",
+      "target": "Reusable NPC bases and animation clips mapped into the shared GoPAL semantic animation vocabulary. Cassidy remains a separate identity boundary."
+    },
+    {
+      "id": "atmosphere",
+      "priority": "P1",
+      "families": ["atmosphere", "materials", "2d-decoration", "2.5d-backgrounds"],
+      "providers": ["polyhaven", "kenney", "3dassets-dev", "blendkit"],
+      "acquisition": "mixed-automatic-and-authenticated",
+      "target": "Weather, lighting, sky, vegetation detail, distant scenery and subtle environmental motion."
+    }
+  ],
+  "scenarioPacks": [
+    {
+      "id": "3dassets-airfield",
+      "slug": "aircraft-fleet-and-airfield",
+      "priority": "P0",
+      "families": ["airport-and-travel", "vehicles", "public-spaces"],
+      "license": "CC0 1.0 Universal",
+      "sourcePage": "https://3dassets.dev/packs/aircraft-fleet-and-airfield"
+    },
+    {
+      "id": "3dassets-cave-crystal",
+      "slug": "cave-and-crystal-networks",
+      "priority": "P1",
+      "families": ["terrain", "interiors", "atmosphere"],
+      "license": "CC0 1.0 Universal",
+      "sourcePage": "https://3dassets.dev/packs/cave-and-crystal-networks"
+    },
+    {
+      "id": "3dassets-viking-longhouse",
+      "slug": "viking-age-longhouse-and-longship",
+      "priority": "P1",
+      "families": ["buildings", "interiors", "vehicles", "public-spaces"],
+      "license": "CC0 1.0 Universal",
+      "sourcePage": "https://3dassets.dev/packs/viking-age-longhouse-and-longship"
+    },
+    {
+      "id": "3dassets-bicycle-shop",
+      "slug": "bicycle-shop-and-repair-cafe",
+      "priority": "P1",
+      "families": ["buildings", "interiors", "furniture", "props", "public-spaces"],
+      "license": "CC0 1.0 Universal",
+      "sourcePage": "https://3dassets.dev/packs/bicycle-shop-and-repair-cafe"
+    }
+  ],
+  "providerNotes": {
+    "3dassets-dev": "Use official API/CDN and pack manifests where available; retain source URL, manifest URL and checksum for every downloaded file. Complete verified packs are preferred because their pieces share scale, palette and LOD intent.",
+    "fab": "Treat every product as a separate license/EULA decision. Free availability is not itself a CC0 signal.",
+    "polyhaven": "Prefer API-backed acquisition with checksum verification; source packages go through the existing Blender normalization path.",
+    "blendkit": "Authenticated downloads remain outside automatic acquisition unless exact license and permitted distribution are recorded.",
+    "sketchfab": "Use only official authenticated downloads with per-asset license/provenance records.",
+    "kaykit": "Prioritize verified free CC0 environment/interior/city/nature packs; avoid maintaining overlapping libraries with Kenney/Quaternius when one family already covers the need.",
+    "quaternius": "Keep exact pack license/provenance and use the existing Blender normalization pipeline.",
+    "kenney": "Use high-reuse CC0 kits as the lightweight stylized backbone and avoid redundant packs."
+  },
+  "validationGate": [
+    "source",
+    "exact-license",
+    "provenance",
+    "acquisition-checksum",
+    "Blender-normalization",
+    "geometry-validation",
+    "material-validation",
+    "runtime-export",
+    "visual-binding",
+    "animation-binding-when-applicable",
+    "mobile-validation",
+    "human-visual-approval",
+    "validated-runtime-promotion"
+  ]
+}
