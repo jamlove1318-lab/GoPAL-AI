@@ -1,0 +1,28 @@
+{
+  "verdict": "PASS",
+  "evaluated_at": "2026-09-03T13:49:53.619698+00:00",
+  "character": "Cassidy",
+  "checks": {
+    "scene_structure_clean": true,
+    "required_nodes_present": true,
+    "required_animations_present": true,
+    "required_expressions_present": true,
+    "poly_budget_compliant": true,
+    "glb_exported_valid": true
+  },
+  "scene_errors": [],
+  "cassidy_validation": {
+    "valid": true,
+    "errors": [],
+    "missing_nodes": [],
+    "missing_animations": [],
+    "missing_expressions": [],
+    "total_triangles": 684,
+    "budget_limit": 25000
+  },
+  "glb_asset": {
+    "path": "/root/gopal-ai/artifacts/cassidy/cassidy-runtime.glb",
+    "size_bytes": 204608,
+    "sha256": "f310e8fde8869ea71ada5cf64e992745b3f297141cbf6e2009407b6347ae7d22"
+  }
+}
