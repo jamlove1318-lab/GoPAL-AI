@@ -1,7 +1,27 @@
 import React,{useEffect,useRef}from'react';
 import{Animated,Easing,View}from'react-native';
+import Svg,{Path}from'react-native-svg';
 
 type Props={time:string;weather:string};
 
-/** Multi-plane valley composition. Each plane drifts at a different rate so the 2D world reads with depth. */
-export function LivingDepthLayer({time,weather}:Props){const far=useRef(new Animated.Value(0)).current;const middle=useRef(new Animated.Value(0)).current;const near=useRef(new Animated.Value(0)).current;useEffect(()=>{const make=(v:Animated.Value,d:number)=>Animated.loop(Animated.sequence([Animated.timing(v,{toValue:1,duration:d,easing:Easing.inOut(Easing.sin),useNativeDriver:true}),Animated.timing(v,{toValue:0,duration:d,easing:Easing.inOut(Easing.sin),useNativeDriver:true})]));const loops=[make(far,18000),make(middle,12000),make(near,7600)];loops.forEach(l=>l.start());return()=>loops.forEach(l=>l.stop());},[far,middle,near]);const night=time==='night', evening=time==='evening';return <View pointerEvents="none" className="absolute inset-0 overflow-hidden"><View className={`absolute inset-0 ${night?'bg-indigo-950/25':evening?'bg-orange-950/10':'bg-sky-200/5'}`}/><Animated.View style={{transform:[{translateX:far.interpolate({inputRange:[0,1],outputRange:[-14,14]})}]}} className="absolute -left-10 -right-10 top-[13%] h-44 rounded-[50%] bg-indigo-950/25"/><Animated.View style={{transform:[{translateX:far.interpolate({inputRange:[0,1],outputRange:[10,-18]})}]}} className="absolute -left-10 -right-10 top-[19%] h-40 rounded-[50%] bg-emerald-900/25"/><View className="absolute inset-x-[-10%] top-[28%] h-36 rounded-[50%] bg-emerald-800/45"/><Animated.View style={{transform:[{translateX:middle.interpolate({inputRange:[0,1],outputRange:[-24,30]})}]}} className="absolute -left-20 -right-20 top-[35%] h-44 rounded-[50%] bg-emerald-950/55"/><View className="absolute inset-x-[-15%] top-[48%] h-48 rounded-[50%] bg-emerald-900/70"/><Animated.View style={{transform:[{translateX:near.interpolate({inputRange:[0,1],outputRange:[-42,34]})}]}} className="absolute -left-16 bottom-[8%] h-52 w-40 rounded-[50%] bg-emerald-950/90"/><Animated.View style={{transform:[{translateX:near.interpolate({inputRange:[0,1],outputRange:[28,-38]})}]}} className="absolute -right-14 bottom-[3%] h-56 w-44 rounded-[50%] bg-slate-950/80"/><View className="absolute inset-x-0 bottom-[22%] h-20 bg-emerald-500/5"/>{weather==='mist'&&<Animated.View style={{opacity:.18,transform:[{translateX:middle.interpolate({inputRange:[0,1],outputRange:[-80,100]})}]}} className="absolute -left-20 top-[42%] h-24 w-[150%] rounded-full bg-white"/>}{weather==='rain'&&<View className="absolute inset-0">{Array.from({length:14},(_,i)=><Animated.View key={i} style={{left:`${(i*19)%100}%`,top:-40,height:100,opacity:.14,transform:[{translateY:near.interpolate({inputRange:[0,1],outputRange:[0,220+i*4]})},{rotate:'-12deg'}]}} className="absolute w-px bg-sky-100"/>)}</View>}<View className="absolute inset-x-0 bottom-0 h-44 bg-slate-950/25"/></View>;}
+/**
+ * Atmospheric effects only. The actual Emerald Valley depth planes now live
+ * in LivingWorldVisualLayer; this layer must never paint opaque blobs over
+ * the world and hide the horizon, mountains, buildings, or stream.
+ */
+export function LivingDepthLayer({time,weather}:Props){
+ const drift=useRef(new Animated.Value(0)).current;
+ useEffect(()=>{const loop=Animated.loop(Animated.sequence([
+   Animated.timing(drift,{toValue:1,duration:18000,easing:Easing.inOut(Easing.sin),useNativeDriver:true,isInteraction:false}),
+   Animated.timing(drift,{toValue:0,duration:18000,easing:Easing.inOut(Easing.sin),useNativeDriver:true,isInteraction:false}),
+ ]));loop.start();return()=>loop.stop();},[drift]);
+ const night=time==='night',evening=time==='evening';
+ return <View pointerEvents="none" className="absolute inset-0 overflow-hidden">
+   <View className={`absolute inset-0 ${night?'bg-indigo-950/10':evening?'bg-orange-950/5':'bg-sky-200/0'}`}/>
+   {weather==='mist'&&<Animated.View style={{opacity:.13,transform:[{translateX:drift.interpolate({inputRange:[0,1],outputRange:[-90,90]})}]}} className="absolute left-[-30%] top-[36%] h-20 w-[160%] rounded-full bg-white"/>}
+   {weather==='rain'&&<Svg style={{position:'absolute',inset:0}} viewBox="0 0 400 800" preserveAspectRatio="none">
+     {Array.from({length:18},(_,i)=><Path key={i} d={`M${(i*29)%400} 300l-18 115`} stroke="#d9f1f1" strokeWidth="1" opacity=".10"/>) }
+   </Svg>}
+   <Animated.View style={{opacity:.05,transform:[{translateX:drift.interpolate({inputRange:[0,1],outputRange:[-24,24]})}]}} className="absolute left-[-15%] right-[-15%] bottom-[24%] h-16 rounded-full bg-emerald-200"/>
+ </View>;
+}
