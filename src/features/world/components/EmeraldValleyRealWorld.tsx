@@ -10,6 +10,7 @@ const MOUNTAINSIDE = require('../../../../assets/world/emerald-valley/landscape/
 
 type Point = [number, number, number];
 type MeadowPatch = { x: number; z: number; sx: number; sz: number; rotation: number };
+type Rock = { x: number; y: number; z: number; sx: number; sy: number; sz: number; rotation: number };
 
 /** Emerald Valley: the visible world is the product. */
 function MountainBackdrop() {
@@ -35,6 +36,35 @@ function ValleyGround() {
     <mesh position={[28, 2.1, 10]} rotation={[0, 0, 0.25]}><planeGeometry args={[36, 122]} /><meshStandardMaterial color="#3f5947" roughness={1} side={THREE.DoubleSide} /></mesh>
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.43, 17]} receiveShadow><planeGeometry args={[34, 112]} /><meshStandardMaterial color="#6f815b" roughness={1} /></mesh>
   </group>;
+}
+
+function ValleyTrails() {
+  const trails = useMemo(() => [
+    { points: [[-16, -0.31, 40], [-11, -0.28, 33], [-8, -0.25, 27], [-4, -0.27, 20], [-1, -0.28, 14]] as Point[], width: 0.62 },
+    { points: [[-1, -0.27, 14], [1, -0.25, 8], [3, -0.23, 2], [5, -0.17, -5], [7, -0.1, -12]] as Point[], width: 0.48 },
+    { points: [[-12, -0.3, 8], [-8, -0.28, 13], [-3, -0.27, 17], [2, -0.25, 20]] as Point[], width: 0.38 },
+  ], []);
+  return <group>{trails.map((trail, index) => {
+    const curve = new THREE.CatmullRomCurve3(trail.points.map((p) => new THREE.Vector3(...p)), false, 'catmullrom', 0.55);
+    return <mesh key={index} geometry={new THREE.TubeGeometry(curve, 36, trail.width, 7, false)} receiveShadow>
+      <meshStandardMaterial color="#9a805c" roughness={1} />
+    </mesh>;
+  })}</group>;
+}
+
+function ForegroundRocks() {
+  const rocks = useMemo<Rock[]>(() => [
+    { x: -15, y: 0.05, z: 37, sx: 1.7, sy: 0.8, sz: 1.25, rotation: 0.2 },
+    { x: -12.8, y: 0.02, z: 30.5, sx: 0.9, sy: 0.55, sz: 0.7, rotation: -0.4 },
+    { x: 13.5, y: 0.08, z: 15, sx: 1.4, sy: 0.72, sz: 1.0, rotation: 0.7 },
+    { x: 11.8, y: 0.03, z: 7, sx: 0.72, sy: 0.46, sz: 0.58, rotation: -0.3 },
+    { x: -5.5, y: 0.02, z: -22, sx: 1.05, sy: 0.55, sz: 0.8, rotation: 0.25 },
+    { x: 9.8, y: 0.04, z: -16, sx: 1.2, sy: 0.62, sz: 0.9, rotation: -0.6 },
+  ], []);
+  return <group>{rocks.map((rock, index) => <mesh key={index} position={[rock.x, rock.y, rock.z]} scale={[rock.sx, rock.sy, rock.sz]} rotation={[0, rock.rotation, 0]} castShadow receiveShadow>
+    <icosahedronGeometry args={[1, 2]} />
+    <meshStandardMaterial color={index % 2 ? '#687068' : '#77776c'} roughness={0.94} />
+  </mesh>)}</group>;
 }
 
 function Stream({ points, width = 0.7 }: { points: Point[]; width?: number }) {
@@ -117,6 +147,8 @@ export function EmeraldValleyRealWorld() {
       <Suspense fallback={null}><MountainBackdrop /></Suspense>
       <ValleyGround />
       <MeadowPatches />
+      <ValleyTrails />
+      <ForegroundRocks />
       <LivingWater />
       <Suspense fallback={null}><RailwayScene /></Suspense>
     </Canvas>
