@@ -1,5 +1,6 @@
 import React, { Suspense, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { Asset } from 'expo-asset';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber/native';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
@@ -7,15 +8,34 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 const COUNTRY_STATION = require('../../../../assets/world/emerald-valley/railway/steam-era-railway/starter/starter-country-station.glb');
 const EXPRESS_PACIFIC = require('../../../../assets/world/emerald-valley/railway/steam-era-railway/models/steam-era-railway-and-rolling-stock-express-pacific-4--e04974dc.glb');
 const MOUNTAINSIDE = require('../../../../assets/world/emerald-valley/landscape/polyhaven-mountainside/model/mountainside.gltf');
+const MOUNTAINSIDE_BIN = require('../../../../assets/world/emerald-valley/landscape/polyhaven-mountainside/model/mountainside.bin');
+const MOUNTAINSIDE_NORMAL = require('../../../../assets/world/emerald-valley/landscape/polyhaven-mountainside/textures/mountainside_nor_gl_4k.jpg');
+const MOUNTAINSIDE_DIFFUSE = require('../../../../assets/world/emerald-valley/landscape/polyhaven-mountainside/textures/mountainside_diff_4k.jpg');
+const MOUNTAINSIDE_ARM = require('../../../../assets/world/emerald-valley/landscape/polyhaven-mountainside/textures/mountainside_arm_4k.jpg');
 
 type Point = [number, number, number];
 type MeadowPatch = { x: number; z: number; sx: number; sz: number; rotation: number };
 type Rock = { x: number; y: number; z: number; sx: number; sy: number; sz: number; rotation: number };
 type Tree = { x: number; z: number; scale: number; rotation: number; tone: number };
 
+const MOUNTAINSIDE_DEPENDENCY_URIS = new Map<string, string>([
+  ['mountainside.bin', Asset.fromModule(MOUNTAINSIDE_BIN).uri],
+  ['mountainside_nor_gl_4k.jpg', Asset.fromModule(MOUNTAINSIDE_NORMAL).uri],
+  ['mountainside_diff_4k.jpg', Asset.fromModule(MOUNTAINSIDE_DIFFUSE).uri],
+  ['mountainside_arm_4k.jpg', Asset.fromModule(MOUNTAINSIDE_ARM).uri],
+]);
+
+function configureMountainsideLoader(loader: GLTFLoader) {
+  loader.manager.setURLModifier((url) => {
+    const clean = url.split('?')[0].split('#')[0];
+    const filename = clean.slice(clean.lastIndexOf('/') + 1);
+    return MOUNTAINSIDE_DEPENDENCY_URIS.get(filename) ?? url;
+  });
+}
+
 /** Emerald Valley: geography first, landmarks second, atmosphere and details last. */
 function MountainBackdrop() {
-  const mountain = useLoader(GLTFLoader, MOUNTAINSIDE);
+  const mountain = useLoader(GLTFLoader, MOUNTAINSIDE, configureMountainsideLoader);
   const scene = useMemo(() => mountain.scene.clone(true), [mountain.scene]);
   const ridges = useMemo(() => [
     { position: [-18, 7.0, -62] as Point, scale: 0.062, rotation: -0.18 },
