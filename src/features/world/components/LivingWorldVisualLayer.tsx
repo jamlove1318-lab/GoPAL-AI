@@ -4,9 +4,11 @@ import type { WorldTheme } from '../data/livingWorldArt';
 import { EmeraldValleyRealWorld } from './EmeraldValleyRealWorld';
 
 /**
- * Emerald Valley now has a real-asset visual foundation.
- * The previous SVG landscape remains in the repository/history for later reuse,
- * but is no longer part of the active Emerald Valley visual composition.
+ * Canonical Emerald Valley visual surface.
+ *
+ * The legacy SVG/2D world systems remain in the repository for later reuse,
+ * but this layer deliberately sits above them so they cannot leak into the
+ * active Emerald Valley composition.
  */
 export function LivingWorldVisualLayer({ theme = 'emerald' }: { theme?: WorldTheme; time?: 'morning' | 'afternoon' | 'evening' | 'night' }) {
   if (theme !== 'emerald') return <View pointerEvents="none" style={StyleSheet.absoluteFill} />;
@@ -21,7 +23,7 @@ export function LivingWorldVisualLayer({ theme = 'emerald' }: { theme?: WorldThe
 const styles = StyleSheet.create({
   activeLayer: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 50,
-    elevation: 50,
+    zIndex: 100000,
+    elevation: 100000,
   },
 });
