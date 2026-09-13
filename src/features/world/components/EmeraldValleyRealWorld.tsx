@@ -9,91 +9,41 @@ const EXPRESS_PACIFIC = require('../../../../assets/world/emerald-valley/railway
 const MOUNTAINSIDE = require('../../../../assets/world/emerald-valley/landscape/polyhaven-mountainside/model/mountainside.gltf');
 
 type Point = [number, number, number];
+type MeadowPatch = { x: number; z: number; sx: number; sz: number; rotation: number };
 
-type TreeSpec = { x: number; z: number; s: number; rot: number };
+/**
+ * Emerald Valley is composed as a world, not a showcase screen.
+ * Real assets currently wired: Poly Haven Mountainside and the Steam Era
+ * Railway station/train. The >80 MB tree source is intentionally not faked;
+ * it needs a smaller mobile/runtime derivative before it can be committed.
+ * There is deliberately NO bridge here yet. The western creek crossing is
+ * reserved as open geography for the future premium bridge asset.
+ */
 
 function MountainBackdrop() {
   const mountain = useLoader(GLTFLoader, MOUNTAINSIDE);
   const scene = useMemo(() => mountain.scene.clone(true), [mountain.scene]);
-
   return (
-    <group position={[-5, 5.5, -44]} rotation={[0, Math.PI, 0]} scale={0.075}>
+    <group position={[-7, 5.8, -47]} rotation={[0, Math.PI, 0]} scale={0.078}>
       <primitive object={scene} />
     </group>
   );
 }
 
-function DistantRidges() {
-  const ridges = [
-    { z: -70, y: 5.5, scale: 1.35, color: '#6f8d82' },
-    { z: -58, y: 4.2, scale: 1.05, color: '#58776b' },
-    { z: -47, y: 3.1, scale: 0.82, color: '#466657' },
+function DistantValleyWalls() {
+  const walls = [
+    { x: -25, z: -58, y: 4.8, sx: 1.15, sz: 1.1, rot: -0.16 },
+    { x: 18, z: -64, y: 5.6, sx: 1.28, sz: 1.18, rot: 0.13 },
+    { x: -30, z: -35, y: 3.5, sx: 0.78, sz: 1.2, rot: -0.25 },
+    { x: 29, z: -31, y: 3.9, sx: 0.9, sz: 1.1, rot: 0.22 },
   ];
-
-  return (
-    <>
-      {ridges.map((ridge, index) => (
-        <group key={index} position={[0, ridge.y, ridge.z]} scale={ridge.scale}>
-          <mesh position={[0, 1, 0]} rotation={[0, 0, Math.PI * 0.04]}>
-            <coneGeometry args={[20, 17, 9]} />
-            <meshStandardMaterial color={ridge.color} roughness={1} flatShading />
-          </mesh>
-          <mesh position={[-19, 0, 1]} rotation={[0, 0, -Math.PI * 0.08]}>
-            <coneGeometry args={[14, 12, 9]} />
-            <meshStandardMaterial color={ridge.color} roughness={1} flatShading />
-          </mesh>
-          <mesh position={[20, 0, 2]} rotation={[0, 0, Math.PI * 0.08]}>
-            <coneGeometry args={[15, 13, 9]} />
-            <meshStandardMaterial color={ridge.color} roughness={1} flatShading />
-          </mesh>
-        </group>
-      ))}
-    </>
-  );
-}
-
-function ValleyForest() {
-  const trees = useMemo<TreeSpec[]>(() => {
-    const values: TreeSpec[] = [];
-    const clusters = [
-      { x: -13, z: -31, count: 8, spread: 5 },
-      { x: 13, z: -24, count: 7, spread: 5 },
-      { x: -15, z: -5, count: 8, spread: 6 },
-      { x: 16, z: 4, count: 9, spread: 6 },
-      { x: -14, z: 25, count: 7, spread: 6 },
-      { x: 14, z: 31, count: 8, spread: 6 },
-    ];
-
-    clusters.forEach((cluster, clusterIndex) => {
-      for (let i = 0; i < cluster.count; i += 1) {
-        const angle = i * 2.399 + clusterIndex * 0.7;
-        const radius = cluster.spread * (0.35 + ((i * 17) % 10) / 10);
-        values.push({
-          x: cluster.x + Math.cos(angle) * radius,
-          z: cluster.z + Math.sin(angle) * radius,
-          s: 0.7 + ((i + clusterIndex) % 5) * 0.11,
-          rot: angle,
-        });
-      }
-    });
-    return values;
-  }, []);
-
   return (
     <group>
-      {trees.map((tree, index) => (
-        <group key={index} position={[tree.x, 0, tree.z]} rotation={[0, tree.rot, 0]} scale={tree.s}>
-          <mesh position={[0, 0.7, 0]}>
-            <cylinderGeometry args={[0.16, 0.24, 1.7, 7]} />
-            <meshStandardMaterial color="#5a4736" roughness={1} />
-          </mesh>
-          <mesh position={[0, 1.9, 0]}>
-            <coneGeometry args={[1.15, 2.9, 7]} />
-            <meshStandardMaterial color="#2f5741" roughness={1} flatShading />
-          </mesh>
-          <mesh position={[0, 2.75, 0]} scale={0.78}>
-            <coneGeometry args={[1.05, 2.2, 7]} />
-            <meshStandardMaterial color="#3d6a4d" roughness={1} flatShading />
+      {walls.map((wall, index) => (
+        <group key={index} position={[wall.x, wall.y, wall.z]} rotation={[0, wall.rot, 0]} scale={[wall.sx, 1, wall.sz]}>
+          <mesh rotation={[0, 0, index % 2 ? 0.08 : -0.08]}>
+            <coneGeometry args={[16, 18, 12]} />
+            <meshStandardMaterial color={index < 2 ? '#526c60' : '#60786b'} roughness={1} flatShading />
           </mesh>
         </group>
       ))}
@@ -101,34 +51,59 @@ function ValleyForest() {
   );
 }
 
-function Stream({ points, width = 0.7 }: { points: Point[]; width?: number }) {
-  const curve = useMemo(() => new THREE.CatmullRomCurve3(points.map((p) => new THREE.Vector3(...p))), [points]);
-  const geometry = useMemo(() => new THREE.TubeGeometry(curve, 42, width, 6, false), [curve, width]);
+function ValleyGround() {
+  return (
+    <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.42, 1]} receiveShadow>
+        <planeGeometry args={[116, 136]} />
+        <meshStandardMaterial color="#526e50" roughness={1} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.37, 10]} receiveShadow>
+        <planeGeometry args={[28, 116]} />
+        <meshStandardMaterial color="#71805e" roughness={0.98} />
+      </mesh>
+      <mesh position={[-25, 2.2, 8]} rotation={[0, 0, -0.28]}>
+        <boxGeometry args={[18, 9, 92]} />
+        <meshStandardMaterial color="#405b49" roughness={1} />
+      </mesh>
+      <mesh position={[25, 2.6, 11]} rotation={[0, 0, 0.3]}>
+        <boxGeometry args={[18, 10, 98]} />
+        <meshStandardMaterial color="#3d5747" roughness={1} />
+      </mesh>
+    </group>
+  );
+}
 
+function Stream({ points, width = 0.7 }: { points: Point[]; width?: number }) {
+  const curve = useMemo(
+    () => new THREE.CatmullRomCurve3(points.map((point) => new THREE.Vector3(...point)), false, 'catmullrom', 0.5),
+    [points],
+  );
+  const geometry = useMemo(() => new THREE.TubeGeometry(curve, 64, width, 8, false), [curve, width]);
   return (
     <mesh geometry={geometry}>
-      <meshPhysicalMaterial color="#4f9faf" roughness={0.12} metalness={0.04} transmission={0.05} transparent opacity={0.84} />
+      <meshPhysicalMaterial color="#5b9eaa" roughness={0.1} metalness={0.02} transmission={0.12} transparent opacity={0.8} />
     </mesh>
   );
 }
 
-function Waterfall({ position, rotation = [0, 0, 0] as Point }: { position: Point; rotation?: Point }) {
+function Waterfall({ position, scale = 1 }: { position: Point; scale?: number }) {
   const mist = useRef<THREE.Mesh>(null);
   useFrame((state) => {
     if (!mist.current) return;
-    mist.current.position.y = Math.sin(state.clock.elapsedTime * 1.1) * 0.025;
-    mist.current.scale.x = 1 + Math.sin(state.clock.elapsedTime * 0.7) * 0.025;
+    const pulse = Math.sin(state.clock.elapsedTime * 0.8) * 0.04;
+    mist.current.scale.set(1 + pulse, 1, 1 - pulse * 0.5);
+    mist.current.position.y = -2.15 + Math.sin(state.clock.elapsedTime * 1.1) * 0.025;
   });
-
   return (
-    <group position={position} rotation={rotation}>
-      <mesh position={[0, -0.8, 0]}>
-        <planeGeometry args={[1.4, 3.2]} />
-        <meshPhysicalMaterial color="#8ed1d8" roughness={0.08} transparent opacity={0.72} side={THREE.DoubleSide} />
+    <group position={position} scale={scale}>
+      <mesh position={[0, -0.7, 0]}>
+        <planeGeometry args={[1.15, 3.5]} />
+        <meshPhysicalMaterial color="#a9dce0" roughness={0.06} transparent opacity={0.65} side={THREE.DoubleSide} />
       </mesh>
-      <mesh ref={mist} position={[0, -2.35, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[0.95, 20]} />
-        <meshStandardMaterial color="#d9efeb" transparent opacity={0.18} depthWrite={false} />
+      <mesh ref={mist} position={[0, -2.15, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[1.05, 28]} />
+        <meshStandardMaterial color="#e5f2ef" transparent opacity={0.16} depthWrite={false} />
       </mesh>
     </group>
   );
@@ -138,65 +113,40 @@ function LivingWater() {
   const water = useRef<THREE.Group>(null);
   useFrame((state) => {
     if (!water.current) return;
-    water.current.position.x = Math.sin(state.clock.elapsedTime * 0.18) * 0.025;
+    water.current.position.x = Math.sin(state.clock.elapsedTime * 0.15) * 0.018;
   });
-
   return (
-    <group ref={water} position={[0, -0.03, 0]}>
-      {/* Upper mountain feeder */}
-      <Stream width={0.32} points={[[-8, 1.8, -51], [-6.5, 1.1, -44], [-4.8, 0.45, -37], [-3.2, 0.1, -30]]} />
-      <Waterfall position={[-4.4, 1.1, -35]} rotation={[0, 0.22, 0]} />
-
-      {/* Western creek */}
-      <Stream width={0.38} points={[[-4, 0, -34], [-6.2, -0.05, -27], [-7.8, -0.08, -20], [-6.8, -0.12, -13], [-8.2, -0.16, -5], [-6.3, -0.18, 4]]} />
-
-      {/* Main river */}
-      <Stream width={0.62} points={[[4.8, 0, -31], [2.4, -0.04, -24], [4.1, -0.07, -17], [2.0, -0.1, -10], [3.2, -0.13, -2], [0.4, -0.15, 6], [-2.0, -0.17, 14], [-5.5, -0.19, 23], [-2.8, -0.21, 34], [-7.2, -0.22, 44]]} />
-      <Stream width={0.42} points={[[7.5, -0.01, -12], [8.8, -0.08, -5], [7.6, -0.12, 2], [9.5, -0.16, 10], [8.2, -0.18, 18]]} />
-
-      {/* Quiet oxbow / pond */}
-      <mesh position={[-8.2, -0.1, 18]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[2.5, 32]} />
-        <meshPhysicalMaterial color="#579eaa" roughness={0.14} metalness={0.04} transparent opacity={0.82} />
+    <group ref={water}>
+      <Stream width={0.25} points={[[-9, 2.1, -52], [-7.4, 1.25, -46], [-5.7, 0.55, -40], [-4.8, 0.05, -34]]} />
+      <Waterfall position={[-4.9, 1.15, -35]} scale={0.9} />
+      <Stream width={0.36} points={[[-4.7, -0.04, -34], [-6.1, -0.08, -28], [-7.8, -0.12, -21], [-8.5, -0.16, -14], [-7.3, -0.19, -7], [-8.2, -0.22, 1]]} />
+      {/* Reserved crossing: deliberately empty for the future premium bridge. */}
+      <Stream width={0.42} points={[[-8.2, -0.22, 1], [-6.4, -0.25, 8], [-4.2, -0.27, 15], [-1.2, -0.29, 20]]} />
+      <Stream width={0.58} points={[[4.5, -0.05, -33], [2.5, -0.1, -27], [4.1, -0.14, -20], [2.0, -0.18, -13], [3.8, -0.21, -5], [1.0, -0.24, 3], [2.8, -0.27, 11], [0.3, -0.29, 18], [-2.6, -0.31, 25], [-5.4, -0.33, 34], [-3.2, -0.35, 44]]} />
+      <Stream width={0.3} points={[[10.2, -0.08, -11], [8.8, -0.13, -5], [9.4, -0.18, 2], [7.6, -0.22, 10], [8.8, -0.26, 17]]} />
+      <mesh position={[-8.2, -0.2, 28]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[2.7, 40]} />
+        <meshPhysicalMaterial color="#589ca7" roughness={0.13} metalness={0.02} transparent opacity={0.78} />
       </mesh>
     </group>
   );
 }
 
-function ValleyGround() {
+function MeadowPatches() {
+  const patches = useMemo<MeadowPatch[]>(() => [
+    { x: -10, z: -18, sx: 2.4, sz: 1.2, rotation: -0.18 },
+    { x: 10, z: -9, sx: 1.8, sz: 1.0, rotation: 0.26 },
+    { x: -12, z: 8, sx: 2.6, sz: 1.35, rotation: 0.12 },
+    { x: 12, z: 19, sx: 2.2, sz: 1.3, rotation: -0.2 },
+    { x: -5, z: 31, sx: 2.8, sz: 1.5, rotation: 0.15 },
+    { x: 7, z: 42, sx: 2.4, sz: 1.2, rotation: -0.12 },
+  ], []);
   return (
-    <>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.28, 0]} receiveShadow>
-        <planeGeometry args={[120, 130, 1, 1]} />
-        <meshStandardMaterial color="#557958" roughness={1} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.255, 7]} receiveShadow>
-        <planeGeometry args={[26, 112, 1, 1]} />
-        <meshStandardMaterial color="#758665" roughness={0.98} />
-      </mesh>
-      <mesh position={[-23, 4, -5]} rotation={[0, 0, -0.32]}>
-        <boxGeometry args={[14, 10, 70]} />
-        <meshStandardMaterial color="#45634f" roughness={1} />
-      </mesh>
-      <mesh position={[23, 4, 7]} rotation={[0, 0, 0.28]}>
-        <boxGeometry args={[14, 10, 72]} />
-        <meshStandardMaterial color="#3f5d4b" roughness={1} />
-      </mesh>
-    </>
-  );
-}
-
-function Footbridge({ position }: { position: Point }) {
-  return (
-    <group position={position} rotation={[0, 0.08, 0]}>
-      <mesh position={[0, 1.05, 0]}>
-        <boxGeometry args={[7, 0.22, 0.8]} />
-        <meshStandardMaterial color="#745b40" roughness={0.85} />
-      </mesh>
-      {[-2.7, 2.7].map((x) => (
-        <mesh key={x} position={[x, 0.5, 0]}>
-          <boxGeometry args={[0.22, 1.1, 0.55]} />
-          <meshStandardMaterial color="#644b36" roughness={0.9} />
+    <group>
+      {patches.map((patch, index) => (
+        <mesh key={index} position={[patch.x, -0.06, patch.z]} rotation={[-Math.PI / 2, 0, patch.rotation]} scale={[patch.sx, patch.sz, 1]}>
+          <circleGeometry args={[1, 24]} />
+          <meshStandardMaterial color={index % 2 ? '#78935e' : '#6f8957'} roughness={1} transparent opacity={0.8} />
         </mesh>
       ))}
     </group>
@@ -209,59 +159,29 @@ function RailwayScene() {
   const train = useRef<THREE.Group>(null);
   const stationScene = useMemo(() => station.scene.clone(true), [station.scene]);
   const trainScene = useMemo(() => express.scene.clone(true), [express.scene]);
-
   useFrame((state) => {
     if (!train.current) return;
-    train.current.position.x = Math.sin(state.clock.elapsedTime * 0.045) * 2.2;
-    train.current.position.z = 30 + Math.cos(state.clock.elapsedTime * 0.045) * 0.8;
+    const phase = state.clock.elapsedTime * 0.038;
+    train.current.position.x = 7 + Math.sin(phase) * 1.8;
+    train.current.position.z = 23 + Math.cos(phase) * 0.45;
   });
-
   return (
-    <>
+    <group>
       <primitive object={stationScene} position={[7, -0.15, 28]} scale={1.05} />
       <group ref={train} position={[7, 0.05, 23]} rotation={[0, Math.PI * 0.5, 0]}>
         <primitive object={trainScene} scale={0.92} />
       </group>
-      <Footbridge position={[4.5, 0, 14]} />
-      <Footbridge position={[-2, 0, 38]} rotation={[0, -0.12, 0]} />
-    </>
-  );
-}
-
-function MeadowDetails() {
-  const patches = useMemo(() => [
-    [-9, -10, 1.4], [10, -5, 1.1], [-11, 9, 1.8], [11, 16, 1.5], [-4, 29, 1.2], [4, 45, 1.6],
-  ] as Array<[number, number, number]>, []);
-
-  return (
-    <group>
-      {patches.map(([x, z, s], index) => (
-        <group key={index} position={[x, -0.08, z]} scale={s}>
-          <mesh rotation={[-Math.PI / 2, 0, 0]}>
-            <circleGeometry args={[1.4, 10]} />
-            <meshStandardMaterial color="#668c57" roughness={1} />
-          </mesh>
-          <mesh position={[0.35, 0.25, 0.1]} rotation={[0, 0, 0.2]}>
-            <coneGeometry args={[0.15, 0.75, 5]} />
-            <meshStandardMaterial color="#82965a" roughness={1} />
-          </mesh>
-          <mesh position={[-0.35, 0.3, -0.2]} rotation={[0, 0, -0.25]}>
-            <coneGeometry args={[0.12, 0.9, 5]} />
-            <meshStandardMaterial color="#78915a" roughness={1} />
-          </mesh>
-        </group>
-      ))}
     </group>
   );
 }
 
-function ValleyLighting() {
+function ValleyAtmosphere() {
   return (
     <>
-      <ambientLight intensity={0.95} />
-      <hemisphereLight args={['#dbe9d4', '#385443', 1.5]} />
-      <directionalLight position={[10, 20, 8]} intensity={2.8} castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
-      <fog attach="fog" args={['#a8c7bd', 38, 105]} />
+      <ambientLight intensity={0.82} />
+      <hemisphereLight args={['#dbe9d5', '#334c3e', 1.35]} />
+      <directionalLight position={[12, 24, 10]} intensity={2.35} castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
+      <fog attach="fog" args={['#a9c8bf', 42, 118]} />
     </>
   );
 }
@@ -269,13 +189,13 @@ function ValleyLighting() {
 function SkyAndClouds() {
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-      <View style={[styles.skyBand, { top: 0, height: '48%' }]} />
-      <View style={[styles.skyGlow, { top: '11%', left: '61%' }]} />
-      <View style={[styles.cloud, { top: '10%', left: '7%', width: 180, height: 42 }]} />
-      <View style={[styles.cloud, { top: '19%', left: '58%', width: 230, height: 52, opacity: 0.62 }]} />
-      <View style={[styles.cloud, { top: '30%', left: '28%', width: 145, height: 36, opacity: 0.46 }]} />
-      <View style={[styles.cloud, { top: '38%', left: '72%', width: 120, height: 32, opacity: 0.38 }]} />
-      <View style={[styles.haze, { top: '37%' }]} />
+      <View style={[styles.sky, { height: '56%' }]} />
+      <View style={[styles.sunGlow, { top: '8%', left: '66%' }]} />
+      <View style={[styles.cloud, { top: '8%', left: '5%', width: 180, height: 38, opacity: 0.78 }]} />
+      <View style={[styles.cloud, { top: '17%', left: '55%', width: 245, height: 48, opacity: 0.62 }]} />
+      <View style={[styles.cloud, { top: '28%', left: '24%', width: 155, height: 32, opacity: 0.45 }]} />
+      <View style={[styles.cloud, { top: '35%', left: '76%', width: 125, height: 28, opacity: 0.34 }]} />
+      <View style={styles.haze} />
     </View>
   );
 }
@@ -284,16 +204,15 @@ export function EmeraldValleyRealWorld() {
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       <SkyAndClouds />
-      <Canvas dpr={[1, 1.5]} shadows gl={{ antialias: true, powerPreference: 'high-performance' }} camera={{ position: [18, 11, 20], fov: 40, near: 0.1, far: 150 }} style={styles.canvas}>
-        <ValleyLighting />
-        <DistantRidges />
+      <Canvas dpr={[1, 1.5]} shadows gl={{ antialias: true, powerPreference: 'high-performance' }} camera={{ position: [17, 10.5, 22], fov: 40, near: 0.1, far: 160 }} style={styles.canvas}>
+        <ValleyAtmosphere />
+        <DistantValleyWalls />
         <Suspense fallback={null}>
           <MountainBackdrop />
         </Suspense>
         <ValleyGround />
-        <ValleyForest />
+        <MeadowPatches />
         <LivingWater />
-        <MeadowDetails />
         <Suspense fallback={null}>
           <RailwayScene />
         </Suspense>
@@ -304,8 +223,8 @@ export function EmeraldValleyRealWorld() {
 
 const styles = StyleSheet.create({
   canvas: { flex: 1, backgroundColor: 'transparent' },
-  skyBand: { position: 'absolute', left: 0, right: 0, backgroundColor: '#9ec8d6' },
-  skyGlow: { position: 'absolute', width: 190, height: 190, borderRadius: 95, backgroundColor: '#f5e5b1', opacity: 0.3 },
-  cloud: { position: 'absolute', borderRadius: 32, backgroundColor: '#f3f6f2', opacity: 0.78 },
-  haze: { position: 'absolute', left: 0, right: 0, height: 190, backgroundColor: '#b9d0c8', opacity: 0.34 },
+  sky: { position: 'absolute', left: 0, right: 0, top: 0, backgroundColor: '#9fcbd7' },
+  sunGlow: { position: 'absolute', width: 210, height: 210, borderRadius: 105, backgroundColor: '#f4e5b5', opacity: 0.26 },
+  cloud: { position: 'absolute', borderRadius: 34, backgroundColor: '#f4f7f3' },
+  haze: { position: 'absolute', left: 0, right: 0, top: '34%', height: 240, backgroundColor: '#bfd4ce', opacity: 0.24 },
 });
