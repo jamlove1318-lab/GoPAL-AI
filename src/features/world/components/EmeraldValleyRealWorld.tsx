@@ -11,8 +11,9 @@ const MOUNTAINSIDE = require('../../../../assets/world/emerald-valley/landscape/
 type Point = [number, number, number];
 type MeadowPatch = { x: number; z: number; sx: number; sz: number; rotation: number };
 type Rock = { x: number; y: number; z: number; sx: number; sy: number; sz: number; rotation: number };
+type Tree = { x: number; z: number; scale: number; rotation: number; tone: number };
 
-/** Emerald Valley: the visible world is the product. */
+/** Emerald Valley: geography first, landmarks second, atmosphere and details last. */
 function MountainBackdrop() {
   const mountain = useLoader(GLTFLoader, MOUNTAINSIDE);
   const scene = useMemo(() => mountain.scene.clone(true), [mountain.scene]);
@@ -65,6 +66,28 @@ function ForegroundRocks() {
     <icosahedronGeometry args={[1, 2]} />
     <meshStandardMaterial color={index % 2 ? '#687068' : '#77776c'} roughness={0.94} />
   </mesh>)}</group>;
+}
+
+function ValleyTreeFiller() {
+  const trees = useMemo<Tree[]>(() => [
+    { x: -21, z: -25, scale: 1.8, rotation: 0.2, tone: 0 }, { x: -18, z: -19, scale: 1.35, rotation: -0.4, tone: 1 },
+    { x: -15, z: -12, scale: 1.55, rotation: 0.55, tone: 2 }, { x: -13, z: -4, scale: 1.15, rotation: -0.25, tone: 1 },
+    { x: -17, z: 5, scale: 1.75, rotation: 0.35, tone: 0 }, { x: -20, z: 14, scale: 1.3, rotation: -0.2, tone: 2 },
+    { x: -18, z: 25, scale: 1.65, rotation: 0.45, tone: 1 }, { x: -21, z: 36, scale: 1.25, rotation: -0.5, tone: 0 },
+    { x: 18, z: -28, scale: 1.65, rotation: -0.25, tone: 1 }, { x: 21, z: -19, scale: 1.25, rotation: 0.45, tone: 0 },
+    { x: 18, z: -8, scale: 1.55, rotation: -0.5, tone: 2 }, { x: 20, z: 2, scale: 1.15, rotation: 0.3, tone: 1 },
+    { x: 19, z: 12, scale: 1.8, rotation: -0.3, tone: 0 }, { x: 22, z: 24, scale: 1.35, rotation: 0.5, tone: 2 },
+    { x: 19, z: 34, scale: 1.55, rotation: -0.2, tone: 1 }, { x: 22, z: 43, scale: 1.2, rotation: 0.35, tone: 0 },
+  ], []);
+  const foliage = ['#36523d', '#426447', '#4c6e49'];
+  return <group>
+    {trees.map((tree, index) => <group key={index} position={[tree.x, -0.25, tree.z]} rotation={[0, tree.rotation, 0]} scale={tree.scale}>
+      <mesh position={[0, 1.35, 0]} castShadow><cylinderGeometry args={[0.11, 0.18, 2.7, 7]} /><meshStandardMaterial color="#5b4b3b" roughness={0.95} /></mesh>
+      <mesh position={[0, 2.7, 0]} castShadow><coneGeometry args={[1.0, 1.65, 9]} /><meshStandardMaterial color={foliage[tree.tone]} roughness={0.96} /></mesh>
+      <mesh position={[0, 3.45, 0]} castShadow><coneGeometry args={[0.76, 1.35, 9]} /><meshStandardMaterial color={foliage[(tree.tone + 1) % foliage.length]} roughness={0.96} /></mesh>
+      <mesh position={[0, 4.05, 0]} castShadow><coneGeometry args={[0.48, 1.0, 9]} /><meshStandardMaterial color={foliage[tree.tone]} roughness={0.96} /></mesh>
+    </group>)}
+  </group>;
 }
 
 function Stream({ points, width = 0.7 }: { points: Point[]; width?: number }) {
@@ -146,19 +169,37 @@ export function EmeraldValleyRealWorld() {
       <ValleyAtmosphere />
       <Suspense fallback={null}><MountainBackdrop /></Suspense>
       <ValleyGround />
+      <ValleyTreeFiller />
       <MeadowPatches />
       <ValleyTrails />
       <ForegroundRocks />
       <LivingWater />
       <Suspense fallback={null}><RailwayScene /></Suspense>
     </Canvas>
-    {/* Deliberately above the Canvas: sky dressing is player-visible, not hidden behind it. */}
     <SkyAndClouds />
   </View>;
 }
 
 const styles = StyleSheet.create({
   canvas: { flex: 1 },
-  sunGlow: { position: 'absolute', width: 210, height: 210, borderRadius: 105, backgroundColor: '#f4e5b5', opacity: 0.26 },
-  cloud: { position: 'absolute', borderRadius: 34, backgroundColor: '#f4f7f3' },
+  cloud: {
+    position: 'absolute',
+    borderRadius: 999,
+    backgroundColor: '#f4fbf7',
+    shadowColor: '#ffffff',
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  sunGlow: {
+    position: 'absolute',
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    backgroundColor: 'rgba(255,244,198,0.34)',
+    shadowColor: '#fff2bd',
+    shadowOpacity: 0.45,
+    shadowRadius: 34,
+    shadowOffset: { width: 0, height: 0 },
+  },
 });
