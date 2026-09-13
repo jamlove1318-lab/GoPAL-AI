@@ -11,13 +11,7 @@ const MOUNTAINSIDE = require('../../../../assets/world/emerald-valley/landscape/
 type Point = [number, number, number];
 type MeadowPatch = { x: number; z: number; sx: number; sz: number; rotation: number };
 
-/**
- * Emerald Valley world composition: geography first, landmarks second, details last.
- * Real runtime assets: Poly Haven Mountainside + Steam Era Railway station/train.
- * The >80 MB photogrammetry tree source remains preserved, but needs an optimized
- * mobile derivative before it can be loaded here. There is intentionally no bridge;
- * the creek crossing stays open for the future premium bridge asset.
- */
+/** Emerald Valley: the visible world is the product. */
 function MountainBackdrop() {
   const mountain = useLoader(GLTFLoader, MOUNTAINSIDE);
   const scene = useMemo(() => mountain.scene.clone(true), [mountain.scene]);
@@ -26,38 +20,21 @@ function MountainBackdrop() {
     { position: [16, 6.3, -69] as Point, scale: 0.073, rotation: 0.2 },
     { position: [34, 4.5, -53] as Point, scale: 0.052, rotation: -0.34 },
     { position: [-34, 4.1, -46] as Point, scale: 0.05, rotation: 0.28 },
+    { position: [-20, 3.1, -27] as Point, scale: 0.045, rotation: -0.12 },
   ], []);
-  return (
-    <group>
-      {ridges.map((ridge, index) => (
-        <primitive key={index} object={scene.clone(true)} position={ridge.position} rotation={[0, Math.PI + ridge.rotation, 0]} scale={ridge.scale} />
-      ))}
-      <primitive object={scene.clone(true)} position={[-5, 5.4, -43]} rotation={[0, Math.PI, 0]} scale={0.08} />
-    </group>
-  );
+  return <group>
+    {ridges.map((ridge, index) => <primitive key={index} object={scene.clone(true)} position={ridge.position} rotation={[0, Math.PI + ridge.rotation, 0]} scale={ridge.scale} />)}
+    <primitive object={scene.clone(true)} position={[-5, 5.4, -43]} rotation={[0, Math.PI, 0]} scale={0.08} />
+  </group>;
 }
 
 function ValleyGround() {
-  return (
-    <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 4]} receiveShadow>
-        <planeGeometry args={[124, 148]} />
-        <meshStandardMaterial color="#526d4f" roughness={0.98} />
-      </mesh>
-      <mesh position={[-28, 1.8, 7]} rotation={[0, 0, -0.24]}>
-        <planeGeometry args={[34, 118]} />
-        <meshStandardMaterial color="#405c49" roughness={1} side={THREE.DoubleSide} />
-      </mesh>
-      <mesh position={[28, 2.1, 10]} rotation={[0, 0, 0.25]}>
-        <planeGeometry args={[36, 122]} />
-        <meshStandardMaterial color="#3f5947" roughness={1} side={THREE.DoubleSide} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.43, 17]} receiveShadow>
-        <planeGeometry args={[34, 112]} />
-        <meshStandardMaterial color="#6f815b" roughness={1} />
-      </mesh>
-    </group>
-  );
+  return <group>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 4]} receiveShadow><planeGeometry args={[124, 148]} /><meshStandardMaterial color="#526d4f" roughness={0.98} /></mesh>
+    <mesh position={[-28, 1.8, 7]} rotation={[0, 0, -0.24]}><planeGeometry args={[34, 118]} /><meshStandardMaterial color="#405c49" roughness={1} side={THREE.DoubleSide} /></mesh>
+    <mesh position={[28, 2.1, 10]} rotation={[0, 0, 0.25]}><planeGeometry args={[36, 122]} /><meshStandardMaterial color="#3f5947" roughness={1} side={THREE.DoubleSide} /></mesh>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.43, 17]} receiveShadow><planeGeometry args={[34, 112]} /><meshStandardMaterial color="#6f815b" roughness={1} /></mesh>
+  </group>;
 }
 
 function Stream({ points, width = 0.7 }: { points: Point[]; width?: number }) {
@@ -74,29 +51,25 @@ function Waterfall({ position, scale = 1 }: { position: Point; scale?: number })
     mist.current.scale.set(1 + pulse, 1, 1 - pulse * 0.5);
     mist.current.position.y = -2.15 + Math.sin(state.clock.elapsedTime * 1.1) * 0.025;
   });
-  return (
-    <group position={position} scale={scale}>
-      <mesh position={[0, -0.7, 0]}><planeGeometry args={[1.15, 3.5]} /><meshPhysicalMaterial color="#a9dce0" roughness={0.06} transparent opacity={0.65} side={THREE.DoubleSide} /></mesh>
-      <mesh ref={mist} position={[0, -2.15, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[1.05, 28]} /><meshStandardMaterial color="#e5f2ef" transparent opacity={0.16} depthWrite={false} /></mesh>
-    </group>
-  );
+  return <group position={position} scale={scale}>
+    <mesh position={[0, -0.7, 0]}><planeGeometry args={[1.15, 3.5]} /><meshPhysicalMaterial color="#a9dce0" roughness={0.06} transparent opacity={0.65} side={THREE.DoubleSide} /></mesh>
+    <mesh ref={mist} position={[0, -2.15, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[1.05, 28]} /><meshStandardMaterial color="#e5f2ef" transparent opacity={0.16} depthWrite={false} /></mesh>
+  </group>;
 }
 
 function LivingWater() {
   const water = useRef<THREE.Group>(null);
   useFrame((state) => { if (water.current) water.current.position.x = Math.sin(state.clock.elapsedTime * 0.15) * 0.018; });
-  return (
-    <group ref={water}>
-      <Stream width={0.25} points={[[-9, 2.1, -52], [-7.4, 1.25, -46], [-5.7, 0.55, -40], [-4.8, 0.05, -34]]} />
-      <Waterfall position={[-4.9, 1.15, -35]} scale={0.9} />
-      <Stream width={0.36} points={[[-4.7, -0.04, -34], [-6.1, -0.08, -28], [-7.8, -0.12, -21], [-8.5, -0.16, -14], [-7.3, -0.19, -7], [-8.2, -0.22, 1]]} />
-      {/* Reserved crossing: open on purpose for the future premium bridge. */}
-      <Stream width={0.42} points={[[-8.2, -0.22, 1], [-6.4, -0.25, 8], [-4.2, -0.27, 15], [-1.2, -0.29, 20]]} />
-      <Stream width={0.58} points={[[4.5, -0.05, -33], [2.5, -0.1, -27], [4.1, -0.14, -20], [2.0, -0.18, -13], [3.8, -0.21, -5], [1.0, -0.24, 3], [2.8, -0.27, 11], [0.3, -0.29, 18], [-2.6, -0.31, 25], [-5.4, -0.33, 34], [-3.2, -0.35, 44]]} />
-      <Stream width={0.3} points={[[10.2, -0.08, -11], [8.8, -0.13, -5], [9.4, -0.18, 2], [7.6, -0.22, 10], [8.8, -0.26, 17]]} />
-      <mesh position={[-8.2, -0.2, 28]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[2.7, 40]} /><meshPhysicalMaterial color="#589ca7" roughness={0.13} metalness={0.02} transparent opacity={0.78} /></mesh>
-    </group>
-  );
+  return <group ref={water}>
+    <Stream width={0.25} points={[[-9, 2.1, -52], [-7.4, 1.25, -46], [-5.7, 0.55, -40], [-4.8, 0.05, -34]]} />
+    <Waterfall position={[-4.9, 1.15, -35]} scale={0.9} />
+    <Stream width={0.36} points={[[-4.7, -0.04, -34], [-6.1, -0.08, -28], [-7.8, -0.12, -21], [-8.5, -0.16, -14], [-7.3, -0.19, -7], [-8.2, -0.22, 1]]} />
+    {/* Reserved crossing: intentionally empty for the future premium bridge. */}
+    <Stream width={0.42} points={[[-8.2, -0.22, 1], [-6.4, -0.25, 8], [-4.2, -0.27, 15], [-1.2, -0.29, 20]]} />
+    <Stream width={0.58} points={[[4.5, -0.05, -33], [2.5, -0.1, -27], [4.1, -0.14, -20], [2.0, -0.18, -13], [3.8, -0.21, -5], [1.0, -0.24, 3], [2.8, -0.27, 11], [0.3, -0.29, 18], [-2.6, -0.31, 25], [-5.4, -0.33, 34], [-3.2, -0.35, 44]]} />
+    <Stream width={0.3} points={[[10.2, -0.08, -11], [8.8, -0.13, -5], [9.4, -0.18, 2], [7.6, -0.22, 10], [8.8, -0.26, 17]]} />
+    <mesh position={[-8.2, -0.2, 28]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[2.7, 40]} /><meshPhysicalMaterial color="#589ca7" roughness={0.13} metalness={0.02} transparent opacity={0.78} /></mesh>
+  </group>;
 }
 
 function MeadowPatches() {
@@ -124,21 +97,36 @@ function RailwayScene() {
 }
 
 function ValleyAtmosphere() {
-  return <><ambientLight intensity={0.78} /><hemisphereLight args={['#dcebe2', '#304b3d', 1.42]} /><directionalLight position={[12, 24, 10]} intensity={2.25} castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} /><fog attach="fog" args={['#a9c8bf', 34, 122]} /></>;
+  return <><color attach="background" args={['#9fcbd7']} /><ambientLight intensity={0.78} /><hemisphereLight args={['#dcebe2', '#304b3d', 1.42]} /><directionalLight position={[12, 24, 10]} intensity={2.25} castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} /><fog attach="fog" args={['#a9c8bf', 34, 122]} /></>;
 }
 
 function SkyAndClouds() {
-  return <View pointerEvents="none" style={StyleSheet.absoluteFill}><View style={[styles.sky, { height: '57%' }]} /><View style={[styles.sunGlow, { top: '7%', left: '66%' }]} /><View style={[styles.cloud, { top: '8%', left: '5%', width: 180, height: 38, opacity: 0.78 }]} /><View style={[styles.cloud, { top: '17%', left: '55%', width: 245, height: 48, opacity: 0.62 }]} /><View style={[styles.cloud, { top: '28%', left: '24%', width: 155, height: 32, opacity: 0.45 }]} /><View style={[styles.cloud, { top: '35%', left: '76%', width: 125, height: 28, opacity: 0.34 }]} /><View style={styles.haze} /></View>;
+  return <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+    <View style={[styles.cloud, { top: '8%', left: '5%', width: 180, height: 38, opacity: 0.78 }]} />
+    <View style={[styles.cloud, { top: '17%', left: '55%', width: 245, height: 48, opacity: 0.62 }]} />
+    <View style={[styles.cloud, { top: '28%', left: '24%', width: 155, height: 32, opacity: 0.45 }]} />
+    <View style={[styles.cloud, { top: '35%', left: '76%', width: 125, height: 28, opacity: 0.34 }]} />
+    <View style={[styles.sunGlow, { top: '7%', left: '66%' }]} />
+  </View>;
 }
 
 export function EmeraldValleyRealWorld() {
-  return <View pointerEvents="none" style={StyleSheet.absoluteFill}><SkyAndClouds /><Canvas dpr={[1, 1.5]} shadows gl={{ antialias: true, powerPreference: 'high-performance' }} camera={{ position: [17, 10.5, 22], fov: 40, near: 0.1, far: 170 }} style={styles.canvas}><ValleyAtmosphere /><Suspense fallback={null}><MountainBackdrop /></Suspense><ValleyGround /><MeadowPatches /><LivingWater /><Suspense fallback={null}><RailwayScene /></Suspense></Canvas></View>;
+  return <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+    <Canvas dpr={[1, 1.5]} shadows gl={{ antialias: true, powerPreference: 'high-performance' }} camera={{ position: [17, 10.5, 22], fov: 40, near: 0.1, far: 170 }} style={styles.canvas}>
+      <ValleyAtmosphere />
+      <Suspense fallback={null}><MountainBackdrop /></Suspense>
+      <ValleyGround />
+      <MeadowPatches />
+      <LivingWater />
+      <Suspense fallback={null}><RailwayScene /></Suspense>
+    </Canvas>
+    {/* Deliberately above the Canvas: sky dressing is player-visible, not hidden behind it. */}
+    <SkyAndClouds />
+  </View>;
 }
 
 const styles = StyleSheet.create({
-  canvas: { flex: 1, backgroundColor: 'transparent' },
-  sky: { position: 'absolute', left: 0, right: 0, top: 0, backgroundColor: '#9fcbd7' },
+  canvas: { flex: 1 },
   sunGlow: { position: 'absolute', width: 210, height: 210, borderRadius: 105, backgroundColor: '#f4e5b5', opacity: 0.26 },
   cloud: { position: 'absolute', borderRadius: 34, backgroundColor: '#f4f7f3' },
-  haze: { position: 'absolute', left: 0, right: 0, top: '34%', height: 240, backgroundColor: '#bfd4ce', opacity: 0.24 },
 });
