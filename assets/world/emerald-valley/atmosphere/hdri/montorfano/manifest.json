@@ -1,0 +1,33 @@
+{
+  "assetName": "Montorfano HDRI",
+  "sourceProvider": "Poly Haven",
+  "officialPageUrl": "https://polyhaven.com/a/montorfano",
+  "apiUrl": "https://api.polyhaven.com/files/montorfano",
+  "license": "CC0 1.0 Universal",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "downloadDate": "2026-09-13",
+  "category": "atmosphere/hdri",
+  "candidateUse": [
+    "natural outdoor lighting reference",
+    "sky/environment lighting",
+    "lighting tests",
+    "color/material validation"
+  ],
+  "technicalSpecifications": {
+    "format": "Radiance RGBE HDR (.hdr)",
+    "resolution": "4K (4096 x 2048)",
+    "dynamicRange": "High Dynamic Range (EV unclipped)"
+  },
+  "files": [
+    {
+      "filename": "montorfano_4k.hdr",
+      "localPath": "source/montorfano_4k.hdr",
+      "originalUrl": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/4k/montorfano_4k.hdr",
+      "fileSizeBytes": 26746852,
+      "sha256": "d1627fcde19c3b4488b1c8e148738bc1c2f5baad4480cfcaddbd51bccc9b0835",
+      "md5": "8e913c477c1b89c34d4b84fcf3917943",
+      "role": "primary-hdri-environment"
+    }
+  ],
+  "totalBytes": 26746852
+}
