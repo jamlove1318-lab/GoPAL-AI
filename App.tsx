@@ -1,5 +1,5 @@
 import './global.css';
-import React,{useEffect,useRef,useState}from'react-native';
+import React,{useEffect,useRef,useState}from'react';
 import{Animated,Easing,View,Text,Pressable}from'react-native';
 import{StatusBar}from'expo-status-bar';
 import{SafeAreaProvider}from'react-native-safe-area-context';
