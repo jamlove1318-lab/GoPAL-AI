@@ -1,0 +1,49 @@
+name: Remote Art Factory
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "tools/blender/**"
+      - "tools/unreal/**"
+      - ".github/workflows/remote-art-factory.yml"
+
+jobs:
+  blender-headless:
+    name: Blender headless factory check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup remote Blender
+        shell: bash
+        run: |
+          chmod +x tools/blender/install-blender.sh
+          ./tools/blender/install-blender.sh
+          echo "BLENDER_ROOT=${RUNNER_TEMP}/blender-5.0.1" >> "$GITHUB_ENV"
+
+      - name: Validate Blender automation
+        shell: bash
+        run: |
+          "$BLENDER_ROOT/blender" --background --python tools/blender/validate_headless.py
+
+  unreal-contract:
+    name: Unreal production bridge contract check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Unreal bridge files
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x tools/unreal/run-uat.sh
+          bash -n tools/unreal/run-uat.sh
+          test -s tools/unreal/README.md
+          echo "[OK] Unreal bridge contract is present."
+          echo "[INFO] Actual Unreal execution is intentionally reserved for a licensed self-hosted runner with UNREAL_ENGINE_ROOT."

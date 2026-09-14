@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# GoPAL-AI Cassidy Factory CLI Wrapper
+set -e
+
+# Resolve repository root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+export PYTHONPATH="${REPO_DIR}:${PYTHONPATH}"
+
+exec python3 -m factory.cli "$@"

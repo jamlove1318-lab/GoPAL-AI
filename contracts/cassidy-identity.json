@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "character": "Cassidy",
+  "role": "Companion & guide of Emerald Valley",
+  "version": "1.0.0",
+  "identity": {
+    "name": "Cassidy",
+    "description": "Living companion with warm chestnut hair, warm peach skin, emerald green attire, and signature Emerald Valley charm.",
+    "height_m": 1.62,
+    "proportions": {
+      "head_to_body_ratio": 0.24,
+      "shoulder_width_m": 0.36,
+      "torso_length_m": 0.46,
+      "leg_length_m": 0.80
+    }
+  },
+  "palette": {
+    "skin": "#f4c9a3",
+    "skin_shade": "#e7b489",
+    "blush": "#f6a98c",
+    "hair": "#5b3a29",
+    "hair_highlight": "#7a4f37",
+    "eye_sclera": "#ffffff",
+    "eye_pupil": "#3a2a1f",
+    "lips": "#b5485a",
+    "shirt": "#10b981",
+    "shirt_shade": "#0c9268",
+    "pants": "#334155",
+    "shoes": "#1e293b",
+    "charm_emerald": "#34d399",
+    "charm_gold": "#fbbf24"
+  },
+  "required_nodes": [
+    "Cassidy_Root",
+    "Cassidy_Body",
+    "Cassidy_Head",
+    "Cassidy_Face",
+    "Cassidy_Eye_L",
+    "Cassidy_Eye_R",
+    "Cassidy_Eyelid_L",
+    "Cassidy_Eyelid_R",
+    "Cassidy_Hand_L",
+    "Cassidy_Hand_R",
+    "Cassidy_Charm",
+    "Cassidy_Hair_Root"
+  ],
+  "required_animations": [
+    "idle",
+    "walk",
+    "run",
+    "turn",
+    "sit",
+    "talk",
+    "gesture",
+    "point",
+    "celebrate",
+    "think",
+    "react"
+  ],
+  "required_expressions": [
+    "expression_neutral",
+    "expression_happy",
+    "expression_curious",
+    "expression_surprised",
+    "expression_thoughtful",
+    "expression_excited",
+    "expression_concerned",
+    "expression_playful"
+  ],
+  "budget": {
+    "lod0_max_triangles": 25000,
+    "lod1_max_triangles": 12000,
+    "lod2_max_triangles": 5000,
+    "max_materials": 12,
+    "max_bones": 64
+  },
+  "staging_views": [
+    "front",
+    "three_quarter_left",
+    "three_quarter_right",
+    "side_left",
+    "side_right",
+    "portrait_face"
+  ]
+}

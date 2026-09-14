@@ -14,12 +14,21 @@ const WEATHER_BY_SEASON: Record<Season, string[]> = {
   winter: ['clear', 'snow', 'cold'],
 };
 
+/** Deterministic world weather: changes naturally without introducing random render state. */
+function weatherFor(date: Date, season: Season): string {
+  const day = Math.floor(date.getTime() / 86_400_000);
+  const hour = date.getHours();
+  const options = WEATHER_BY_SEASON[season];
+  return options[Math.abs(day + Math.floor(hour / 6)) % options.length];
+}
+
 export class EnvironmentEngine {
-  resolve(date: Date = new Date(), weather: string = 'clear'): EnvironmentContext {
+  resolve(date: Date = new Date(), weather?: string): EnvironmentContext {
+    const season = resolveSeason(date);
     return {
       timeOfDay: resolveTimeOfDay(date),
-      season: resolveSeason(date),
-      weather,
+      season,
+      weather: weather ?? weatherFor(date, season),
     };
   }
 
@@ -27,3 +36,5 @@ export class EnvironmentEngine {
     return `${ctx.season}.${ctx.timeOfDay}.${ctx.weather}`;
   }
 }
+
+export const environmentEngine = new EnvironmentEngine();
