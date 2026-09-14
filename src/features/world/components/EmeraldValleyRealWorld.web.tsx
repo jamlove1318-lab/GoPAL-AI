@@ -1,29 +1,47 @@
 import React, { Suspense, useMemo, useRef } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { Asset } from 'expo-asset';
+import { StyleSheet, View } from 'react-native';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
-const COUNTRY_STATION = require('../../../../assets/world/emerald-valley/railway/steam-era-railway/starter/starter-country-station.glb');
-const EXPRESS_PACIFIC = require('../../../../assets/world/emerald-valley/railway/steam-era-railway/models/steam-era-railway-and-rolling-stock-express-pacific-4--e04974dc.glb');
-const MOUNTAINSIDE = require('../../../../assets/world/emerald-valley/landscape/polyhaven-mountainside/model/mountainside.gltf');
-const MOUNTAINSIDE_BIN = require('../../../../assets/world/emerald-valley/landscape/polyhaven-mountainside/model/mountainside.bin');
-const MOUNTAINSIDE_NORMAL = require('../../../../assets/world/emerald-valley/landscape/polyhaven-mountainside/textures/mountainside_nor_gl_4k.jpg');
-const MOUNTAINSIDE_DIFFUSE = require('../../../../assets/world/emerald-valley/landscape/polyhaven-mountainside/textures/mountainside_diff_4k.jpg');
-const MOUNTAINSIDE_ARM = require('../../../../assets/world/emerald-valley/landscape/polyhaven-mountainside/textures/mountainside_arm_4k.jpg');
+// Web/Metro asset requires must be passed to Three as URL strings.
+// Keep this adapter independent from expo-asset so Expo Web never receives
+// an Asset object/number where a URL is expected.
+const COUNTRY_STATION = require('../../../../assets/world/emerald-valley/railway/steam-era-railway/starter/starter-country-station.glb') as string;
+const EXPRESS_PACIFIC = require('../../../../assets/world/emerald-valley/railway/steam-era-railway/models/steam-era-railway-and-rolling-stock-express-pacific-4--e04974dc.glb') as string;
+const MOUNTAINSIDE = require('../../../../assets/world/emerald-valley/landscape/polyhaven-mountainside/model/mountainside.gltf') as string;
+const MOUNTAINSIDE_BIN = require('../../../../assets/world/emerald-valley/landscape/polyhaven-mountainside/model/mountainside.bin') as string;
+const MOUNTAINSIDE_NORMAL = require('../../../../assets/world/emerald-valley/landscape/polyhaven-mountainside/textures/mountainside_nor_gl_4k.jpg') as string;
+const MOUNTAINSIDE_DIFFUSE = require('../../../../assets/world/emerald-valley/landscape/polyhaven-mountainside/textures/mountainside_diff_4k.jpg') as string;
+const MOUNTAINSIDE_ARM = require('../../../../assets/world/emerald-valley/landscape/polyhaven-mountainside/textures/mountainside_arm_4k.jpg') as string;
+
+function webAssetUrl(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (value && typeof value === 'object' && 'uri' in value && typeof (value as { uri?: unknown }).uri === 'string') {
+    return (value as { uri: string }).uri;
+  }
+  throw new Error(`Emerald Valley web asset did not resolve to a URL: ${String(value)}`);
+}
+
+const COUNTRY_STATION_URL = webAssetUrl(COUNTRY_STATION);
+const EXPRESS_PACIFIC_URL = webAssetUrl(EXPRESS_PACIFIC);
+const MOUNTAINSIDE_URL = webAssetUrl(MOUNTAINSIDE);
+const MOUNTAINSIDE_BIN_URL = webAssetUrl(MOUNTAINSIDE_BIN);
+const MOUNTAINSIDE_NORMAL_URL = webAssetUrl(MOUNTAINSIDE_NORMAL);
+const MOUNTAINSIDE_DIFFUSE_URL = webAssetUrl(MOUNTAINSIDE_DIFFUSE);
+const MOUNTAINSIDE_ARM_URL = webAssetUrl(MOUNTAINSIDE_ARM);
 
 type Point = [number, number, number];
 
 const mountainDependencies = new Map<string, string>([
-  ['mountainside.bin', Asset.fromModule(MOUNTAINSIDE_BIN).uri],
-  ['mountainside_nor_gl_4k.jpg', Asset.fromModule(MOUNTAINSIDE_NORMAL).uri],
-  ['mountainside_diff_4k.jpg', Asset.fromModule(MOUNTAINSIDE_DIFFUSE).uri],
-  ['mountainside_arm_4k.jpg', Asset.fromModule(MOUNTAINSIDE_ARM).uri],
+  ['mountainside.bin', MOUNTAINSIDE_BIN_URL],
+  ['mountainside_nor_gl_4k.jpg', MOUNTAINSIDE_NORMAL_URL],
+  ['mountainside_diff_4k.jpg', MOUNTAINSIDE_DIFFUSE_URL],
+  ['mountainside_arm_4k.jpg', MOUNTAINSIDE_ARM_URL],
 ]);
 
 function configureMountainLoader(loader: GLTFLoader) {
-  loader.manager.setURLModifier((url) => {
+  loader.manager.setURLModifier((url: string) => {
     const clean = url.split('?')[0].split('#')[0];
     const filename = clean.slice(clean.lastIndexOf('/') + 1);
     return mountainDependencies.get(filename) ?? url;
@@ -31,7 +49,7 @@ function configureMountainLoader(loader: GLTFLoader) {
 }
 
 function Mountains() {
-  const gltf = useLoader(GLTFLoader, MOUNTAINSIDE, configureMountainLoader);
+  const gltf = useLoader(GLTFLoader, MOUNTAINSIDE_URL, configureMountainLoader);
   const scene = useMemo(() => gltf.scene.clone(true), [gltf.scene]);
   const positions = useMemo(() => [
     [-20, 4.5, -55, 0.075], [12, 4.2, -62, 0.082], [36, 3.5, -50, 0.058],
@@ -78,8 +96,8 @@ function Trees() {
 }
 
 function Railway() {
-  const station = useLoader(GLTFLoader, COUNTRY_STATION);
-  const train = useLoader(GLTFLoader, EXPRESS_PACIFIC);
+  const station = useLoader(GLTFLoader, COUNTRY_STATION_URL);
+  const train = useLoader(GLTFLoader, EXPRESS_PACIFIC_URL);
   const movingTrain = useRef<THREE.Group>(null);
   const stationScene = useMemo(() => station.scene.clone(true), [station.scene]);
   const trainScene = useMemo(() => train.scene.clone(true), [train.scene]);
