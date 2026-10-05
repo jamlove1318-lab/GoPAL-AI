@@ -1,0 +1,67 @@
+{
+  "assetName": "Mountainside",
+  "sourceProvider": "Poly Haven",
+  "officialPageUrl": "https://polyhaven.com/a/mountainside",
+  "apiUrl": "https://api.polyhaven.com/files/mountainside",
+  "license": "CC0 1.0 Universal",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "downloadDate": "2026-09-12",
+  "category": "landscape",
+  "candidateUse": [
+    "foreground cliff",
+    "valley wall",
+    "rocky mountain formation",
+    "hero geological formation"
+  ],
+  "technicalSpecifications": {
+    "format": "glTF 2.0 (separate .gltf + .bin + textures)",
+    "triangles": 153472,
+    "textureResolution": "4K",
+    "dimensions": "10.5m tall"
+  },
+  "files": {
+    "model": [
+      {
+        "filename": "mountainside.gltf",
+        "localPath": "model/mountainside.gltf",
+        "originalUrl": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/mountainside/mountainside_4k.gltf",
+        "fileSizeBytes": 2776,
+        "sha256": "5c93eeffba983be5ac1974e469db6f0cb65f47c92b76f6a98ca4f7aa885823ed"
+      },
+      {
+        "filename": "mountainside.bin",
+        "localPath": "model/mountainside.bin",
+        "originalUrl": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/mountainside/mountainside.bin",
+        "fileSizeBytes": 4409280,
+        "sha256": "08e4ca60e050045de8224d12d23af84f9406bc558943038114d81e184158d953"
+      }
+    ],
+    "textures": [
+      {
+        "filename": "mountainside_diff_4k.jpg",
+        "localPath": "textures/mountainside_diff_4k.jpg",
+        "originalUrl": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/mountainside/mountainside_diff_4k.jpg",
+        "fileSizeBytes": 13492897,
+        "sha256": "a8dce0eb7e1a0979bd627644ce74d4cf504935cfbae1d4cd8c7fc734145eb089",
+        "md5Reported": "111e596e02d0ec169ab822427fb7ece9"
+      },
+      {
+        "filename": "mountainside_arm_4k.jpg",
+        "localPath": "textures/mountainside_arm_4k.jpg",
+        "originalUrl": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/mountainside/mountainside_arm_4k.jpg",
+        "fileSizeBytes": 10546227,
+        "sha256": "ad469f25399543b80af34f1bc96835187d579af7452c4f8d9a2a3ee708197de6",
+        "md5Reported": "7ac2b5f8a7a9717d42161a30d4a38031"
+      },
+      {
+        "filename": "mountainside_nor_gl_4k.jpg",
+        "localPath": "textures/mountainside_nor_gl_4k.jpg",
+        "originalUrl": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/mountainside/mountainside_nor_gl_4k.jpg",
+        "fileSizeBytes": 16250646,
+        "sha256": "b6f6e083f8731219fb509e424cdd5233829a504063082374c216a8dcd543c6da",
+        "md5Reported": "eb9ce5226771b941338360091f284ad4"
+      }
+    ]
+  },
+  "totalBytes": 44701826
+}

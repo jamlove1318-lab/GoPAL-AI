@@ -1,0 +1,20 @@
+{
+  "packId": "cassidy-canonical-2d",
+  "contractVersion": "1.0.0",
+  "identityVersion": "canonical-v1",
+  "sourceReference": "cassidy-character-reference.md",
+  "runtimeFormat": "custom",
+  "runtimeAssetVersion": "REPLACE_WITH_APPROVED_VERSION",
+  "masterResolution": {
+    "width": 0,
+    "height": 0
+  },
+  "layers": [],
+  "expressions": [],
+  "animations": [],
+  "charmStates": [],
+  "provenance": "custom-authored",
+  "humanApproved": false,
+  "sourceLicenseRecord": "REPLACE_WITH_LICENSE_OR_OWNERSHIP_RECORD",
+  "rendererAdapterVersion": "REPLACE_WITH_ADAPTER_VERSION"
+}

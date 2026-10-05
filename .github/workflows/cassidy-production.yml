@@ -1,0 +1,107 @@
+name: Cassidy Blender Production
+
+run-name: Cassidy production • ${{ github.event_name }} • ${{ github.ref_name }}
+
+on:
+  push:
+    branches:
+      - cassidy-blender-factory
+    paths:
+      - 'tools/blender/**'
+      - 'docs/cassidy-character-reference.md'
+      - '.github/workflows/cassidy-production.yml'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Production operation
+        required: true
+        default: build
+        type: choice
+        options:
+          - build
+          - validate
+          - export
+      clean:
+        description: Reset the Blender production scene before building
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cassidy-blender-production
+  cancel-in-progress: false
+
+env:
+  CASSIDY_SOURCE_SHA256: 3c121505651140ceb4d69fd1d8923f7788ffadd81672f5be14845a5f2c75c137
+
+jobs:
+  cassidy:
+    name: Cassidy • Blender production
+    runs-on: [self-hosted, linux, ARM64, cassidy-blender]
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout requested revision
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          clean: false
+
+      - name: Verify runner, Blender, and canonical reference
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Runner: $(hostname)"
+          echo "Architecture: $(uname -m)"
+          command -v blender
+          blender --background --factory-startup --python-expr 'import bpy; print("BLENDER_VERSION=" + bpy.app.version_string); print("BLENDER_PLATFORM=" + str(bpy.app.build_platform))'
+          python3 --version
+          test -f docs/cassidy-character-reference.md
+          echo "Canonical reference SHA256: $(sha256sum docs/cassidy-character-reference.md | awk '{print $1}')"
+
+      - name: Resolve genuine Cassidy source automatically
+        shell: bash
+        env:
+          PYTHONPATH: ${{ github.workspace }}/tools/blender
+        run: |
+          set -euo pipefail
+          SOURCE="$(python3 - <<'PY'
+          import os
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, str(Path.cwd() / 'tools/blender'))
+          from characters.cassidy_source_locator import discover
+          print(discover(Path.cwd()))
+          PY
+          )"
+          echo "CASSIDY_SOURCE_BLEND=$SOURCE" >> "$GITHUB_ENV"
+          echo "Resolved Cassidy source: $SOURCE"
+          sha256sum "$SOURCE"
+
+      - name: Prepare output directory
+        shell: bash
+        run: mkdir -p artifacts/cassidy
+
+      - name: Run Cassidy production pipeline
+        shell: bash
+        env:
+          PYTHONPATH: ${{ github.workspace }}/tools/blender
+        run: |
+          set -euo pipefail
+          if [ "${{ inputs.clean || 'true' }}" = "true" ]; then
+            blender --background --factory-startup --python tools/blender/characters/cassidy_ci_entry.py 2>&1 | tee artifacts/cassidy/blender.log
+          else
+            blender --background --python tools/blender/characters/cassidy_ci_entry.py 2>&1 | tee artifacts/cassidy/blender.log
+          fi
+
+      - name: Publish Cassidy build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cassidy-production-${{ github.run_id }}
+          path: artifacts/cassidy/
+          if-no-files-found: warn
+          retention-days: 14

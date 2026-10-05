@@ -1,0 +1,26 @@
+{
+  "assetName": "photogrammetry Tree – 3D ASSETS (Tree 02 / Tree 3 in pipeline)",
+  "sourceProvider": "3DTexel",
+  "officialPageUrl": "https://3dtexel.com/product/photogrammetry-tree-3d-assets-4/",
+  "productId": "9979",
+  "license": "CC0 1.0 Universal (Public Domain)",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "category": "nature/vegetation",
+  "status": "REQUIRES_NORMAL_LOGIN",
+  "reason": "Official site download interface requires user registration/login (logged-out state shows \"Login or Register to Download\"). Per acquisition protocol rules (\"If login is required: DO NOT bypass the login. Stop this asset only and report that normal authentication is required.\"), automated download was halted at the authentication barrier.",
+  "features": [
+    "Photogrammetry tree trunk and canopy mesh",
+    "8 PBR texture maps (Diffuse, Normal, Roughness, AO, Displacement, etc.)",
+    "Free for commercial & personal use",
+    "No attribution required"
+  ],
+  "availableFormatsOnSite": [
+    "high_poly_8k_png",
+    "high_poly_4k_png",
+    "lod_4k_tga",
+    "lod_2k_tga",
+    "lowpoly_4k_tga",
+    "lowpoly_2k_tga"
+  ],
+  "inspectionDate": "2026-09-12"
+}

@@ -1,4 +1,5 @@
 import type { WorldBuildingDefinition, WorldPropDefinition, WorldTheme } from '../components/LivingWorldPrimitives';
+import { getLanguageWorldLocation } from './livingLanguageWorldLocations';
 
 export type LivingLocationTemplate = {
   id: string;
@@ -32,10 +33,8 @@ export const LIVING_LOCATION_TEMPLATES: LivingLocationTemplate[] = [
   {
     id: 'learning-campus', name: 'Learning Campus', theme: 'coastal',
     buildings: [
-      { id: 'campus-school', type: 'school', x: 42, y: 25, label: 'Academy' },
-      { id: 'campus-library', type: 'library', x: 67, y: 48, label: 'Library' },
-      { id: 'campus-workshop', type: 'workshop', x: 19, y: 57, label: 'Workshop' },
-      { id: 'campus-cafe', type: 'cafe', x: 73, y: 73, label: 'Café' },
+      { id: 'campus-school', type: 'school', x: 42, y: 25, label: 'Academy' }, { id: 'campus-library', type: 'library', x: 67, y: 48, label: 'Library' },
+      { id: 'campus-workshop', type: 'workshop', x: 19, y: 57, label: 'Workshop' }, { id: 'campus-cafe', type: 'cafe', x: 73, y: 73, label: 'Café' },
       { id: 'campus-airport-terminal', type: 'airport', x: 17, y: 18, scale: 1.15, label: 'Campus Airport' },
     ],
     props: [
@@ -47,10 +46,8 @@ export const LIVING_LOCATION_TEMPLATES: LivingLocationTemplate[] = [
   {
     id: 'coastal-town', name: 'Azure Coast', theme: 'coastal',
     buildings: [
-      { id: 'coast-cafe', type: 'cafe', x: 25, y: 48, scale: 1.05, label: 'Seaside Café' },
-      { id: 'coast-market', type: 'market', x: 49, y: 36, label: 'Harbor Market' },
-      { id: 'coast-workshop', type: 'workshop', x: 72, y: 57, label: 'Boat Workshop' },
-      { id: 'coast-station', type: 'railway-station', x: 78, y: 24, label: 'Coast Station' },
+      { id: 'coast-cafe', type: 'cafe', x: 25, y: 48, scale: 1.05, label: 'Seaside Café' }, { id: 'coast-market', type: 'market', x: 49, y: 36, label: 'Harbor Market' },
+      { id: 'coast-workshop', type: 'workshop', x: 72, y: 57, label: 'Boat Workshop' }, { id: 'coast-station', type: 'railway-station', x: 78, y: 24, label: 'Coast Station' },
     ],
     props: [
       { id: 'coast-tree-1', type: 'tree', x: 8, y: 25, scale: .85 }, { id: 'coast-tree-2', type: 'tree', x: 91, y: 69, scale: .8 },
@@ -61,10 +58,8 @@ export const LIVING_LOCATION_TEMPLATES: LivingLocationTemplate[] = [
   {
     id: 'mountain-village', name: 'Cloudpine Village', theme: 'mountain',
     buildings: [
-      { id: 'mountain-sanctuary', type: 'sanctuary', x: 18, y: 40, scale: 1.0, label: 'Mountain Shrine' },
-      { id: 'mountain-house', type: 'house', x: 46, y: 27, scale: .9, label: 'Lodge' },
-      { id: 'mountain-workshop', type: 'workshop', x: 72, y: 50, label: 'Forge' },
-      { id: 'mountain-cafe', type: 'cafe', x: 54, y: 70, label: 'Summit Café' },
+      { id: 'mountain-sanctuary', type: 'sanctuary', x: 18, y: 40, scale: 1.0, label: 'Mountain Shrine' }, { id: 'mountain-house', type: 'house', x: 46, y: 27, scale: .9, label: 'Lodge' },
+      { id: 'mountain-workshop', type: 'workshop', x: 72, y: 50, label: 'Forge' }, { id: 'mountain-cafe', type: 'cafe', x: 54, y: 70, label: 'Summit Café' },
     ],
     props: [
       { id: 'mountain-tree-1', type: 'tree', x: 7, y: 15, scale: .95 }, { id: 'mountain-tree-2', type: 'tree', x: 29, y: 11, scale: .8 },
@@ -75,10 +70,8 @@ export const LIVING_LOCATION_TEMPLATES: LivingLocationTemplate[] = [
   {
     id: 'fantasy-kingdom', name: 'Moonveil Kingdom', theme: 'festival',
     buildings: [
-      { id: 'fantasy-sanctuary', type: 'sanctuary', x: 50, y: 24, scale: 1.3, label: 'Moon Temple' },
-      { id: 'fantasy-market', type: 'market', x: 24, y: 54, scale: 1.05, label: 'Magic Market' },
-      { id: 'fantasy-workshop', type: 'workshop', x: 73, y: 54, label: 'Enchanter' },
-      { id: 'fantasy-library', type: 'library', x: 51, y: 72, label: 'Arcane Library' },
+      { id: 'fantasy-sanctuary', type: 'sanctuary', x: 50, y: 24, scale: 1.3, label: 'Moon Temple' }, { id: 'fantasy-market', type: 'market', x: 24, y: 54, scale: 1.05, label: 'Magic Market' },
+      { id: 'fantasy-workshop', type: 'workshop', x: 73, y: 54, label: 'Enchanter' }, { id: 'fantasy-library', type: 'library', x: 51, y: 72, label: 'Arcane Library' },
       { id: 'fantasy-house', type: 'house', x: 15, y: 76, scale: .85, label: 'Village Home' },
     ],
     props: [
@@ -90,10 +83,8 @@ export const LIVING_LOCATION_TEMPLATES: LivingLocationTemplate[] = [
   {
     id: 'scifi-outpost', name: 'Nova Outpost', theme: 'coastal',
     buildings: [
-      { id: 'scifi-school', type: 'school', x: 25, y: 32, scale: 1.05, label: 'Research Hub' },
-      { id: 'scifi-workshop', type: 'workshop', x: 72, y: 32, scale: 1.05, label: 'Tech Lab' },
-      { id: 'scifi-library', type: 'library', x: 50, y: 58, scale: 1.0, label: 'Data Archive' },
-      { id: 'scifi-airport', type: 'airport', x: 50, y: 80, scale: 1.1, label: 'Starport' },
+      { id: 'scifi-school', type: 'school', x: 25, y: 32, scale: 1.05, label: 'Research Hub' }, { id: 'scifi-workshop', type: 'workshop', x: 72, y: 32, scale: 1.05, label: 'Tech Lab' },
+      { id: 'scifi-library', type: 'library', x: 50, y: 58, scale: 1.0, label: 'Data Archive' }, { id: 'scifi-airport', type: 'airport', x: 50, y: 80, scale: 1.1, label: 'Starport' },
     ],
     props: [
       { id: 'scifi-tree-1', type: 'tree', x: 8, y: 48, scale: .75 }, { id: 'scifi-tree-2', type: 'tree', x: 92, y: 48, scale: .75 },
@@ -104,10 +95,8 @@ export const LIVING_LOCATION_TEMPLATES: LivingLocationTemplate[] = [
   {
     id: 'game-arena', name: 'Chaos Arena', theme: 'festival',
     buildings: [
-      { id: 'arena-market', type: 'market', x: 18, y: 25, scale: 1.0, label: 'Prize Booth' },
-      { id: 'arena-workshop', type: 'workshop', x: 82, y: 25, scale: 1.0, label: 'Build Zone' },
-      { id: 'arena-library', type: 'library', x: 18, y: 76, scale: .9, label: 'Rule Hall' },
-      { id: 'arena-cafe', type: 'cafe', x: 82, y: 76, scale: .9, label: 'Party Café' },
+      { id: 'arena-market', type: 'market', x: 18, y: 25, scale: 1.0, label: 'Prize Booth' }, { id: 'arena-workshop', type: 'workshop', x: 82, y: 25, scale: 1.0, label: 'Build Zone' },
+      { id: 'arena-library', type: 'library', x: 18, y: 76, scale: .9, label: 'Rule Hall' }, { id: 'arena-cafe', type: 'cafe', x: 82, y: 76, scale: .9, label: 'Party Café' },
     ],
     props: [
       { id: 'arena-lamp-1', type: 'lamp', x: 30, y: 42, scale: 1.1 }, { id: 'arena-lamp-2', type: 'lamp', x: 70, y: 42, scale: 1.1 },
@@ -117,6 +106,32 @@ export const LIVING_LOCATION_TEMPLATES: LivingLocationTemplate[] = [
   },
 ];
 
-export function getLivingLocationTemplate(id: string) {
-  return LIVING_LOCATION_TEMPLATES.find(location => location.id === id) ?? LIVING_LOCATION_TEMPLATES[0];
+function languageTemplate(locationId: string): LivingLocationTemplate | null {
+  const location = getLanguageWorldLocation(locationId);
+  if (!location) return null;
+  const city = location.city?.toLowerCase() ?? '';
+  const tags = new Set(location.tags);
+  const theme: WorldTheme = tags.has('nature') || tags.has('garden') ? 'emerald' : tags.has('history') || tags.has('tradition') ? 'festival' : 'coastal';
+  const primaryBuilding: WorldBuildingDefinition['type'] = tags.has('cafe') ? 'cafe' : tags.has('bakery') || tags.has('food') ? 'market' : tags.has('garden') || tags.has('nature') ? 'house' : 'library';
+  const secondaryBuilding: WorldBuildingDefinition['type'] = location.kind === 'real' ? 'railway-station' : 'cafe';
+  return {
+    id: location.id,
+    name: location.name,
+    theme,
+    buildings: [
+      { id: `${location.id}-hub`, type: primaryBuilding, x: 42, y: 42, scale: 1.05, label: location.name },
+      { id: `${location.id}-learning`, type: secondaryBuilding, x: 70, y: 62, scale: 0.9, label: location.experiences.includes('conversation') ? 'Conversation Spot' : 'Discovery Spot' },
+      ...(city ? [{ id: `${location.id}-landmark`, type: 'house' as const, x: 20, y: 25, scale: 0.85, label: location.city }] : []),
+    ],
+    props: [
+      { id: `${location.id}-tree-1`, type: 'tree', x: 10, y: 18, scale: 0.85 },
+      { id: `${location.id}-tree-2`, type: 'tree', x: 88, y: 20, scale: 0.8 },
+      { id: `${location.id}-bench`, type: 'bench', x: 55, y: 76 },
+      { id: `${location.id}-lamp`, type: 'lamp', x: 62, y: 51 },
+    ],
+  };
+}
+
+export function getLivingLocationTemplate(id: string): LivingLocationTemplate {
+  return LIVING_LOCATION_TEMPLATES.find(location => location.id === id) ?? languageTemplate(id) ?? LIVING_LOCATION_TEMPLATES[0];
 }
