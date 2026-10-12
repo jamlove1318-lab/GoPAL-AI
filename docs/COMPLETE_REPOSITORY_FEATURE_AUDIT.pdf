@@ -1,0 +1,309 @@
+%PDF-1.4
+%GoPAL-AI
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [6 0 R 8 0 R 10 0 R 12 0 R 14 0 R] /Count 5 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+5 0 obj
+<< /Length 4478 >>
+stream
+q
+0.08 0.34 0.26 rg 0 744 612 48 re f
+0.08 0.12 0.15 rg
+BT /F2 9 Tf 44 761 Td (Complete Repository Feature Audit - GOPAL-AI) Tj ET
+BT /F1 8.4 Tf 44 715 Td ( Complete Repository Feature Audit) Tj ET
+BT /F1 8.4 Tf 44 702 Td ( GoPAL-AI | Repository snapshot: 12 October 2026) Tj ET
+BT /F1 8.4 Tf 44 689 Td (Repository: [jamlove1318-lab/GoPAL-AI]https://github.com/jamlove1318-lab/GoPAL-AI) Tj ET
+BT /F1 8.4 Tf 44 676 Td (Branch: main) Tj ET
+BT /F1 8.4 Tf 44 663 Td (Scope: Static repository-tree and README review. This is not a completed build, device test,) Tj ET
+BT /F1 8.4 Tf 44 650 Td (or proof that every documented feature is reachable.) Tj ET
+BT /F1 8.4 Tf 44 637 Td ( Evidence rule: A file, asset, workflow, contract or README claim proves that an) Tj ET
+BT /F1 8.4 Tf 44 624 Td (implementation or design artifact exists-not that the feature is wired into the shipped app.) Tj ET
+BT /F1 8.4 Tf 44 611 Td (Treat conclusions as a map for verification, not as a declaration that code is unused.) Tj ET
+BT /F1 8.4 Tf 44 598 Td ( 1. Repository snapshot) Tj ET
+BT /F1 8.4 Tf 44 585 Td (The recursive Git tree contained 705 paths at the audit snapshot. The README describes) Tj ET
+BT /F1 8.4 Tf 44 572 Td (GoPAL-AI as an autonomous language-learning companion and living sanctuary, with multi-turn) Tj ET
+BT /F1 8.4 Tf 44 559 Td (Socratic roleplay, world continuity and multiple domain engines.) Tj ET
+BT /F1 8.4 Tf 44 546 Td ( Root and supporting areas) Tj ET
+BT /F1 8.4 Tf 44 533 Td (| Path | Role / what to verify |) Tj ET
+BT /F1 8.4 Tf 44 520 Td (|---|---|) Tj ET
+BT /F1 8.4 Tf 44 507 Td (| App.tsx, index.ts | App bootstrap and actual screen/navigation entry path |) Tj ET
+BT /F1 8.4 Tf 44 494 Td (| app.json, eas.json, package.json | Expo metadata, build profiles, dependencies and scripts) Tj ET
+BT /F1 8.4 Tf 44 481 Td (|) Tj ET
+BT /F1 8.4 Tf 44 468 Td (| tsconfig.json, Babel/Metro/Tailwind config, global.css | TypeScript, bundling and styling) Tj ET
+BT /F1 8.4 Tf 44 455 Td (setup |) Tj ET
+BT /F1 8.4 Tf 44 442 Td (| src/ | Main application source: engines, characters, components and archive |) Tj ET
+BT /F1 8.4 Tf 44 429 Td (| assets/ | Icons, Cassidy references, Emerald Valley environment art, animation and media |) Tj ET
+BT /F1 8.4 Tf 44 416 Td (| docs/ | Master specifications, workflows, implementation trackers, Cassidy production and) Tj ET
+BT /F1 8.4 Tf 44 403 Td (world/learning/audio documentation |) Tj ET
+BT /F1 8.4 Tf 44 390 Td (| .github/workflows/ | APK build, Cassidy production, remote art, world asset acquisition,) Tj ET
+BT /F1 8.4 Tf 44 377 Td (repair, validation and typecheck automation |) Tj ET
+BT /F1 8.4 Tf 44 364 Td (| scripts/, tools/, bin/, factory/, jobs/ | Development and asset-production tooling |) Tj ET
+BT /F1 8.4 Tf 44 351 Td (| contracts/ | Expected integration boundaries and validation contracts |) Tj ET
+BT /F1 8.4 Tf 44 338 Td (| supabase/ | Backend schema/policy candidates; inspect before assuming cloud behavior |) Tj ET
+BT /F1 8.4 Tf 44 325 Td (| artifacts/ | Generated evidence, reports, packages and validation outputs |) Tj ET
+BT /F1 8.4 Tf 44 312 Td (| src/archive/ | Explicitly preserved legacy material |) Tj ET
+BT /F1 8.4 Tf 44 299 Td (Path caution: Older audit notes refer to top-level app/, engine/, store/ and data/. The) Tj ET
+BT /F1 8.4 Tf 44 286 Td (current recursive tree instead foregrounds src/ and does not list those as root directories.) Tj ET
+BT /F1 8.4 Tf 44 273 Td (Use the current branch as the source of truth.) Tj ET
+BT /F1 8.4 Tf 44 260 Td ( 2. App entry, build and delivery) Tj ET
+BT /F1 8.4 Tf 44 247 Td (- App.tsx, index.ts - PRESENT: bootstrap candidates. Trace the real render and navigation) Tj ET
+BT /F1 8.4 Tf 44 234 Td (chain before assigning connection status.) Tj ET
+BT /F1 8.4 Tf 44 221 Td (- Expo / TypeScript configuration - PRESENT: app.json, eas.json, package.json,) Tj ET
+BT /F1 8.4 Tf 44 208 Td (tsconfig.json, Babel/Metro/Tailwind configuration and global.css.) Tj ET
+BT /F1 8.4 Tf 44 195 Td (- Build automation - PRESENT: .github/workflows/build-release-apk.yml. The README documents) Tj ET
+BT /F1 8.4 Tf 44 182 Td (Yarn install, npx tsc --noEmit, Expo start and EAS Android/iOS build profiles.) Tj ET
+BT /F1 8.4 Tf 44 169 Td (- Not established by this audit: successful current build, fresh-install navigation,) Tj ET
+0.89 0.94 0.90 rg 44 22 524 17 re f
+0.08 0.34 0.26 rg 50 28 80 5 re f 145 28 80 5 re f 240 28 80 5 re f 335 28 80 5 re f 430 28 80 5 re f 525 28 35 5 re f
+Q
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 5 0 R >>
+endobj
+7 0 obj
+<< /Length 4082 >>
+stream
+q
+0.08 0.34 0.26 rg 0 744 612 48 re f
+0.08 0.12 0.15 rg
+BT /F2 9 Tf 44 761 Td (Complete Repository Feature Audit - GOPAL-AI) Tj ET
+BT /F1 8.4 Tf 44 715 Td (physical-device stability, offline restart, or store-release readiness. No build was run) Tj ET
+BT /F1 8.4 Tf 44 702 Td (here.) Tj ET
+BT /F1 8.4 Tf 44 689 Td (- Next checks: clean install from the declared package manager; typecheck and configured) Tj ET
+BT /F1 8.4 Tf 44 676 Td (lint; Expo export/build; fresh-install smoke test; restart/offline test. Check .env.example) Tj ET
+BT /F1 8.4 Tf 44 663 Td (and never commit live secrets.) Tj ET
+BT /F1 8.4 Tf 44 650 Td ( 3. Experience director, events and domain engines) Tj ET
+BT /F1 8.4 Tf 44 637 Td (| Source location | Identifiable responsibility | Connection status |) Tj ET
+BT /F1 8.4 Tf 44 624 Td (|---|---|---|) Tj ET
+BT /F1 8.4 Tf 44 611 Td (| src/engines/index.ts, testRunner.ts | Engine exports and test orchestration candidates |) Tj ET
+BT /F1 8.4 Tf 44 598 Td (Verify imports/call sites |) Tj ET
+BT /F1 8.4 Tf 44 585 Td (| src/engines/director/experienceDirector.ts | Experience/intent selection and coordination) Tj ET
+BT /F1 8.4 Tf 44 572 Td (| Verify instantiated runtime path |) Tj ET
+BT /F1 8.4 Tf 44 559 Td (| src/engines/events/eventBus.ts | Shared domain event coordination | Verify event) Tj ET
+BT /F1 8.4 Tf 44 546 Td (producers/consumers |) Tj ET
+BT /F1 8.4 Tf 44 533 Td (| src/engines/character/characterEngine.ts | Character domain | Verify screen/engine call) Tj ET
+BT /F1 8.4 Tf 44 520 Td (path |) Tj ET
+BT /F1 8.4 Tf 44 507 Td (| src/engines/creation/creationStudio.ts | Learner creation experiences | Verify save/reopen) Tj ET
+BT /F1 8.4 Tf 44 494 Td (route |) Tj ET
+BT /F1 8.4 Tf 44 481 Td (| src/engines/knowledge/knowledgeEngine.ts | Knowledge/exhibit concepts | Verify Museum) Tj ET
+BT /F1 8.4 Tf 44 468 Td (connection |) Tj ET
+BT /F1 8.4 Tf 44 455 Td (| src/engines/journey/journeyEngine.ts | Personal chronology and growth | Verify actual) Tj ET
+BT /F1 8.4 Tf 44 442 Td (Journey route |) Tj ET
+BT /F1 8.4 Tf 44 429 Td (| src/engines/economy/economyEngine.ts, quest/questEngine.ts | Optional goals, rewards and) Tj ET
+BT /F1 8.4 Tf 44 416 Td (economy | Verify persistent state and UI |) Tj ET
+BT /F1 8.4 Tf 44 403 Td (Intended architecture: learner intent and context -> director -> learning/character/world) Tj ET
+BT /F1 8.4 Tf 44 390 Td (activity -> typed event -> memory and state -> meaningful change on a later visit. Presence) Tj ET
+BT /F1 8.4 Tf 44 377 Td (of engine files is not proof they are all instantiated or coordinated.) Tj ET
+BT /F1 8.4 Tf 44 364 Td ( 4. Learning and tutor systems) Tj ET
+BT /F1 8.4 Tf 44 351 Td (Location: src/engines/learning/ contains:) Tj ET
+BT /F1 8.4 Tf 44 338 Td (- adaptiveConversationEngine) Tj ET
+BT /F1 8.4 Tf 44 325 Td (- contextualLanguageLearningEngine) Tj ET
+BT /F1 8.4 Tf 44 312 Td (- languageCapabilityEngine) Tj ET
+BT /F1 8.4 Tf 44 299 Td (- learningEvaluationEngine) Tj ET
+BT /F1 8.4 Tf 44 286 Td (- learningNeedEngine) Tj ET
+BT /F1 8.4 Tf 44 273 Td (- residentConversationContinuityEngine) Tj ET
+BT /F1 8.4 Tf 44 260 Td (- wordBankAnswerEngine) Tj ET
+BT /F1 8.4 Tf 44 247 Td (- worldLearningFlowEngine, worldLearningIntegrationEngine, worldLearningOutcomeEngine,) Tj ET
+BT /F1 8.4 Tf 44 234 Td (worldLearningResponseEngine, worldLearningScenarioEngine) Tj ET
+BT /F1 8.4 Tf 44 221 Td (Tutor entry candidate: src/engines/tutor/tutorEngine.ts.) Tj ET
+BT /F1 8.4 Tf 44 208 Td (The README describes multi-turn Socratic roleplay, contextual immersion, pitch-accent shadow) Tj ET
+BT /F1 8.4 Tf 44 195 Td (practice, calligraphy/stroke order, dialogue transcripts, phonetics and audio drills.) Tj ET
+BT /F1 8.4 Tf 44 182 Td (Expected loop: infer learner need/ability -> choose scenario -> roleplay -> evaluate ->) Tj ET
+BT /F1 8.4 Tf 44 169 Td (adapt next prompt -> save transcript/vocabulary -> revisit later -> show growth in Journey.) Tj ET
+0.89 0.94 0.90 rg 44 22 524 17 re f
+0.08 0.34 0.26 rg 50 28 80 5 re f 145 28 80 5 re f 240 28 80 5 re f 335 28 80 5 re f 430 28 80 5 re f 525 28 35 5 re f
+Q
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 7 0 R >>
+endobj
+9 0 obj
+<< /Length 4566 >>
+stream
+q
+0.08 0.34 0.26 rg 0 744 612 48 re f
+0.08 0.12 0.15 rg
+BT /F2 9 Tf 44 761 Td (Complete Repository Feature Audit - GOPAL-AI) Tj ET
+BT /F1 8.4 Tf 44 715 Td (Integration questions: Does evaluation change difficulty? Are recurring errors revisited?) Tj ET
+BT /F1 8.4 Tf 44 702 Td (Are transcripts and audio reachable from active navigation? Do resident and tutor dialogue) Tj ET
+BT /F1 8.4 Tf 44 689 Td (share one learner model? Confirm with source call paths and tests.) Tj ET
+BT /F1 8.4 Tf 44 676 Td ( 5. Cassidy: character, autonomy and presentation) Tj ET
+BT /F1 8.4 Tf 44 663 Td (Character source: src/characters/ includes Cassidy identity/runtime candidates such as) Tj ET
+BT /F1 8.4 Tf 44 650 Td (canonical reference intake, design/master, production pipeline, context, asset) Tj ET
+BT /F1 8.4 Tf 44 637 Td (contracts/registry, integration gate, production spec, reference package, renderer) Tj ET
+BT /F1 8.4 Tf 44 624 Td (contract/controller, runtime model contract, visual design/resolver and NPC design.) Tj ET
+BT /F1 8.4 Tf 44 611 Td (Behavior engines: src/engines/cassidy/ contains action/autonomy, character runtime/system,) Tj ET
+BT /F1 8.4 Tf 44 598 Td (experience coordination, interaction/lifecycle, learning reaction, life director/state,) Tj ET
+BT /F1 8.4 Tf 44 585 Td (meaningful/narrative experience, perception, personality, presence, presentation, runtime) Tj ET
+BT /F1 8.4 Tf 44 572 Td (bridge/session, scene anchor, welcome, world presence and verification modules.) Tj ET
+BT /F1 8.4 Tf 44 559 Td (Presentation candidates: src/components/Cassidy2DProductionRenderer.tsx,) Tj ET
+BT /F1 8.4 Tf 44 546 Td (CassidyCharacter.tsx, LivingCompanion.tsx, LivingWorldPulse.tsx, AmbientBackground.tsx.) Tj ET
+BT /F1 8.4 Tf 44 533 Td (Production evidence: canonical reference imagery, artifacts/cassidy/) Tj ET
+BT /F1 8.4 Tf 44 520 Td (acceptance/package/checksum/production/validation files, and) Tj ET
+BT /F1 8.4 Tf 44 507 Td (.github/workflows/cassidy-production.yml. This shows a production process; it does not by) Tj ET
+BT /F1 8.4 Tf 44 494 Td (itself prove a live 3D renderer in the app.) Tj ET
+BT /F1 8.4 Tf 44 481 Td (Risks / acceptance criteria) Tj ET
+BT /F1 8.4 Tf 44 468 Td (- Multiple life/state/autonomy/presence/presentation layers can overlap. Define one owner) Tj ET
+BT /F1 8.4 Tf 44 455 Td (per responsibility and typed contracts.) Tj ET
+BT /F1 8.4 Tf 44 442 Td (- Use one canonical identity and asset manifest, deterministic tests and graceful 2D) Tj ET
+BT /F1 8.4 Tf 44 429 Td (fallback.) Tj ET
+BT /F1 8.4 Tf 44 416 Td (- Cassidy should remember relevant experiences honestly, react to learning/world context,) Tj ET
+BT /F1 8.4 Tf 44 403 Td (and keep autonomy bounded and respectful.) Tj ET
+BT /F1 8.4 Tf 44 390 Td (- Relationship should be shown through behavior and shared moments-not a visible affection) Tj ET
+BT /F1 8.4 Tf 44 377 Td (score.) Tj ET
+BT /F1 8.4 Tf 44 364 Td ( 6. Emerald Valley and living-world systems) Tj ET
+BT /F1 8.4 Tf 44 351 Td (Assets and specs: assets/world/emerald-valley/ contains environment/atmosphere resources,) Tj ET
+BT /F1 8.4 Tf 44 338 Td (including HDRI assets. Documentation includes docs/EMERALDVALLEYWORLDMASTERSPEC.md and real) Tj ET
+BT /F1 8.4 Tf 44 325 Td (asset acquisition reports.) Tj ET
+BT /F1 8.4 Tf 44 312 Td (World engines in src/engines/world/ include:) Tj ET
+BT /F1 8.4 Tf 44 299 Td (- World/language-world engine and state; environment and contextual world events;) Tj ET
+BT /F1 8.4 Tf 44 286 Td (continuity.) Tj ET
+BT /F1 8.4 Tf 44 273 Td (- Destination arrival/departure/encounter/experience/opportunity/resident systems.) Tj ET
+BT /F1 8.4 Tf 44 260 Td (- Living world clock, objects store, reactor, runtime and simulation.) Tj ET
+BT /F1 8.4 Tf 44 247 Td (- NPC registry/runtime; offline resident behavior; persistent world state.) Tj ET
+BT /F1 8.4 Tf 44 234 Td (- Place presentation; resident action, ambient behavior, animation, consequences, context) Tj ET
+BT /F1 8.4 Tf 44 221 Td (reactions, relationships, relationship memory, routes, routines, stories and story) Tj ET
+BT /F1 8.4 Tf 44 208 Td (opportunities.) Tj ET
+BT /F1 8.4 Tf 44 195 Td (- Activity content/mechanics/primitives; animation/audio contracts and runtime; crafting,) Tj ET
+BT /F1 8.4 Tf 44 182 Td (inventory, investigation, discovery progression, hotspots, external asset registry/binding,) Tj ET
+BT /F1 8.4 Tf 44 169 Td (landmarks and integrity.) Tj ET
+0.89 0.94 0.90 rg 44 22 524 17 re f
+0.08 0.34 0.26 rg 50 28 80 5 re f 145 28 80 5 re f 240 28 80 5 re f 335 28 80 5 re f 430 28 80 5 re f 525 28 35 5 re f
+Q
+endstream
+endobj
+10 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 9 0 R >>
+endobj
+11 0 obj
+<< /Length 4536 >>
+stream
+q
+0.08 0.34 0.26 rg 0 744 612 48 re f
+0.08 0.12 0.15 rg
+BT /F2 9 Tf 44 761 Td (Complete Repository Feature Audit - GOPAL-AI) Tj ET
+BT /F1 8.4 Tf 44 715 Td (Related documentation: world audio, source policy, external art/animation pipelines,) Tj ET
+BT /F1 8.4 Tf 44 702 Td (mini-game catalogs, learning variety, batch integration, verification and current progress.) Tj ET
+BT /F1 8.4 Tf 44 689 Td (Intended loop: clock/weather/season/location/history -> event director ->) Tj ET
+BT /F1 8.4 Tf 44 676 Td (scene/resident/activity -> language opportunity -> learner action -> event and memory ->) Tj ET
+BT /F1 8.4 Tf 44 663 Td (changed return visit.) Tj ET
+BT /F1 8.4 Tf 44 650 Td (Risks to verify: duplicated state, circular dependencies, hard-coded transitions, schema) Tj ET
+BT /F1 8.4 Tf 44 637 Td (drift, unhandled offline behavior and assets that exist but are not bound to a reachable) Tj ET
+BT /F1 8.4 Tf 44 624 Td (screen.) Tj ET
+BT /F1 8.4 Tf 44 611 Td ( 7. Memory, Journey, economy, audio and creation) Tj ET
+BT /F1 8.4 Tf 44 598 Td (- Memory: src/engines/memory/memoryEngine.ts plus resident/world memory modules. Separate) Tj ET
+BT /F1 8.4 Tf 44 585 Td (session context, durable learner facts, relationship memories, world canon, event history) Tj ET
+BT /F1 8.4 Tf 44 572 Td (and private goals.) Tj ET
+BT /F1 8.4 Tf 44 559 Td (- Journey: src/engines/journey/journeyEngine.ts; README describes milestones, narrative) Tj ET
+BT /F1 8.4 Tf 44 546 Td (chapter reviews and then-vs-now speech comparisons.) Tj ET
+BT /F1 8.4 Tf 44 533 Td (- Economy/quests: src/engines/economy/economyEngine.ts, src/engines/quest/questEngine.ts;) Tj ET
+BT /F1 8.4 Tf 44 520 Td (README mentions daily quests, personal challenges, rare seeds, fertilizer and souvenirs.) Tj ET
+BT /F1 8.4 Tf 44 507 Td (- Knowledge/Museum: src/engines/knowledge/knowledgeEngine.ts; README describes postcards,) Tj ET
+BT /F1 8.4 Tf 44 494 Td (learner creations, cultural keepsakes and canonical story memories.) Tj ET
+BT /F1 8.4 Tf 44 481 Td (- Audio: src/engines/audio/audioEngine.ts and world audio modules; README describes a) Tj ET
+BT /F1 8.4 Tf 44 468 Td (four-channel ambience mixer and world-radio stations.) Tj ET
+BT /F1 8.4 Tf 44 455 Td (- Creation: src/engines/creation/creationStudio.ts; verify save/reopen, export, privacy and) Tj ET
+BT /F1 8.4 Tf 44 442 Td (attribution.) Tj ET
+BT /F1 8.4 Tf 44 429 Td (- Cloud/storage: supabase/ exists, but actual schema, app wiring, row-level security and) Tj ET
+BT /F1 8.4 Tf 44 416 Td (sync correctness must be inspected. Presence is not proof of secure cloud persistence.) Tj ET
+BT /F1 8.4 Tf 44 403 Td ( 8. README-described product surfaces) Tj ET
+BT /F1 8.4 Tf 44 390 Td (| Surface | README-described capabilities | Evidence still needed |) Tj ET
+BT /F1 8.4 Tf 44 377 Td (|---|---|---|) Tj ET
+BT /F1 8.4 Tf 44 364 Td (| Home / Living Sanctuary | Time-aware greeting, away recap, continuity cards, festivals,) Tj ET
+BT /F1 8.4 Tf 44 351 Td (natural-language World DJ | Active route, event source, user intent routing |) Tj ET
+BT /F1 8.4 Tf 44 338 Td (| Study | Bonsai, matcha workshop, calligraphy, soundscape, pitch practice | Reachable) Tj ET
+BT /F1 8.4 Tf 44 325 Td (actions, accessibility, saved outcomes |) Tj ET
+BT /F1 8.4 Tf 44 312 Td (| World Map | Emerald Valley locations, familiarity, resident bios, transitions, lore, ema) Tj ET
+BT /F1 8.4 Tf 44 299 Td (wish ritual | Location routing, persistent discovery and resident state |) Tj ET
+BT /F1 8.4 Tf 44 286 Td (| Journey | Milestones, chapter reviews, speech-growth comparison, transcripts | Real) Tj ET
+BT /F1 8.4 Tf 44 273 Td (learner data and privacy controls |) Tj ET
+BT /F1 8.4 Tf 44 260 Td (| Museum | Postcards, creations, keepsakes, story memories | Save/reopen and deletion/export) Tj ET
+BT /F1 8.4 Tf 44 247 Td (|) Tj ET
+BT /F1 8.4 Tf 44 234 Td (| Settings | Runtime diagnostics and engine/storage verification | Actual on-device checks) Tj ET
+BT /F1 8.4 Tf 44 221 Td (and understandable failures |) Tj ET
+BT /F1 8.4 Tf 44 208 Td (These are product claims documented in README; each should be confirmed against active) Tj ET
+BT /F1 8.4 Tf 44 195 Td (screens and automated tests.) Tj ET
+BT /F1 8.4 Tf 44 182 Td ( 9. Duplicated, unfinished or potentially orphaned work) Tj ET
+BT /F2 11 Tf 44 169 Td (1. Overlapping world systems: continuity, destination experience, resident presentation,) Tj ET
+0.89 0.94 0.90 rg 44 22 524 17 re f
+0.08 0.34 0.26 rg 50 28 80 5 re f 145 28 80 5 re f 240 28 80 5 re f 335 28 80 5 re f 430 28 80 5 re f 525 28 35 5 re f
+Q
+endstream
+endobj
+12 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 11 0 R >>
+endobj
+13 0 obj
+<< /Length 2719 >>
+stream
+q
+0.08 0.34 0.26 rg 0 744 612 48 re f
+0.08 0.12 0.15 rg
+BT /F2 9 Tf 44 761 Td (Complete Repository Feature Audit - GOPAL-AI) Tj ET
+BT /F1 8.4 Tf 44 715 Td (memory and event coordination need clear ownership.) Tj ET
+BT /F2 11 Tf 44 702 Td (2. Cassidy lifecycle breadth: life/state/autonomy/presence/presentation/runtime layers need) Tj ET
+BT /F1 8.4 Tf 44 684 Td (one documented state model and integration boundary.) Tj ET
+BT /F2 11 Tf 44 671 Td (3. Specs versus runtime: production checklists, acceptance artifacts and asset pipelines do) Tj ET
+BT /F1 8.4 Tf 44 653 Td (not prove live rendering or feature reachability.) Tj ET
+BT /F2 11 Tf 44 640 Td (4. Status drift: reconcile documentation trackers and progress reports with current source) Tj ET
+BT /F1 8.4 Tf 44 622 Td (and commit.) Tj ET
+BT /F2 11 Tf 44 609 Td (5. Legacy: src/archive/learning/WorldActivityExperienceModal.legacy.tsx is explicitly) Tj ET
+BT /F1 8.4 Tf 44 591 Td (archived; do not delete without reference and replacement checks.) Tj ET
+BT /F2 11 Tf 44 578 Td (6. Potential orphan candidates: only label unused after tracing static imports, dynamic) Tj ET
+BT /F1 8.4 Tf 44 560 Td (imports, registries, routes, workflows and runtime behavior.) Tj ET
+BT /F1 8.4 Tf 44 547 Td ( 10. Recommended verification order) Tj ET
+BT /F2 11 Tf 44 534 Td (1. Freeze the audited commit SHA; install dependencies and run typecheck/lint/build.) Tj ET
+BT /F2 11 Tf 44 516 Td (2. Inventory active routes from the real navigation tree.) Tj ET
+BT /F2 11 Tf 44 498 Td (3. For each screen, trace action -> component -> engine/service -> storage -> rendered) Tj ET
+BT /F1 8.4 Tf 44 480 Td (consequence.) Tj ET
+BT /F2 11 Tf 44 467 Td (4. Test onboarding/re-entry, Study, roleplay, World Map, transcripts, memory, quests,) Tj ET
+BT /F1 8.4 Tf 44 449 Td (Journey, Museum, Settings and offline restart.) Tj ET
+BT /F2 11 Tf 44 436 Td (5. Verify Supabase policies, privacy controls, migrations, sync conflicts and) Tj ET
+BT /F1 8.4 Tf 44 418 Td (deletion/export.) Tj ET
+BT /F2 11 Tf 44 405 Td (6. Tie generated artifacts to commit, input hashes and reproducible validation.) Tj ET
+BT /F2 11 Tf 44 387 Td (7. Publish a feature matrix with four states: CONNECTED + tested, CONNECTED but untested,) Tj ET
+BT /F1 8.4 Tf 44 369 Td (IMPLEMENTED/ORPHANED, SPEC/DOC/ASSET ONLY.) Tj ET
+BT /F1 8.4 Tf 44 356 Td ( Preservation rule) Tj ET
+BT /F1 8.4 Tf 44 343 Td (Nothing gets deleted until its purpose is verified and cleanup is agreed. Prefer archive,) Tj ET
+BT /F1 8.4 Tf 44 330 Td (deprecate or refactor additively first.) Tj ET
+0.89 0.94 0.90 rg 44 22 524 17 re f
+0.08 0.34 0.26 rg 50 28 80 5 re f 145 28 80 5 re f 240 28 80 5 re f 335 28 80 5 re f 430 28 80 5 re f 525 28 35 5 re f
+Q
+endstream
+endobj
+14 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 13 0 R >>
+endobj
+xref
+0 15
+0000000000 65535 f 
+0000000019 00000 n 
+0000000068 00000 n 
+0000000152 00000 n 
+0000000222 00000 n 
+0000000297 00000 n 
+0000004827 00000 n 
+0000004963 00000 n 
+0000009097 00000 n 
+0000009233 00000 n 
+0000013851 00000 n 
+0000013988 00000 n 
+0000018577 00000 n 
+0000018715 00000 n 
+0000021487 00000 n 
+trailer
+<< /Size 15 /Root 1 0 R >>
+startxref
+21625
+%%EOF
