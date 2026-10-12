@@ -40,3 +40,12 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Cassidy factory local build & blend files
+build/
+*.blend
+*.blend1
+artifacts/cassidy/*.glb
+__pycache__/
+*.pyc
+

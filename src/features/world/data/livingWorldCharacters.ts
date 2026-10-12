@@ -1,5 +1,6 @@
 import type { WorldTheme } from '../components/LivingWorldPrimitives';
 import { getScheduleBehavior } from './livingWorldBehavior';
+import { getLanguageWorldCharacters, getLanguageWorldSpawnPoints } from './livingLanguageWorldPhysical';
 export type WorldCharacterRole='player'|'companion'|'resident'|'teacher'|'merchant'|'guide'|'traveler'|'quest-giver'|'enemy'|'custom';
 export type WorldCharacterDefinition={id:string;role:WorldCharacterRole;x:number;y:number;scale?:number;theme?:WorldTheme;name?:string;label?:string;tags?:string[];dialogueId?:string;scheduleId?:string;interactionRadius?:number;persistent?:boolean;interactive?:boolean;metadata?:Record<string,unknown>};
 export type WorldCharacterSpawnPoint={id:string;x:number;y:number;role:WorldCharacterRole;tags?:string[];maxCount?:number;respawn?:boolean};
@@ -22,7 +23,7 @@ export const LIVING_WORLD_SPAWN_POINTS:Record<string,WorldCharacterSpawnPoint[]>
  'scifi-outpost':[{id:'scifi-resident-spawn',x:27,y:48,role:'resident',tags:['outpost'],maxCount:8,respawn:true},{id:'scifi-traveler-spawn',x:76,y:48,role:'traveler',tags:['starport'],maxCount:5,respawn:true}],
  'game-arena':[{id:'arena-crowd-spawn',x:25,y:52,role:'resident',tags:['audience','game'],maxCount:10,respawn:true},{id:'arena-player-spawn',x:75,y:52,role:'traveler',tags:['player','game'],maxCount:4,respawn:true}],
 };
-export function getWorldCharacters(locationId:string){return LIVING_WORLD_CHARACTERS[locationId]??[];}
-export function getWorldSpawnPoints(locationId:string){return LIVING_WORLD_SPAWN_POINTS[locationId]??[];}
+export function getWorldCharacters(locationId:string){return LIVING_WORLD_CHARACTERS[locationId]??getLanguageWorldCharacters(locationId);}
+export function getWorldSpawnPoints(locationId:string){return LIVING_WORLD_SPAWN_POINTS[locationId]??getLanguageWorldSpawnPoints(locationId);}
 export function findWorldCharacter(locationId:string,id:string){return getWorldCharacters(locationId).find(c=>c.id===id)??null;}
 export function getCharacterBehavior(character:WorldCharacterDefinition,hour=new Date().getHours()){return character.scheduleId?getScheduleBehavior(character.scheduleId,hour):null;}

@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 1,
+  "world": "emerald-valley",
+  "purpose": "One source-policy registry for large scenario libraries. It describes acquisition capabilities; the external-asset-manifest remains the canonical per-asset runtime catalog.",
+  "rules": {
+    "qualityFirst": true,
+    "sourceOnlyUntilValidated": true,
+    "mobileFirst": true,
+    "singleRuntimeBrain": true,
+    "noDuplicateLibraries": true,
+    "neverBypassAuthentication": true,
+    "neverBypassLicenseOrEula": true,
+    "safeWorldContentOnly": true,
+    "promoteOnlyAfterObservedValidation": true
+  },
+  "scenarioFamilies": [
+    "terrain",
+    "nature",
+    "buildings",
+    "streets",
+    "interiors",
+    "furniture",
+    "props",
+    "vehicles",
+    "rail",
+    "stations",
+    "airports",
+    "characters",
+    "humanoid-animation",
+    "atmosphere",
+    "materials",
+    "2d-decoration",
+    "2.5d-backgrounds"
+  ],
+  "providers": [
+    {
+      "id": "3dassets-dev",
+      "name": "3DAssets.dev",
+      "sourceUrl": "https://3dassets.dev/",
+      "licensePolicy": "CC0",
+      "acquisitionMode": "direct-cdn",
+      "authRequired": false,
+      "preferredFormats": ["glb"],
+      "strengths": ["buildings", "environment", "props", "furniture", "vehicles", "scenario-packs"],
+      "mobileNotes": "Prefer pack members with bounded triangle/texture budgets; GLB is already web-optimised and can enter the Blender validation path."
+    },
+    {
+      "id": "polyhaven",
+      "name": "Poly Haven",
+      "sourceUrl": "https://polyhaven.com/",
+      "licensePolicy": "CC0",
+      "acquisitionMode": "official-api",
+      "authRequired": false,
+      "preferredFormats": ["glb", "gltf", "hdr", "exr"],
+      "strengths": ["terrain", "nature", "materials", "hdris", "props", "architecture"],
+      "mobileNotes": "Use source-quality assets, then generate mobile-specific LOD/material variants; do not ship source-resolution packages directly."
+    },
+    {
+      "id": "kenney",
+      "name": "Kenney",
+      "sourceUrl": "https://kenney.nl/assets",
+      "licensePolicy": "CC0-for-the-curated-asset-catalog",
+      "acquisitionMode": "official-page-discovery",
+      "authRequired": false,
+      "preferredFormats": ["glb", "gltf", "fbx", "png"],
+      "strengths": ["buildings", "streets", "nature", "rail", "vehicles", "props", "2d", "mini-games"],
+      "mobileNotes": "High-reuse stylized packs are preferred over accumulating overlapping libraries."
+    },
+    {
+      "id": "quaternius",
+      "name": "Quaternius",
+      "sourceUrl": "https://quaternius.com/",
+      "licensePolicy": "verify-exact-pack-license",
+      "acquisitionMode": "official-page-discovery",
+      "authRequired": false,
+      "preferredFormats": ["glb", "gltf", "fbx", "blend"],
+      "strengths": ["characters", "buildings", "cities", "rail", "public-transport", "nature"],
+      "mobileNotes": "Keep exact pack license/provenance with each asset. Normalize through the existing Blender pipeline."
+    },
+    {
+      "id": "kaykit",
+      "name": "KayKit",
+      "sourceUrl": "https://kaylousberg.com/game-assets",
+      "licensePolicy": "CC0-for-verified-packs",
+      "acquisitionMode": "official-page-discovery",
+      "authRequired": false,
+      "preferredFormats": ["gltf", "fbx", "obj"],
+      "strengths": ["nature", "buildings", "city", "interiors", "furniture", "characters", "animation", "prototype-pieces"],
+      "mobileNotes": "Excellent stylized low-poly source. Select free/verified packs first and keep a single canonical library per family."
+    },
+    {
+      "id": "blendkit",
+      "name": "BlendKit (formerly BlenderKit)",
+      "sourceUrl": "https://www.blendkit.com/",
+      "licensePolicy": "verify-per-asset-royalty-free-or-CC0",
+      "acquisitionMode": "authenticated-client",
+      "authRequired": true,
+      "preferredFormats": ["blend", "glb", "gltf"],
+      "strengths": ["architecture", "interiors", "furniture", "materials", "props", "environment"],
+      "mobileNotes": "Use only assets whose exact license permits the intended distribution. Never redistribute source models as a standalone asset library."
+    },
+    {
+      "id": "fab",
+      "name": "Fab",
+      "sourceUrl": "https://www.fab.com/",
+      "licensePolicy": "verify-exact-product-license-and-eula",
+      "acquisitionMode": "authenticated-client-or-official-download",
+      "authRequired": "sometimes",
+      "preferredFormats": ["glb", "gltf", "fbx", "uasset", "blend"],
+      "strengths": ["full-scenario-packs", "architecture", "environment", "vehicles", "characters", "vfx"],
+      "mobileNotes": "Free does not automatically mean CC0. Record exact license/EULA, source product, version and dependencies before promotion."
+    },
+    {
+      "id": "sketchfab",
+      "name": "Sketchfab",
+      "sourceUrl": "https://sketchfab.com/",
+      "licensePolicy": "verify-exact-asset-license",
+      "acquisitionMode": "authenticated-official-download",
+      "authRequired": true,
+      "preferredFormats": ["gltf", "glb", "usdz"],
+      "strengths": ["specific-props", "architecture", "vehicles", "environment", "reference-to-runtime"],
+      "mobileNotes": "Per-asset license and provenance are mandatory. Editorial or incompatible assets stay discovery-only."
+    },
+    {
+      "id": "mixamo",
+      "name": "Mixamo",
+      "sourceUrl": "https://www.mixamo.com/",
+      "licensePolicy": "verify-current-Adobe-Mixamo-terms",
+      "acquisitionMode": "authenticated-official-export",
+      "authRequired": true,
+      "preferredFormats": ["fbx", "obj"],
+      "strengths": ["humanoid-animation", "character-rigging", "motion-library"],
+      "mobileNotes": "Use as an animation source, not a second runtime brain. Retarget into the shared GoPAL semantic animation contract and keep only needed clips."
+    }
+  ],
+  "acquisitionTiers": [
+    {
+      "id": "tier-0-direct-free",
+      "description": "Automatable official sources with clear redistribution/use rights and no account required.",
+      "providers": ["3dassets-dev", "polyhaven", "kenney"]
+    },
+    {
+      "id": "tier-1-official-free-discovery",
+      "description": "Official free packs that may require page discovery or exact-pack license verification.",
+      "providers": ["quaternius", "kaykit"]
+    },
+    {
+      "id": "tier-2-authenticated",
+      "description": "Sources where downloads are account-gated, product/EULA-specific, or otherwise require the user's authorized access.",
+      "providers": ["blendkit", "fab", "sketchfab", "mixamo"]
+    }
+  ],
+  "scenarioAcquisitionOrder": [
+    "terrain-and-nature",
+    "districts-and-buildings",
+    "roads-and-public-spaces",
+    "railway-and-station",
+    "airport-and-travel",
+    "interiors-and-furniture",
+    "vehicles",
+    "characters-and-animation",
+    "atmosphere-and-materials",
+    "small-props-and-dressing"
+  ]
+}

@@ -1,0 +1,1 @@
+CI trigger policy: release APK builds and broad validation are manual during active implementation. Pull requests remain the automatic validation gate. This avoids consuming GitHub Actions minutes for every direct development commit on main.

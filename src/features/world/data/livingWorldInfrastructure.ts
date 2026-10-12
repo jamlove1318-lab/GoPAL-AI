@@ -1,4 +1,5 @@
 import type { WorldTheme } from '../components/LivingWorldPrimitives';
+import { getLanguageWorldInfrastructure, getLanguageWorldInfrastructureNetworks } from './livingLanguageWorldPhysical';
 
 export type WorldInfrastructureKind =
   | 'road' | 'sidewalk' | 'intersection' | 'bridge' | 'tunnel'
@@ -14,51 +15,29 @@ export type WorldInfrastructureDefinition = {
 export type WorldInfrastructureNetwork = { id:string; kind:WorldInfrastructureKind; points:{x:number;y:number}[]; width:number; variant?:string; theme?:WorldTheme };
 
 export const infrastructure=(kind:WorldInfrastructureKind,id:string,x:number,y:number,options:Omit<WorldInfrastructureDefinition,'id'|'kind'|'x'|'y'>={}):WorldInfrastructureDefinition=>({id,kind,x,y,...options});
-export const infrastructureNetwork=(kind:WorldInfrastructureKind,id:string,points:{x:number;y:number}[],width:number,options:Omit<WorldInfrastructureNetwork,'id'|'kind'|'points'|'width'>={}):WorldInfrastructureNetwork=>({id,kind,points,width,...options});
+export const infrastructureNetwork=(kind:WorldInfrastructureNetwork['kind'],id:string,points:{x:number;y:number}[],width:number,options:Omit<WorldInfrastructureNetwork,'id'|'kind'|'points'|'width'>={}):WorldInfrastructureNetwork=>({id,kind,points,width,...options});
 
 export const LIVING_WORLD_INFRASTRUCTURE:Record<string,WorldInfrastructureDefinition[]>={
   'emerald-village':[
-    infrastructure('bus-stop','emerald-bus-stop',58,53,{label:'Valley Bus Stop',interactive:true,zIndex:18}),
-    infrastructure('railway-crossing','emerald-crossing',45,67,{label:'Rail Crossing',interactive:true,zIndex:18}),
-    infrastructure('bridge','emerald-bridge',42,54,{width:16,height:8,rotation:12,variant:'stone',zIndex:16}),
-    infrastructure('intersection','emerald-intersection',45,51,{width:18,height:18,variant:'village',zIndex:15}),
-    infrastructure('traffic-signal','emerald-signal',48,52,{scale:.8,variant:'village',zIndex:19}),
-    infrastructure('street-light','emerald-lamp-01',64,48,{scale:.8,zIndex:19}), infrastructure('street-light','emerald-lamp-02',52,61,{scale:.8,zIndex:19}),
-    infrastructure('street-light','emerald-lamp-03',32,57,{scale:.7,zIndex:19}), infrastructure('dock','emerald-dock',81,27,{width:13,height:5,rotation:-8,variant:'wood',zIndex:12}),
-    infrastructure('pier','emerald-pier',89,25,{width:7,height:18,rotation:4,variant:'wood',zIndex:11}),
+    infrastructure('bus-stop','emerald-bus-stop',58,53,{label:'Valley Bus Stop',interactive:true,zIndex:18}), infrastructure('railway-crossing','emerald-crossing',45,67,{label:'Rail Crossing',interactive:true,zIndex:18}), infrastructure('bridge','emerald-bridge',42,54,{width:16,height:8,rotation:12,variant:'stone',zIndex:16}), infrastructure('intersection','emerald-intersection',45,51,{width:18,height:18,variant:'village',zIndex:15}), infrastructure('traffic-signal','emerald-signal',48,52,{scale:.8,variant:'village',zIndex:19}), infrastructure('street-light','emerald-lamp-01',64,48,{scale:.8,zIndex:19}), infrastructure('street-light','emerald-lamp-02',52,61,{scale:.8,zIndex:19}), infrastructure('street-light','emerald-lamp-03',32,57,{scale:.7,zIndex:19}), infrastructure('dock','emerald-dock',81,27,{width:13,height:5,rotation:-8,variant:'wood',zIndex:12}), infrastructure('pier','emerald-pier',89,25,{width:7,height:18,rotation:4,variant:'wood',zIndex:11}),
   ],
   'learning-campus':[
-    infrastructure('bus-stop','campus-bus-stop',53,57,{label:'Campus Shuttle',interactive:true,zIndex:18}), infrastructure('parking','campus-parking',80,57,{width:18,height:11,variant:'student',zIndex:8}),
-    infrastructure('helipad','campus-helipad',31,19,{scale:.8,variant:'rescue',zIndex:8}), infrastructure('intersection','campus-intersection',52,54,{width:18,height:18,variant:'campus',zIndex:15}),
-    infrastructure('traffic-signal','campus-signal',55,55,{scale:.8,variant:'campus',zIndex:19}), infrastructure('street-light','campus-lamp-01',42,48,{scale:.7,zIndex:19}),
-    infrastructure('street-light','campus-lamp-02',69,56,{scale:.7,zIndex:19}), infrastructure('utility','campus-utility',86,46,{scale:.8,variant:'modern',zIndex:9}),
+    infrastructure('bus-stop','campus-bus-stop',53,57,{label:'Campus Shuttle',interactive:true,zIndex:18}), infrastructure('parking','campus-parking',80,57,{width:18,height:11,variant:'student',zIndex:8}), infrastructure('helipad','campus-helipad',31,19,{scale:.8,variant:'rescue',zIndex:8}), infrastructure('intersection','campus-intersection',52,54,{width:18,height:18,variant:'campus',zIndex:15}), infrastructure('traffic-signal','campus-signal',55,55,{scale:.8,variant:'campus',zIndex:19}), infrastructure('street-light','campus-lamp-01',42,48,{scale:.7,zIndex:19}), infrastructure('street-light','campus-lamp-02',69,56,{scale:.7,zIndex:19}), infrastructure('utility','campus-utility',86,46,{scale:.8,variant:'modern',zIndex:9}),
   ],
   'coastal-town':[
-    infrastructure('harbor','coast-harbor',79,74,{scale:1.05,variant:'seaside',zIndex:5}), infrastructure('dock','coast-dock',73,72,{width:20,height:6,rotation:-5,variant:'wood',zIndex:12}),
-    infrastructure('pier','coast-pier',88,63,{width:8,height:22,rotation:2,variant:'wood',zIndex:11}), infrastructure('bridge','coast-bridge',55,57,{width:17,height:8,rotation:-8,variant:'stone',zIndex:16}),
-    infrastructure('bus-stop','coast-bus-stop',43,51,{label:'Coast Bus',interactive:true,zIndex:18}), infrastructure('street-light','coast-lamp-01',32,48,{scale:.75,zIndex:19}), infrastructure('street-light','coast-lamp-02',62,43,{scale:.75,zIndex:19}),
-    infrastructure('railway-crossing','coast-crossing',76,26,{interactive:true,label:'Station Crossing',zIndex:18}),
+    infrastructure('harbor','coast-harbor',79,74,{scale:1.05,variant:'seaside',zIndex:5}), infrastructure('dock','coast-dock',73,72,{width:20,height:6,rotation:-5,variant:'wood',zIndex:12}), infrastructure('pier','coast-pier',88,63,{width:8,height:22,rotation:2,variant:'wood',zIndex:11}), infrastructure('bridge','coast-bridge',55,57,{width:17,height:8,rotation:-8,variant:'stone',zIndex:16}), infrastructure('bus-stop','coast-bus-stop',43,51,{label:'Coast Bus',interactive:true,zIndex:18}), infrastructure('street-light','coast-lamp-01',32,48,{scale:.75,zIndex:19}), infrastructure('street-light','coast-lamp-02',62,43,{scale:.75,zIndex:19}), infrastructure('railway-crossing','coast-crossing',76,26,{interactive:true,label:'Station Crossing',zIndex:18}),
   ],
   'mountain-village':[
-    infrastructure('bridge','mountain-bridge',51,53,{width:16,height:8,rotation:8,variant:'wood',zIndex:16}), infrastructure('tunnel','mountain-tunnel',82,43,{scale:.9,variant:'stone',zIndex:17}),
-    infrastructure('intersection','mountain-intersection',48,58,{width:17,height:17,variant:'mountain',zIndex:15}), infrastructure('bus-stop','mountain-bus-stop',54,69,{label:'Summit Bus',interactive:true,zIndex:18}),
-    infrastructure('street-light','mountain-lamp-01',37,51,{scale:.7,zIndex:19}), infrastructure('street-light','mountain-lamp-02',67,57,{scale:.7,zIndex:19}), infrastructure('power-line','mountain-utility',78,31,{scale:.8,variant:'wooden-poles',zIndex:9}),
+    infrastructure('bridge','mountain-bridge',51,53,{width:16,height:8,rotation:8,variant:'wood',zIndex:16}), infrastructure('tunnel','mountain-tunnel',82,43,{scale:.9,variant:'stone',zIndex:17}), infrastructure('intersection','mountain-intersection',48,58,{width:17,height:17,variant:'mountain',zIndex:15}), infrastructure('bus-stop','mountain-bus-stop',54,69,{label:'Summit Bus',interactive:true,zIndex:18}), infrastructure('street-light','mountain-lamp-01',37,51,{scale:.7,zIndex:19}), infrastructure('street-light','mountain-lamp-02',67,57,{scale:.7,zIndex:19}), infrastructure('power-line','mountain-utility',78,31,{scale:.8,variant:'wooden-poles',zIndex:9}),
   ],
   'fantasy-kingdom':[
-    infrastructure('bridge','fantasy-bridge',50,47,{width:19,height:9,rotation:0,variant:'stone-arch',zIndex:16}), infrastructure('intersection','fantasy-crossroads',50,56,{width:20,height:20,variant:'cobblestone',zIndex:15}),
-    infrastructure('street-light','fantasy-lamp-01',38,49,{scale:.8,variant:'lantern',zIndex:19}), infrastructure('street-light','fantasy-lamp-02',63,49,{scale:.8,variant:'lantern',zIndex:19}),
-    infrastructure('bus-stop','fantasy-carriage-stop',76,58,{label:'Carriage Stop',interactive:true,variant:'carriage',zIndex:18}), infrastructure('utility','fantasy-magic-node',84,30,{scale:.8,variant:'crystal',zIndex:9}),
+    infrastructure('bridge','fantasy-bridge',50,47,{width:19,height:9,rotation:0,variant:'stone-arch',zIndex:16}), infrastructure('intersection','fantasy-crossroads',50,56,{width:20,height:20,variant:'cobblestone',zIndex:15}), infrastructure('street-light','fantasy-lamp-01',38,49,{scale:.8,variant:'lantern',zIndex:19}), infrastructure('street-light','fantasy-lamp-02',63,49,{scale:.8,variant:'lantern',zIndex:19}), infrastructure('bus-stop','fantasy-carriage-stop',76,58,{label:'Carriage Stop',interactive:true,variant:'carriage',zIndex:18}), infrastructure('utility','fantasy-magic-node',84,30,{scale:.8,variant:'crystal',zIndex:9}),
   ],
   'scifi-outpost':[
-    infrastructure('intersection','scifi-hub-intersection',50,48,{width:22,height:22,variant:'futuristic',zIndex:15}), infrastructure('bridge','scifi-bridge',50,65,{width:18,height:8,rotation:0,variant:'metal',zIndex:16}),
-    infrastructure('parking','scifi-parking',26,70,{width:20,height:12,variant:'hover',zIndex:8}), infrastructure('helipad','scifi-helipad',78,47,{scale:.8,variant:'landing-pad',zIndex:8}),
-    infrastructure('street-light','scifi-lamp-01',39,44,{scale:.75,variant:'neon',zIndex:19}), infrastructure('street-light','scifi-lamp-02',61,44,{scale:.75,variant:'neon',zIndex:19}),
-    infrastructure('utility','scifi-power-node',87,28,{scale:.9,variant:'reactor',zIndex:9}),
+    infrastructure('intersection','scifi-hub-intersection',50,48,{width:22,height:22,variant:'futuristic',zIndex:15}), infrastructure('bridge','scifi-bridge',50,65,{width:18,height:8,rotation:0,variant:'metal',zIndex:16}), infrastructure('parking','scifi-parking',26,70,{width:20,height:12,variant:'hover',zIndex:8}), infrastructure('helipad','scifi-helipad',78,47,{scale:.8,variant:'landing-pad',zIndex:8}), infrastructure('street-light','scifi-lamp-01',39,44,{scale:.75,variant:'neon',zIndex:19}), infrastructure('street-light','scifi-lamp-02',61,44,{scale:.75,variant:'neon',zIndex:19}), infrastructure('utility','scifi-power-node',87,28,{scale:.9,variant:'reactor',zIndex:9}),
   ],
   'game-arena':[
-    infrastructure('intersection','arena-center',50,50,{width:24,height:24,variant:'arena',zIndex:15}), infrastructure('bridge','arena-overpass',50,50,{width:20,height:7,rotation:90,variant:'modular',zIndex:16}),
-    infrastructure('street-light','arena-lamp-01',38,42,{scale:.8,variant:'festival',zIndex:19}), infrastructure('street-light','arena-lamp-02',62,42,{scale:.8,variant:'festival',zIndex:19}),
-    infrastructure('bus-stop','arena-start-gate',50,83,{label:'Game Start',interactive:true,variant:'arena',zIndex:18}), infrastructure('utility','arena-control-node',50,18,{scale:.8,variant:'game',zIndex:9}),
+    infrastructure('intersection','arena-center',50,50,{width:24,height:24,variant:'arena',zIndex:15}), infrastructure('bridge','arena-overpass',50,50,{width:20,height:7,rotation:90,variant:'modular',zIndex:16}), infrastructure('street-light','arena-lamp-01',38,42,{scale:.8,variant:'festival',zIndex:19}), infrastructure('street-light','arena-lamp-02',62,42,{scale:.8,variant:'festival',zIndex:19}), infrastructure('bus-stop','arena-start-gate',50,83,{label:'Game Start',interactive:true,variant:'arena',zIndex:18}), infrastructure('utility','arena-control-node',50,18,{scale:.8,variant:'game',zIndex:9}),
   ],
 };
 
@@ -86,5 +65,5 @@ export const LIVING_INFRASTRUCTURE_NETWORKS:Record<string,WorldInfrastructureNet
   ],
 };
 
-export function getWorldInfrastructure(locationId:string){return LIVING_WORLD_INFRASTRUCTURE[locationId]??[];}
-export function getWorldInfrastructureNetworks(locationId:string){return LIVING_INFRASTRUCTURE_NETWORKS[locationId]??[];}
+export function getWorldInfrastructure(locationId:string){return LIVING_WORLD_INFRASTRUCTURE[locationId]??getLanguageWorldInfrastructure(locationId);}
+export function getWorldInfrastructureNetworks(locationId:string){return LIVING_INFRASTRUCTURE_NETWORKS[locationId]??getLanguageWorldInfrastructureNetworks(locationId);}

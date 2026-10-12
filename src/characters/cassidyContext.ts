@@ -1,21 +1,11 @@
 import { WaveStore } from '../lib/waveStore';
+import { livingWorldObjectsStore } from '../engines/world/livingWorldObjectsStore';
 import { CharacterEngine } from '../engines/character/characterEngine';
 
 const characterEngine = new CharacterEngine();
 
-// Where Cassidy can be. Used to give her a voice that fits the place.
-export type Place =
-  | 'home'
-  | 'cassidy'
-  | 'study'
-  | 'world'
-  | 'journey'
-  | 'museum'
-  | 'characters'
-  | 'settings';
+export type Place = 'home' | 'cassidy' | 'study' | 'world' | 'journey' | 'museum' | 'characters' | 'settings';
 
-// A live snapshot of the learner's world — pulled from every engine that
-// remembers them. Cassidy reads this to know what to say.
 export interface CassidySnapshot {
   returns: number;
   lastMode: string | null;
@@ -28,7 +18,8 @@ export interface CassidySnapshot {
   radioGrowth: number;
 }
 
-export async function loadCassidySnapshot(): Promise<CassidySnapshot> {
+export async function loadCassidySnapshot(userId: string = 'local-explorer-user'): Promise<CassidySnapshot> {
+  await livingWorldObjectsStore.migrateLegacyLocalState(userId);
   const [ret, echoes, worldEchoes, souvs, threads, decisions, living] = await Promise.all([
     WaveStore.getReturnSignature(),
     WaveStore.getLearningEchoes(),
@@ -36,7 +27,7 @@ export async function loadCassidySnapshot(): Promise<CassidySnapshot> {
     WaveStore.getSouvenirs(),
     WaveStore.getThreads(),
     WaveStore.getDecisions(),
-    WaveStore.getLivingObjects(),
+    livingWorldObjectsStore.getAll(userId),
   ]);
   const bonsai = living.find((o) => o.id === 'living-bonsai');
   const radio = living.find((o) => o.id === 'living-radio');
@@ -53,17 +44,10 @@ export async function loadCassidySnapshot(): Promise<CassidySnapshot> {
   };
 }
 
-// The character engine's own time-of-day greeting — reused so Cassidy stays
-// consistent with the world's clock.
 export function cassidyTimeGreeting(timeOfDay: string, location?: string | null): string {
-  return characterEngine.generateGreeting(
-    (timeOfDay as any) ?? 'morning',
-    (location as any) ?? '',
-    'warm' as any,
-  );
+  return characterEngine.generateGreeting((timeOfDay as any) ?? 'morning', (location as any) ?? '', 'warm' as any);
 }
 
-// How "alive" the world feels, derived from how much the learner has done.
 export function worldIntensity(snap: CassidySnapshot | null): number {
   if (!snap) return 0.5;
   return Math.min(1, 0.35 + (snap.echoes + snap.souvenirs + snap.threads + snap.worldEchoes) / 30);

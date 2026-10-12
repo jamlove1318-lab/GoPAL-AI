@@ -1,0 +1,1572 @@
+{
+  "packName": "Steam Era Railway and Rolling Stock",
+  "packSlug": "steam-era-railway-and-rolling-stock",
+  "sourceProvider": "3DAssets.dev",
+  "packPageUrl": "https://3dassets.dev/packs/steam-era-railway-and-rolling-stock",
+  "manifestApiUrl": "https://3dassets.dev/api/v1/packs/steam-era-railway-and-rolling-stock",
+  "license": "CC0 1.0 Universal",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "totalAssets": 64,
+  "totalBytes": 10644328,
+  "downloadDate": "2026-09-12",
+  "starterScene": {
+    "id": "14778",
+    "originalName": "Country station with a passenger train at the platform (Steam Era Railway and Rolling Stock)",
+    "slug": "steam-era-railway-and-rolling-stock-stat-d2357295-starter-scene",
+    "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-stat-d2357295-starter-scene",
+    "cdnUrl": "https://cdn.3dassets.dev/assets/14778/v1/model.glb",
+    "localPath": "starter/starter-country-station.glb",
+    "fileSizeBytes": 1099904,
+    "sha256": "9b2a7b45d929c31cd9d37de87535e34d9b0c6b46c365e3a84acc07c006041e15",
+    "license": "CC0 1.0 Universal",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "sourceProvider": "3DAssets.dev",
+    "triangles": 30888,
+    "vertices": 67373,
+    "dimensionsMeters": [
+      17.84,
+      7.82,
+      60
+    ],
+    "downloadTimestamp": "2026-09-12T12:49:02.130Z"
+  },
+  "assets": [
+    {
+      "id": "14716",
+      "originalName": "Steam goods locomotive 0-6-0 (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-goods-0-6-0-673ef503",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-goods-0-6-0-673ef503",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14716/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-goods-0-6-0-673ef503.glb",
+      "fileSizeBytes": 270752,
+      "sha256": "8181cf535396a137a62d0eec498d95ca716040ab6e50b3f1214546a9c931362c",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 7396,
+      "vertices": 22188,
+      "dimensionsMeters": [
+        2.7,
+        3.974,
+        9
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:02.760Z"
+    },
+    {
+      "id": "14721",
+      "originalName": "Steam mixed traffic locomotive 4-6-0 (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-mixed-traffic-4-6--f590c812",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-mixed-traffic-4-6--f590c812",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14721/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-mixed-traffic-4-6--f590c812.glb",
+      "fileSizeBytes": 332632,
+      "sha256": "ee8640e6f6c33adacc7fbd2cd4f4d5181daffced96f87c24a029706113a2d3b6",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 9272,
+      "vertices": 27816,
+      "dimensionsMeters": [
+        2.78,
+        4,
+        12.4
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:02.927Z"
+    },
+    {
+      "id": "14718",
+      "originalName": "Steam express locomotive 4-6-2 (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-express-pacific-4--e04974dc",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-express-pacific-4--e04974dc",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14718/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-express-pacific-4--e04974dc.glb",
+      "fileSizeBytes": 339272,
+      "sha256": "c5fae954b6f9b89a3746314b060450b949ced110427d738808d32f6980e47796",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 9628,
+      "vertices": 28884,
+      "dimensionsMeters": [
+        2.859,
+        4.06,
+        13.8
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:03.236Z"
+    },
+    {
+      "id": "14715",
+      "originalName": "Steam side tank shunting locomotive 0-4-0 (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-tank-shunter-0-4-0-a1b70a58",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-tank-shunter-0-4-0-a1b70a58",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14715/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-tank-shunter-0-4-0-a1b70a58.glb",
+      "fileSizeBytes": 225168,
+      "sha256": "986a13cdddc92850e6fd4b852e13a27164f54d09df07a17e34fe561901be5aaf",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 5520,
+      "vertices": 16560,
+      "dimensionsMeters": [
+        2.66,
+        3.355,
+        6.8
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:03.676Z"
+    },
+    {
+      "id": "14722",
+      "originalName": "Narrow gauge saddle tank locomotive (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-narrow-gauge-saddl-3e7188f3",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-narrow-gauge-saddl-3e7188f3",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14722/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-narrow-gauge-saddl-3e7188f3.glb",
+      "fileSizeBytes": 207516,
+      "sha256": "674e8e79d87bb669f21af4fd1fea027050e1e8704e88903a5393ba726abfacc6",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 5112,
+      "vertices": 15336,
+      "dimensionsMeters": [
+        1.46,
+        2.4,
+        4.4
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:04.170Z"
+    },
+    {
+      "id": "14719",
+      "originalName": "Vertical boiler industrial locomotive (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-vertical-boiler-in-a7556426",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-vertical-boiler-in-a7556426",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14719/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-vertical-boiler-in-a7556426.glb",
+      "fileSizeBytes": 174164,
+      "sha256": "57555d7982898982fb96ab689c096194125b8ce871992e69e4eee696081be309",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 4304,
+      "vertices": 12912,
+      "dimensionsMeters": [
+        2.14,
+        2.957,
+        3.9
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:04.289Z"
+    },
+    {
+      "id": "14717",
+      "originalName": "Six wheel locomotive tender (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-six-wheel-tender-af17bb59",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-six-wheel-tender-af17bb59",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14717/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-six-wheel-tender-af17bb59.glb",
+      "fileSizeBytes": 135292,
+      "sha256": "430f3bae399e00d0a9fc6543a10d2e25b222fe8aba51c4428351128efbc01b65",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 3812,
+      "vertices": 11436,
+      "dimensionsMeters": [
+        2.7,
+        3.38,
+        7
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:04.425Z"
+    },
+    {
+      "id": "14720",
+      "originalName": "Bogie locomotive tender (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-bogie-tender-e8ef03f1",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-bogie-tender-e8ef03f1",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14720/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-bogie-tender-e8ef03f1.glb",
+      "fileSizeBytes": 139408,
+      "sha256": "9723235b89668ad890bb011f7ec17397060107028ab07bca334a6b8713bcfc33",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 4492,
+      "vertices": 13476,
+      "dimensionsMeters": [
+        2.76,
+        3.63,
+        8.8
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:04.558Z"
+    },
+    {
+      "id": "14724",
+      "originalName": "Compartment carriage (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-compartment-coach-3fe695bf",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-compartment-coach-3fe695bf",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14724/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-compartment-coach-3fe695bf.glb",
+      "fileSizeBytes": 212140,
+      "sha256": "9a26a0fea11500470d31104670d7e123be16e4aaa2c42170ed075ac1326641c6",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 5976,
+      "vertices": 17928,
+      "dimensionsMeters": [
+        3.259,
+        3.92,
+        15
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:04.703Z"
+    },
+    {
+      "id": "14725",
+      "originalName": "Corridor carriage (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-corridor-coach-927e61fe",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-corridor-coach-927e61fe",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14725/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-corridor-coach-927e61fe.glb",
+      "fileSizeBytes": 195936,
+      "sha256": "df594ee75f6f65d79f715689e2412e8c536a9acda61bbbd50026c1e07a7904d6",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 5640,
+      "vertices": 16920,
+      "dimensionsMeters": [
+        3.259,
+        3.92,
+        15
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:04.909Z"
+    },
+    {
+      "id": "14723",
+      "originalName": "Brake and luggage carriage (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-brake-luggage-coac-9872f255",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-brake-luggage-coac-9872f255",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14723/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-brake-luggage-coac-9872f255.glb",
+      "fileSizeBytes": 188364,
+      "sha256": "4a2974a4a11061d02a24b98a7c6208b5089293d97034e6b1353f3acac11c3e4c",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 5480,
+      "vertices": 16440,
+      "dimensionsMeters": [
+        3.259,
+        4.06,
+        15
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:05.125Z"
+    },
+    {
+      "id": "14726",
+      "originalName": "Dining carriage (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-dining-coach-b9b8d6a4",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-dining-coach-b9b8d6a4",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14726/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-dining-coach-b9b8d6a4.glb",
+      "fileSizeBytes": 185720,
+      "sha256": "4f65e8eae8224cf9a10bff16110ef89f0e080bbf64bd35b17912d39d905480b5",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 5428,
+      "vertices": 16284,
+      "dimensionsMeters": [
+        3.259,
+        4.09,
+        15
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:05.590Z"
+    },
+    {
+      "id": "14727",
+      "originalName": "Four wheel branch line carriage (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-four-wheel-branch--08917d65",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-four-wheel-branch--08917d65",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14727/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-four-wheel-branch--08917d65.glb",
+      "fileSizeBytes": 131916,
+      "sha256": "a9c7c9dac5535a129b2b12ede74b804ce565a740d26f0af11fc08443cfebf50c",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 2596,
+      "vertices": 7788,
+      "dimensionsMeters": [
+        2.7,
+        3.58,
+        7.2
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:05.880Z"
+    },
+    {
+      "id": "14728",
+      "originalName": "Open mineral wagon (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-open-mineral-wagon-d00165d3",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-open-mineral-wagon-d00165d3",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14728/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-open-mineral-wagon-d00165d3.glb",
+      "fileSizeBytes": 116064,
+      "sha256": "97a33af6748a584ab83e6e80584ae25871e34a1af91ed653fa50ccc21382f0b1",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 2872,
+      "vertices": 8616,
+      "dimensionsMeters": [
+        2.385,
+        2.4,
+        5.6
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:06.024Z"
+    },
+    {
+      "id": "14729",
+      "originalName": "Covered goods van (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-box-van-a71580fa",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-box-van-a71580fa",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14729/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-box-van-a71580fa.glb",
+      "fileSizeBytes": 110420,
+      "sha256": "1fdfb55eb7c384db82d5ee8980d0067706d36152b2b537790a969bc65945c087",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 2756,
+      "vertices": 8268,
+      "dimensionsMeters": [
+        2.43,
+        3.64,
+        5.9
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:06.164Z"
+    },
+    {
+      "id": "14730",
+      "originalName": "Flat goods wagon (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-flat-wagon-b25605be",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-flat-wagon-b25605be",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14730/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-flat-wagon-b25605be.glb",
+      "fileSizeBytes": 109032,
+      "sha256": "e00365a5da8e07627d1144556ff820e7612b999e70345b1b692fcd4dde6b4279",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 2728,
+      "vertices": 8184,
+      "dimensionsMeters": [
+        2.375,
+        1.96,
+        5.6
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:06.344Z"
+    },
+    {
+      "id": "14731",
+      "originalName": "Goods tank wagon (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-tank-wagon-a86f89fc",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-tank-wagon-a86f89fc",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14731/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-tank-wagon-a86f89fc.glb",
+      "fileSizeBytes": 140748,
+      "sha256": "7d5228e91a168637d0c7ecc3f07c4ff466c13c389ae5d6eb02ecd5d801cf6981",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 3388,
+      "vertices": 10164,
+      "dimensionsMeters": [
+        2.375,
+        3.12,
+        5.8
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:06.490Z"
+    },
+    {
+      "id": "14732",
+      "originalName": "Cattle wagon (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-cattle-wagon-8763f0ec",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-cattle-wagon-8763f0ec",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14732/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-cattle-wagon-8763f0ec.glb",
+      "fileSizeBytes": 122656,
+      "sha256": "cf502f8269c0583ef2848140dbe8b498073b0c53b3c7ce41718631fbe99bed44",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 2996,
+      "vertices": 8988,
+      "dimensionsMeters": [
+        2.385,
+        3.5,
+        5.9
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:06.609Z"
+    },
+    {
+      "id": "14733",
+      "originalName": "Goods brake van (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-brake-van-8d7a6f07",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-brake-van-8d7a6f07",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14733/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-brake-van-8d7a6f07.glb",
+      "fileSizeBytes": 135252,
+      "sha256": "bdddd27a3c70e7922b6ef9625e666ed48231e7e117ab88b9c1ef4c4011dd2aa9",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 3244,
+      "vertices": 9732,
+      "dimensionsMeters": [
+        2.89,
+        4.02,
+        6.4
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:06.745Z"
+    },
+    {
+      "id": "14734",
+      "originalName": "Bolster timber wagon (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-bolster-timber-wag-88621920",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-bolster-timber-wag-88621920",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14734/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-bolster-timber-wag-88621920.glb",
+      "fileSizeBytes": 114356,
+      "sha256": "3a9f6d2cc4c26ba1c563e4a7e21a9d3ab5096e84a7806abb5b3a552b52af4d4b",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 2836,
+      "vertices": 8508,
+      "dimensionsMeters": [
+        2.4,
+        2.63,
+        6.2
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:06.877Z"
+    },
+    {
+      "id": "14735",
+      "originalName": "Bottom discharge hopper wagon (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-hopper-wagon-25b3d852",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-hopper-wagon-25b3d852",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14735/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-hopper-wagon-25b3d852.glb",
+      "fileSizeBytes": 114240,
+      "sha256": "abdbab8f88963392e7a98795e9f38a73f66cf3ef7b7d2c536e51b1f0b8603f2e",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 2836,
+      "vertices": 8508,
+      "dimensionsMeters": [
+        2.44,
+        2.741,
+        6
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:06.994Z"
+    },
+    {
+      "id": "14736",
+      "originalName": "Narrow gauge tipping skip wagon (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-narrow-gauge-skip--112c82e9",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-narrow-gauge-skip--112c82e9",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14736/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-narrow-gauge-skip--112c82e9.glb",
+      "fileSizeBytes": 77608,
+      "sha256": "89c9f3febc7c94c30395941c9c37d52dc7a01e2e11f813f82f9e3e15b6854a10",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 1892,
+      "vertices": 5676,
+      "dimensionsMeters": [
+        1.02,
+        1.54,
+        2.3
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll",
+        "tilt"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:07.419Z"
+    },
+    {
+      "id": "14737",
+      "originalName": "Plain track straight 4 m (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-track-straight-4m-921a7240",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-track-straight-4m-921a7240",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14737/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-track-straight-4m-921a7240.glb",
+      "fileSizeBytes": 18892,
+      "sha256": "706532837bfbf90e4e9dc0548a8e4d9749c8b2d566e9f78e82f435304e72c60d",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 328,
+      "vertices": 984,
+      "dimensionsMeters": [
+        4.1,
+        0.5,
+        4
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:07.527Z"
+    },
+    {
+      "id": "14738",
+      "originalName": "Plain track curve 15 degrees (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-track-curve-15deg-43b236be",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-track-curve-15deg-43b236be",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14738/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-track-curve-15deg-43b236be.glb",
+      "fileSizeBytes": 37880,
+      "sha256": "f75ad747ae999b70d53bb444e9421bc74828a7b7966a46d7f070d19eeba706b2",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 720,
+      "vertices": 2160,
+      "dimensionsMeters": [
+        4.549,
+        0.5,
+        4.414
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:07.638Z"
+    },
+    {
+      "id": "14739",
+      "originalName": "Left hand turnout (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-turnout-left-fe11f19c",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-turnout-left-fe11f19c",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14739/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-turnout-left-fe11f19c.glb",
+      "fileSizeBytes": 55244,
+      "sha256": "6e97142955531d1fc0c6b15c20f17c3149b8dd5bce58074bfc752b95d2e81ccc",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 1084,
+      "vertices": 3252,
+      "dimensionsMeters": [
+        4.35,
+        0.81,
+        8.106
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:07.751Z"
+    },
+    {
+      "id": "14740",
+      "originalName": "Right angle crossing diamond (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-crossing-diamond-6c9a5b4e",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-crossing-diamond-6c9a5b4e",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14740/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-crossing-diamond-6c9a5b4e.glb",
+      "fileSizeBytes": 26956,
+      "sha256": "29e906bdf1afc7bf8f5d1178ca93101f1df5dec7930dad22f63ba0fced580c7c",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 496,
+      "vertices": 1488,
+      "dimensionsMeters": [
+        4.1,
+        0.5,
+        4.064
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:07.859Z"
+    },
+    {
+      "id": "14742",
+      "originalName": "Sleeper built buffer stop (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-buffer-stop-84daeb10",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-buffer-stop-84daeb10",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14742/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-buffer-stop-84daeb10.glb",
+      "fileSizeBytes": 33720,
+      "sha256": "914e1292c877157bea6fc1916ab5e54c5454f9f3c1cd11eb20b08f39cebaed9c",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 616,
+      "vertices": 1848,
+      "dimensionsMeters": [
+        4.1,
+        2.64,
+        3
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:07.978Z"
+    },
+    {
+      "id": "14741",
+      "originalName": "Level crossing with gates (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-level-crossing-70ed6fd5",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-level-crossing-70ed6fd5",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14741/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-level-crossing-70ed6fd5.glb",
+      "fileSizeBytes": 44576,
+      "sha256": "930e1ef9208b39b17054dc9a55d54cc5c72d33f83f6c6d5cb7f152c1170a031b",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 792,
+      "vertices": 2376,
+      "dimensionsMeters": [
+        9.4,
+        2.12,
+        4
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "open",
+        "close"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:08.094Z"
+    },
+    {
+      "id": "14743",
+      "originalName": "Through girder bridge deck (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-bridge-deck-90cb5af6",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-bridge-deck-90cb5af6",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14743/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-bridge-deck-90cb5af6.glb",
+      "fileSizeBytes": 47992,
+      "sha256": "b6e8ccc5976fa65be15c3792b62900aa3d6793fde20926216fec117b28b5b191",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 936,
+      "vertices": 2808,
+      "dimensionsMeters": [
+        4.6,
+        2.94,
+        8.25
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:08.205Z"
+    },
+    {
+      "id": "14745",
+      "originalName": "Narrow gauge track straight 4 m (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-narrow-track-strai-069c7a2a",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-narrow-track-strai-069c7a2a",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14745/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-narrow-track-strai-069c7a2a.glb",
+      "fileSizeBytes": 20644,
+      "sha256": "5c3598739afb778b5fdaa3ffed9bf4678b84ae43016c0497a92927ed885d1a3e",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 364,
+      "vertices": 1092,
+      "dimensionsMeters": [
+        2.87,
+        0.35,
+        4
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:08.327Z"
+    },
+    {
+      "id": "14744",
+      "originalName": "Signal box (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-signal-box-89e4fccd",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-signal-box-89e4fccd",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14744/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-signal-box-89e4fccd.glb",
+      "fileSizeBytes": 30084,
+      "sha256": "48c9780b5253612e995ec248d5ebf894b99edd4dc9b7b1de3d46f106e342ef08",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 532,
+      "vertices": 1596,
+      "dimensionsMeters": [
+        7.8,
+        6.24,
+        4.7
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:08.438Z"
+    },
+    {
+      "id": "14746",
+      "originalName": "Lower quadrant semaphore signal (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-semaphore-signal-9ca4609d",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-semaphore-signal-9ca4609d",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14746/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-semaphore-signal-9ca4609d.glb",
+      "fileSizeBytes": 54848,
+      "sha256": "8e202212d63ed9ea07f4dc33ccf07fa7cc292fde828594240d3d792f120c90a8",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 1044,
+      "vertices": 3132,
+      "dimensionsMeters": [
+        1.935,
+        6.9,
+        0.956
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "trigger"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:08.560Z"
+    },
+    {
+      "id": "14747",
+      "originalName": "Water tower (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-water-tower-87222c2b",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-water-tower-87222c2b",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14747/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-water-tower-87222c2b.glb",
+      "fileSizeBytes": 47052,
+      "sha256": "b399ebda3abcf7d8bd12f93381db90e5e73cf3984e67c59517ce5c42625da8d1",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 916,
+      "vertices": 2748,
+      "dimensionsMeters": [
+        5.727,
+        6.9,
+        5
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:08.676Z"
+    },
+    {
+      "id": "14748",
+      "originalName": "Water crane (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-water-crane-5f5b75c0",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-water-crane-5f5b75c0",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14748/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-water-crane-5f5b75c0.glb",
+      "fileSizeBytes": 25984,
+      "sha256": "800eef31e097b20b66186fd4668eed9ccf6377b57011e6668228eeac3e4ac9d4",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 452,
+      "vertices": 1356,
+      "dimensionsMeters": [
+        2.89,
+        3.1,
+        1.75
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "open",
+        "close"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:08.784Z"
+    },
+    {
+      "id": "14749",
+      "originalName": "Coaling stage (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-coaling-stage-dd222607",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-coaling-stage-dd222607",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14749/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-coaling-stage-dd222607.glb",
+      "fileSizeBytes": 34216,
+      "sha256": "a8022f171e7dd163701382ff7ec9e169d96071c224efd45b9fa87cf2a9db9de5",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 616,
+      "vertices": 1848,
+      "dimensionsMeters": [
+        8.4,
+        6.54,
+        9.258
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:08.893Z"
+    },
+    {
+      "id": "14750",
+      "originalName": "Locomotive turntable (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-turntable-19b94020",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-turntable-19b94020",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14750/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-turntable-19b94020.glb",
+      "fileSizeBytes": 58168,
+      "sha256": "d0f4da537cefa64d3943b13a8a2b4ffd4f25a6f074912a77cae6ed1e1852d89d",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 1140,
+      "vertices": 3420,
+      "dimensionsMeters": [
+        14.6,
+        1.4,
+        14.6
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "spin"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:09.009Z"
+    },
+    {
+      "id": "14751",
+      "originalName": "Engine shed (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-engine-shed-fronta-98c208ea",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-engine-shed-fronta-98c208ea",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14751/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-engine-shed-fronta-98c208ea.glb",
+      "fileSizeBytes": 26564,
+      "sha256": "fd4d1fd37a1b6e86c3055c8f189b71ae19b8de66aa6af10d542d177c303e0303",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 488,
+      "vertices": 1464,
+      "dimensionsMeters": [
+        17.3,
+        10.551,
+        12.05
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:09.113Z"
+    },
+    {
+      "id": "14752",
+      "originalName": "Station platform module (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-platform-module-e0cc0aef",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-platform-module-e0cc0aef",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14752/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-platform-module-e0cc0aef.glb",
+      "fileSizeBytes": 19872,
+      "sha256": "8b17fd2dccb6ad740ba995a4217f6de2ea5614b967fdb30db5bbc265201318e5",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 348,
+      "vertices": 1044,
+      "dimensionsMeters": [
+        3.401,
+        1.26,
+        6
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:09.213Z"
+    },
+    {
+      "id": "14753",
+      "originalName": "Platform canopy (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-platform-canopy-89c3608f",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-platform-canopy-89c3608f",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14753/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-platform-canopy-89c3608f.glb",
+      "fileSizeBytes": 41884,
+      "sha256": "2047a91faec23c97a94b230d9e8e94d805284896045746340d2f9d5d04a594fb",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 808,
+      "vertices": 2424,
+      "dimensionsMeters": [
+        3.6,
+        4.52,
+        6
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:09.348Z"
+    },
+    {
+      "id": "14754",
+      "originalName": "Station footbridge (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-footbridge-59be8b67",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-footbridge-59be8b67",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14754/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-footbridge-59be8b67.glb",
+      "fileSizeBytes": 60032,
+      "sha256": "37f66ee7e56d4c7dcb406e256a66519215a616b9ce8ce1a30efe352e9f845adc",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 1200,
+      "vertices": 3600,
+      "dimensionsMeters": [
+        2.2,
+        7.82,
+        15.98
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:09.470Z"
+    },
+    {
+      "id": "14755",
+      "originalName": "Goods shed (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-goods-shed-debb22ca",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-goods-shed-debb22ca",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14755/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-goods-shed-debb22ca.glb",
+      "fileSizeBytes": 30144,
+      "sha256": "4699191bee44ede2592f2d26949ec712fbf1a07ab951986695ba28aa70bc78a8",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 544,
+      "vertices": 1632,
+      "dimensionsMeters": [
+        13.25,
+        7.16,
+        12.7
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:09.599Z"
+    },
+    {
+      "id": "14756",
+      "originalName": "Station nameboard (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-station-nameboard-28b3e5b3",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-station-nameboard-28b3e5b3",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14756/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-station-nameboard-28b3e5b3.glb",
+      "fileSizeBytes": 16816,
+      "sha256": "7729d4c1d8e039a97b34133655429e203902cb08a130c59dbbf99a93d72fa429",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 300,
+      "vertices": 900,
+      "dimensionsMeters": [
+        3.5,
+        2,
+        0.324
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:09.702Z"
+    },
+    {
+      "id": "14757",
+      "originalName": "Platform lamp post (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-lamp-post-1e42f0ef",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-lamp-post-1e42f0ef",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14757/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-lamp-post-1e42f0ef.glb",
+      "fileSizeBytes": 22160,
+      "sha256": "08c14f0a99363c82f90af2b3caae357929ffdbd10f62fb838ea4c86b52b0af50",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 420,
+      "vertices": 1260,
+      "dimensionsMeters": [
+        0.68,
+        4.28,
+        0.68
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:09.813Z"
+    },
+    {
+      "id": "14758",
+      "originalName": "Long spout oil can (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-oil-can-9dc5d99e",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-oil-can-9dc5d99e",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14758/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-oil-can-9dc5d99e.glb",
+      "fileSizeBytes": 11272,
+      "sha256": "0401190c8cd4e799fc55004dfea8f839516060b4feedeb98ccae6acd26b2e7ce",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 184,
+      "vertices": 552,
+      "dimensionsMeters": [
+        0.18,
+        0.366,
+        0.524
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:09.921Z"
+    },
+    {
+      "id": "14760",
+      "originalName": "Firing shovel (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-coal-shovel-e216c2c2",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-coal-shovel-e216c2c2",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14760/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-coal-shovel-e216c2c2.glb",
+      "fileSizeBytes": 5408,
+      "sha256": "f4601aef1e6dc5866e8d58e152b9c2b40321d93a5937e21515b2715e5414189f",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 76,
+      "vertices": 228,
+      "dimensionsMeters": [
+        0.3,
+        0.202,
+        1.229
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:10.020Z"
+    },
+    {
+      "id": "14759",
+      "originalName": "Sack barrow (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-sack-barrow-78fe2b6a",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-sack-barrow-78fe2b6a",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14759/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-sack-barrow-78fe2b6a.glb",
+      "fileSizeBytes": 23700,
+      "sha256": "0e5ac78486ddda2f3fb8e97be7699e667b766ad728497f75be40c8b67725df6c",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 456,
+      "vertices": 1368,
+      "dimensionsMeters": [
+        0.56,
+        1.2,
+        0.733
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:10.131Z"
+    },
+    {
+      "id": "14761",
+      "originalName": "Milk churn (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-milk-churn-2dd0fcde",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-milk-churn-2dd0fcde",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14761/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-milk-churn-2dd0fcde.glb",
+      "fileSizeBytes": 40132,
+      "sha256": "68d1e67982ca2eda847702d5e6acb448b108147f32708ac0f4b9674f9159e22b",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 800,
+      "vertices": 2400,
+      "dimensionsMeters": [
+        0.536,
+        0.78,
+        0.536
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:10.248Z"
+    },
+    {
+      "id": "14762",
+      "originalName": "Mail sack (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-mail-sack-e9f271a8",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-mail-sack-e9f271a8",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14762/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-mail-sack-e9f271a8.glb",
+      "fileSizeBytes": 13200,
+      "sha256": "213aa04fcd0b495461b539f3dda20d19531ae9c7c0a773a147b5b87545600f50",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 224,
+      "vertices": 672,
+      "dimensionsMeters": [
+        0.727,
+        0.78,
+        0.62
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:10.347Z"
+    },
+    {
+      "id": "14764",
+      "originalName": "Signalling hand lamp (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-hand-lamp-f8991f76",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-hand-lamp-f8991f76",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14764/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-hand-lamp-f8991f76.glb",
+      "fileSizeBytes": 17260,
+      "sha256": "2faacace9073bd9fa2cfca580370e9d240cea3a19363226fb9e13d39e6a1f147",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 308,
+      "vertices": 924,
+      "dimensionsMeters": [
+        0.194,
+        0.592,
+        0.195
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:10.455Z"
+    },
+    {
+      "id": "14763",
+      "originalName": "Parcels trolley (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-parcels-trolley-fb4fc4f8",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-parcels-trolley-fb4fc4f8",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14763/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-parcels-trolley-fb4fc4f8.glb",
+      "fileSizeBytes": 51504,
+      "sha256": "9f47eeccb011acd05f2f5b7850142efa08e70dd08fd5dc4bcd949fb58da12fbd",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 1036,
+      "vertices": 3108,
+      "dimensionsMeters": [
+        1.21,
+        1.04,
+        1.84
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:10.560Z"
+    },
+    {
+      "id": "14765",
+      "originalName": "Wagon wheel chock (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-wheel-chock-f50bd511",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-wheel-chock-f50bd511",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14765/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-wheel-chock-f50bd511.glb",
+      "fileSizeBytes": 8112,
+      "sha256": "82dc2cc195d2d309ed527b4a057fbf196a2bd854d1c195b45b61b8b1c38d048a",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 132,
+      "vertices": 396,
+      "dimensionsMeters": [
+        0.44,
+        0.734,
+        0.36
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:10.679Z"
+    },
+    {
+      "id": "14766",
+      "originalName": "Right hand turnout (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-turnout-right-e67a582f",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-turnout-right-e67a582f",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14766/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-turnout-right-e67a582f.glb",
+      "fileSizeBytes": 55252,
+      "sha256": "602d3effb22c297e8a44ba74d1d2caa62014fb9f613d811e5282fe820ca6ef21",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 1084,
+      "vertices": 3252,
+      "dimensionsMeters": [
+        4.35,
+        0.81,
+        8.106
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:10.789Z"
+    },
+    {
+      "id": "14770",
+      "originalName": "Plain track straight 2 m (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-track-straight-2m-0ee437ce",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-track-straight-2m-0ee437ce",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14770/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-track-straight-2m-0ee437ce.glb",
+      "fileSizeBytes": 13700,
+      "sha256": "b4f20b4ab5dd6baf1222e784ffeae6ce8f0406d5782c92a0de191741337a02f1",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 220,
+      "vertices": 660,
+      "dimensionsMeters": [
+        4.1,
+        0.5,
+        2
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:10.892Z"
+    },
+    {
+      "id": "14767",
+      "originalName": "Narrow gauge track curve (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-narrow-track-curve-17448cb3",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-narrow-track-curve-17448cb3",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14767/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-narrow-track-curve-17448cb3.glb",
+      "fileSizeBytes": 35200,
+      "sha256": "c76d5c671c461a0c1ce0a3d0def008845f66d3834246bedab758a2a57ed47ea2",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 664,
+      "vertices": 1992,
+      "dimensionsMeters": [
+        3.503,
+        0.35,
+        3.991
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:10.996Z"
+    },
+    {
+      "id": "14768",
+      "originalName": "Semaphore signal cleared (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-semaphore-signal-c-d3a16948",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-semaphore-signal-c-d3a16948",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14768/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-semaphore-signal-c-d3a16948.glb",
+      "fileSizeBytes": 54316,
+      "sha256": "401c5302c152b471d9e59feeb22e750f3936474b95a8b8eebed27ec6aa6eeb36",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 1044,
+      "vertices": 3132,
+      "dimensionsMeters": [
+        1.935,
+        6.9,
+        0.956
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:11.133Z"
+    },
+    {
+      "id": "14769",
+      "originalName": "Open mineral wagon loaded with coal (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-open-mineral-wagon-2d8a73cc",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-open-mineral-wagon-2d8a73cc",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14769/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-open-mineral-wagon-2d8a73cc.glb",
+      "fileSizeBytes": 118412,
+      "sha256": "17832bcf3064d6ac7312681304c6f8a3bf1497c68d55f5845a68b2fb77611295",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 2904,
+      "vertices": 8712,
+      "dimensionsMeters": [
+        2.385,
+        2.59,
+        5.6
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:11.254Z"
+    },
+    {
+      "id": "14771",
+      "originalName": "Flat wagon with a crated load (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-flat-wagon-loaded-c7c646db",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-flat-wagon-loaded-c7c646db",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14771/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-flat-wagon-loaded-c7c646db.glb",
+      "fileSizeBytes": 113144,
+      "sha256": "3f1d7f6d066451dafe476aac8004724659b2d0685617484dccec68eeea144f6d",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 2812,
+      "vertices": 8436,
+      "dimensionsMeters": [
+        2.375,
+        2.3,
+        5.6
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:11.386Z"
+    },
+    {
+      "id": "14772",
+      "originalName": "Goods 0-6-0 with the smokebox door open (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-goods-0-6-0-smokeb-68e4d951",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-goods-0-6-0-smokeb-68e4d951",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14772/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-goods-0-6-0-smokeb-68e4d951.glb",
+      "fileSizeBytes": 270948,
+      "sha256": "fec5d671057ff39fce46c41bfa5fc9742606b108924229494f09553908d2374a",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 7396,
+      "vertices": 22188,
+      "dimensionsMeters": [
+        2.7,
+        3.974,
+        9
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:11.557Z"
+    },
+    {
+      "id": "14773",
+      "originalName": "Station platform end ramp module (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-platform-module-ra-293fc360",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-platform-module-ra-293fc360",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14773/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-platform-module-ra-293fc360.glb",
+      "fileSizeBytes": 20740,
+      "sha256": "97b8201a81cdcea8444a4dee9da8ba19d1f44d9d64f9f175d81e411ed07fd645",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 364,
+      "vertices": 1092,
+      "dimensionsMeters": [
+        3.401,
+        1.26,
+        8.8
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:11.674Z"
+    },
+    {
+      "id": "14774",
+      "originalName": "Compartment carriage in varnished teak (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-compartment-coach--1ef0c50a",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-compartment-coach--1ef0c50a",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14774/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-compartment-coach--1ef0c50a.glb",
+      "fileSizeBytes": 211996,
+      "sha256": "6d9ab1040656e51150542eedbb7d9b8983826c44461782405d2e00d9af323a34",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 5976,
+      "vertices": 17928,
+      "dimensionsMeters": [
+        3.259,
+        3.92,
+        15
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:11.813Z"
+    },
+    {
+      "id": "14775",
+      "originalName": "Goods 0-6-0 in unlined black (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-goods-0-6-0-lined--29ed5427",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-goods-0-6-0-lined--29ed5427",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14775/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-goods-0-6-0-lined--29ed5427.glb",
+      "fileSizeBytes": 270784,
+      "sha256": "b5c83d154fcf4abc2e66fe307fb79ae80386453f78c98cbb758ae794ec42ddfd",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 7396,
+      "vertices": 22188,
+      "dimensionsMeters": [
+        2.7,
+        3.974,
+        9
+      ],
+      "hasAnimations": true,
+      "animations": [
+        "wheel-roll"
+      ],
+      "downloadTimestamp": "2026-09-12T12:49:11.943Z"
+    },
+    {
+      "id": "14778",
+      "originalName": "Country station with a passenger train at the platform (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-stat-d2357295-starter-scene",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-stat-d2357295-starter-scene",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14778/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-stat-d2357295-starter-scene.glb",
+      "fileSizeBytes": 1099904,
+      "sha256": "9b2a7b45d929c31cd9d37de87535e34d9b0c6b46c365e3a84acc07c006041e15",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 30888,
+      "vertices": 67373,
+      "dimensionsMeters": [
+        17.84,
+        7.82,
+        60
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:12.245Z"
+    },
+    {
+      "id": "14777",
+      "originalName": "Goods yard with turntable, engine shed and wagon sidings (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-goods-yard-and-she-526f4a60",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-goods-yard-and-she-526f4a60",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14777/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-goods-yard-and-she-526f4a60.glb",
+      "fileSizeBytes": 1716132,
+      "sha256": "3d75b94ecddc397844fbb250a7cfc429aec67600631a68fb2bde8b9bd34f11da",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 47032,
+      "vertices": 102232,
+      "dimensionsMeters": [
+        40.55,
+        10.551,
+        73.45
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:12.608Z"
+    },
+    {
+      "id": "14776",
+      "originalName": "Connector cases for rail, narrow gauge rail, couplers and platforms (Steam Era Railway and Rolling Stock)",
+      "slug": "steam-era-railway-and-rolling-stock-connector-cases-293476ca",
+      "originalUrl": "https://3dassets.dev/assets/steam-era-railway-and-rolling-stock-connector-cases-293476ca",
+      "cdnUrl": "https://cdn.3dassets.dev/assets/14776/v1/model.glb",
+      "localPath": "models/steam-era-railway-and-rolling-stock-connector-cases-293476ca.glb",
+      "fileSizeBytes": 860924,
+      "sha256": "3115b7392b23abdbe0b75cc54b3294510bc1f821c800c185f538dcec874075cb",
+      "license": "CC0 1.0 Universal",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceProvider": "3DAssets.dev",
+      "triangles": 25448,
+      "vertices": 55573,
+      "dimensionsMeters": [
+        57.9,
+        4.444,
+        34.064
+      ],
+      "hasAnimations": false,
+      "animations": [],
+      "downloadTimestamp": "2026-09-12T12:49:12.774Z"
+    }
+  ]
+}
