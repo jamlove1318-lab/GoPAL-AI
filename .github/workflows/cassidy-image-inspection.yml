@@ -1,0 +1,60 @@
+name: Cassidy Image Inspection
+
+run-name: Cassidy image inspection • ${{ github.event_name }} • ${{ github.ref_name }}
+
+on:
+  push:
+    branches:
+      - main
+      - cassidy-image-inspection
+    paths:
+      - 'cassidy_canonical_*.jpg'
+      - 'cassidy_master_showcase.png'
+      - 'tools/image-inspection/**'
+      - '.github/workflows/cassidy-image-inspection.yml'
+  pull_request:
+    paths:
+      - 'cassidy_canonical_*.jpg'
+      - 'cassidy_master_showcase.png'
+      - 'tools/image-inspection/**'
+      - '.github/workflows/cassidy-image-inspection.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    name: Inspect Cassidy raster source package
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/image-inspection/requirements.txt
+
+      - name: Install image reader
+        run: python -m pip install -r tools/image-inspection/requirements.txt
+
+      - name: Inspect canonical Cassidy images
+        run: |
+          python tools/image-inspection/inspect_images.py \
+            --root . \
+            --output artifacts/cassidy-image-inspection/manifest.json
+
+      - name: Upload inspection report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cassidy-image-inspection-${{ github.run_id }}
+          path: artifacts/cassidy-image-inspection/
+          if-no-files-found: warn
+          retention-days: 14
